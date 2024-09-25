@@ -36,6 +36,10 @@ test.describe('Create Container Tests', () => {
     }
   });
 
+  //TODO skip for now as to avoid flooding the test area. Hopefully Gary
+  //will be able to spin up a clean environment for each run to avoid a glut
+  //of data building up. We cannot easily delete, because deletion on Fedora is not 
+  //straightforward
   test.skip(`can create a container/folder with a properly formed slug`, async () => {
 
     await containerPage.goto();
