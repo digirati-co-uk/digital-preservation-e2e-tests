@@ -2,6 +2,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 
+
 export class ContainerPages {
   readonly page: Page;
   readonly newFolderButton: Locator;
@@ -9,6 +10,7 @@ export class ContainerPages {
   readonly folderPathTitleInput: Locator;
   readonly createNewFolderConfirmationButton: Locator;
   readonly alertMessage: Locator;
+  readonly incorrectPathFormat: string = 'Invalid container file path - only a-z, 0-9 and .-_ are allowed.';
 
   constructor(page: Page) {
     this.page = page;

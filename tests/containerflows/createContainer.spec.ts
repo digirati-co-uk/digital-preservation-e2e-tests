@@ -20,9 +20,7 @@ test.describe('Create Container Tests', () => {
       await containerPage.folderPathNameInput.fill('Christine test folder');
       await containerPage.folderPathTitleInput.fill('Christine test folder');
       await containerPage.createNewFolderConfirmationButton.click();
-
-      //TODO this message will change - in progress with Tom
-      await expect(containerPage.alertMessage).toHaveText('Invalid container name');
+      await expect(containerPage.alertMessage).toHaveText(containerPage.incorrectPathFormat);
 
 
     });
