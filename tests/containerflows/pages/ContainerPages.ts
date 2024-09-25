@@ -10,10 +10,26 @@ export class ContainerPages {
   readonly folderPathTitleInput: Locator;
   readonly createNewFolderConfirmationButton: Locator;
   readonly alertMessage: Locator;
-  readonly incorrectPathFormat: string = 'Invalid container file path - only a-z, 0-9 and .-_ are allowed.';
+  readonly incorrectPathFormatMessage: string; 
+  readonly createdContainerMessage: string;
+  readonly playwrightContainerTitle: string;
+  readonly playwrightContainerSlug: string;
+  readonly duplicateContainerMessage: string;
+  readonly playwrightContainerInvalidSlugs: string[];
 
   constructor(page: Page) {
     this.page = page;
+
+    //consts
+    this.incorrectPathFormatMessage = 'Invalid container file path - only a-z, 0-9 and .-_ are allowed.';
+    this.createdContainerMessage = 'Created Container';
+    this.playwrightContainerTitle = 'Playwright Container Test';
+    this.playwrightContainerSlug = 'Playwright-Container-Slug';
+    this.playwrightContainerInvalidSlugs = ['&%&^%&','looks-almost-correct*'];
+    //TODO Set to Tom's new message
+    this.duplicateContainerMessage = 'Invalid container file path - only a-z, 0-9 and .-_ are allowed.';
+
+    //Locators
     this.newFolderButton = page.getByRole('button', {name: 'New Folder'});
     this.folderPathNameInput = page.getByRole('textbox', {name: 'Folder path name'});
     this.folderPathTitleInput = page.getByRole('textbox', {name: 'Folder title'});
