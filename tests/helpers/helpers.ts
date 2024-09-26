@@ -4,3 +4,8 @@ import {generate as generateString} from 'randomized-string';
 export function generateUniqueId(): string {
     return `${generateString(6)}`
 }
+
+// export function getJSONBody(){
+//     let body = await spaces.body();
+//     let jsonBody = JSON.parse(body.toString('utf-8'));
+// }

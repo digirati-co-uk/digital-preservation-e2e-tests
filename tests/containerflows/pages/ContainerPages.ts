@@ -1,8 +1,5 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
-
-
-
 export class ContainerPages {
   readonly page: Page;
   readonly newFolderButton: Locator;
@@ -16,6 +13,9 @@ export class ContainerPages {
   readonly playwrightContainerSlug: string;
   readonly duplicateContainerMessage: string;
   readonly playwrightContainerInvalidSlugs: string[];
+  readonly createdBy : string;
+  readonly baseBrowsePath: string;
+  readonly baseAPIPath: string;
 
   constructor(page: Page) {
     this.page = page;
@@ -28,6 +28,9 @@ export class ContainerPages {
     this.playwrightContainerInvalidSlugs = ['&%&^%&','looks-almost-correct*'];
     //TODO Set to Tom's new message
     this.duplicateContainerMessage = 'Invalid container file path - only a-z, 0-9 and .-_ are allowed.';
+    this.createdBy = '/agents/dlipdev';
+    this.baseBrowsePath = '/browse/_for_tests';
+    this.baseAPIPath = '/repository/_for_tests/';
 
     //Locators
     this.newFolderButton = page.getByRole('button', {name: 'New Folder'});
@@ -38,7 +41,7 @@ export class ContainerPages {
   }
 
   async goto() {
-    await this.page.goto('/browse/_for_tests');
+    await this.page.goto(this.baseBrowsePath);
   }
 
   async getStarted() {
