@@ -1,0 +1,190 @@
+import { expect, Locator, Page } from '@playwright/test';
+import { ContainerPages } from './pages/ContainerPages';
+import { generateUniqueId } from '../helpers/helpers';
+import { apiContext, test } from '../../fixture';
+
+test.describe('Container Tests', () => {
+
+  let containerPage: ContainerPages;
+
+  test.beforeEach('Set up POM', async ({ page }) => {
+    containerPage = new ContainerPages(page);    
+  });
+
+  test(`cannot create a container/folder without a properly formed slug`, async ({page}) => {
+    await containerPage.getStarted();  
+    
+    //Note passing title into slug here, which isn't properly formed as it's a Title not a slug
+    await containerPage.createContainer(containerPage.playwrightContainerTitle, containerPage.playwrightContainerTitle);
+    await expect(containerPage.alertMessage, 'The incorrect path format error message is shown').toHaveText(containerPage.incorrectPathFormatMessage);
+    await expect(page.getByRole('link', {name: containerPage.playwrightContainerTitle, exact:true})).not.toBeVisible();
+  });
+
+  test(`cannot create a container/folder with invalid characters in the path`, async ({page}) => {
+    await containerPage.getStarted();  
+
+    for (var slug of containerPage.playwrightContainerInvalidSlugs){
+      await containerPage.createContainer(slug, slug);
+      await expect(containerPage.alertMessage, 'The incorrect path format error message is shown').toHaveText(containerPage.incorrectPathFormatMessage);
+      await expect(page.getByRole('link', {name: slug, exact:true})).not.toBeVisible();
+
+    }
+  });
+
+  //Hopefully Gary
+  //will be able to spin up a clean environment for each run to avoid a glut
+  //of data building up. We cannot easily delete, because deletion on Fedora is not 
+  //straightforward
+  test(`can create a container/folder with a properly formed slug and see the details displayed`, async ({page}) => {
+
+    const uniqueId = generateUniqueId();
+    const folderTitle = `${containerPage.playwrightContainerTitle} ${uniqueId}`;
+    const folderSlug = `${containerPage.playwrightContainerSlug}-${uniqueId}`;
+    let containerItem;
+
+    await test.step(`Can create the container via the Front End`, async () => {
+      await containerPage.getStarted();  
+      await containerPage.createContainer(folderSlug, folderTitle);
+      await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
+      await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderTitle);
+      await expect(page.getByRole('link', {name: folderTitle})).toBeVisible();
+    });
+
+    await test.step(`API contains all the expected fields`, async () => {
+
+      const containerResponse = await apiContext.get(`${containerPage.baseAPIPath}${folderSlug.toLowerCase()}`);
+      const body = await containerResponse.body();
+      containerItem = JSON.parse(body.toString('utf-8'));
+
+      //type matches Container
+      expect(containerItem.type).toEqual('Container');
+
+      //id matches what we sent in the get
+      expect(containerItem.id).toEqual(expect.stringContaining(`${containerPage.baseAPIPath}${folderSlug.toLowerCase()}`));
+      //name matches the title
+      expect(containerItem.name).toEqual(folderTitle);
+
+      //containers is empty
+      expect(containerItem.containers).toHaveLength(0);
+
+      //binaries is empty
+      expect(containerItem.binaries).toHaveLength(0);
+
+      //created date is within last few seconds
+      const now = new Date();
+      const createdDate = new Date(containerItem.created);
+      expect(createdDate < now ).toBeTruthy();
+
+      //Add 5 seconds to createdDate
+      const createdDatePlus = new Date(createdDate.getTime() + 5000);
+      expect(createdDatePlus < now ).toBeFalsy();
+
+      //lastmodified is within the last few seconds
+      const modifiedDate = new Date(containerItem.lastModified);
+      expect(modifiedDate < now ).toBeTruthy();
+
+      //Add 5 seconds to modifiedDate
+      const modifiedDatePlus = new Date(modifiedDate.getTime() + 5000);
+      expect(modifiedDatePlus < now ).toBeFalsy();
+
+      //check that the created ad modified dates match
+      expect(containerItem.lastModified).toEqual(containerItem.created);
+
+      //createdBy and modifiedBy match containerPage.createdBy
+      expect(containerItem.createdBy).toEqual(expect.stringContaining(containerPage.createdBy));
+      expect(containerItem.lastModifiedBy).toEqual(expect.stringContaining(containerPage.createdBy));
+    });
+
+    await test.step('Table headers are diplayed as expected', async () => {
+      //TODO - modify to use Tom's aria-labels once deployed
+      
+    });
+
+    await test.step('Verify correct columns shown with the correct data', async () => {
+
+      //TODO - modify to use Tom's aria-labels once deployed
+      const  newContainerRow: Locator = containerPage.containerTableRow.filter({has: page.getByRole('link', {name: folderTitle})});
+      await expect(newContainerRow).toBeVisible();
+      await expect(newContainerRow.locator(page.getByRole('cell')).nth(1)).toContainText(folderSlug.toLowerCase());
+
+      //Check the API elements are displayed as expected
+      await expect(newContainerRow.locator(page.getByRole('cell')).nth(1)).toContainText(folderSlug.toLowerCase());
+      await expect(newContainerRow.locator(page.getByRole('cell')).nth(2)).toContainText(containerItem.name);
+
+      const displayedModifiedDate = await newContainerRow.locator(page.getByRole('cell')).nth(3).textContent();
+      expect(containerItem.lastModified).toEqual(expect.stringContaining(displayedModifiedDate?.substring(0,9)!));
+
+      const displayedModifiedBy = await newContainerRow.locator(page.getByRole('cell')).nth(4).textContent();
+      expect(containerItem.lastModifiedBy).toEqual(expect.stringContaining(displayedModifiedBy!));
+
+      const displayedCreatedDate = await newContainerRow.locator(page.getByRole('cell')).nth(5).textContent();
+      expect(containerItem.created).toEqual(expect.stringContaining(displayedCreatedDate?.substring(0,9)!));
+
+      const displayedCreatedBy = await newContainerRow.locator(page.getByRole('cell')).nth(6).textContent();
+      expect(containerItem.createdBy).toEqual(expect.stringContaining(displayedCreatedBy!));
+
+    });
+  });
+
+  test(`cannot create a container/folder with an existing slug`, async ({page}) => {
+
+    await containerPage.getStarted();  
+    const uniqueId = generateUniqueId();
+    const folderTitle = `${containerPage.playwrightContainerTitle} ${uniqueId}`;
+    const folderSlug = `${containerPage.playwrightContainerSlug}-${uniqueId}`
+    await containerPage.createContainer(folderSlug, folderTitle);
+    await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
+    await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderTitle);
+    await expect(page.getByRole('link', {name: folderTitle})).toBeVisible();
+    
+    //Now try again with the same slug, this should fail
+    await containerPage.createContainer(folderSlug, folderTitle);
+    await expect(containerPage.alertMessage, 'The duplicate path error message is shown').toContainText(containerPage.duplicateContainerMessage);
+  });
+
+  test(`can create a container/folder without a title and title defaults to the slug`, async ({page}) => {
+
+    await containerPage.getStarted();  
+    const uniqueId = generateUniqueId();
+    const folderSlug = `${containerPage.playwrightContainerSlug}-${uniqueId}`;
+    await containerPage.createContainer(folderSlug, '');
+    await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
+    await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderSlug.toLowerCase());
+    await expect(page.getByRole('link', {name: folderSlug})).toBeVisible();
+
+  });
+
+  test(`can create a child container`, async ({page}) => {
+
+    //Create a parent
+    await containerPage.getStarted(); 
+    const uniqueId = generateUniqueId();
+    const folderSlug = `${containerPage.playwrightContainerSlug}-${uniqueId}`;
+    const folderTitle = `${containerPage.playwrightContainerTitle} ${uniqueId}`;
+    await containerPage.createContainer(folderSlug, folderTitle);
+    await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
+    await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderTitle);
+    const myContainerLink: Locator = page.getByRole('link', {name: folderTitle});
+    await expect(myContainerLink).toBeVisible();
+
+    //Navigate into the new parent Container
+    await myContainerLink.click();
+    await expect(page.getByRole('heading', {name: `Browse - ${folderTitle}`})).toBeVisible();
+
+    //Create a child Container within the parent Container
+    const uniqueIdChild = generateUniqueId();
+    const folderSlugChild = `${containerPage.playwrightContainerSlug}-${uniqueIdChild}`;
+    const folderTitleChild = `${containerPage.playwrightContainerTitle} ${uniqueIdChild}`;
+    await containerPage.createContainer(folderSlugChild, folderTitleChild);
+
+    //Check we are still within the correct 'parent' Container
+    await expect(page.getByRole('heading', {name: `Browse - ${folderTitle}`})).toBeVisible();
+    await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
+    await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderTitleChild);
+    await expect(page.getByRole('link', {name: folderTitleChild})).toBeVisible();
+
+  });
+
+});
+
+

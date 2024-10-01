@@ -16,6 +16,8 @@ export class ContainerPages {
   readonly createdBy : string;
   readonly baseBrowsePath: string;
   readonly baseAPIPath: string;
+  readonly baseBrowsePathHeading: Locator;
+  readonly containerTableRow: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -23,11 +25,10 @@ export class ContainerPages {
     //consts
     this.incorrectPathFormatMessage = 'Invalid container file path - only a-z, 0-9 and .-_ are allowed.';
     this.createdContainerMessage = 'Created Container';
-    this.playwrightContainerTitle = 'Playwright Container Test';
+    this.playwrightContainerTitle = 'Playwright Container Testing';
     this.playwrightContainerSlug = 'Playwright-Container-Slug';
     this.playwrightContainerInvalidSlugs = ['&%&^%&','looks-almost-correct*'];
-    //TODO Set to Tom's new message
-    this.duplicateContainerMessage = 'Invalid container file path - only a-z, 0-9 and .-_ are allowed.';
+    this.duplicateContainerMessage = 'Failed to create Container: Conflict';
     this.createdBy = '/agents/dlipdev';
     this.baseBrowsePath = '/browse/_for_tests';
     this.baseAPIPath = '/repository/_for_tests/';
@@ -38,6 +39,8 @@ export class ContainerPages {
     this.folderPathTitleInput = page.getByRole('textbox', {name: 'Folder title'});
     this.createNewFolderConfirmationButton = page.getByRole('button', {name:'Create New Folder'});
     this.alertMessage = page.getByRole('alert');
+    this.baseBrowsePathHeading = page.getByRole('heading', {name: 'Browse - For Tests'});
+    this.containerTableRow = page.getByRole('row');
   }
 
   async goto() {
@@ -45,8 +48,18 @@ export class ContainerPages {
   }
 
   async getStarted() {
+    await this.goto();
+    await expect(this.baseBrowsePathHeading).toBeVisible();
     await expect(this.newFolderButton).toBeVisible();
   }
+
+  async createContainer(slug: string, title: string){
+    await this.newFolderButton.click();
+    await this.folderPathNameInput.fill(slug);
+    await this.folderPathTitleInput.fill(title);
+    await this.createNewFolderConfirmationButton.click();
+    
+  };
 
 }
 
