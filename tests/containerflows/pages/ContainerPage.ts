@@ -1,6 +1,6 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
-export class ContainerPages {
+export class ContainerPage {
   readonly page: Page;
   readonly newFolderButton: Locator;
   readonly folderPathNameInput: Locator;
@@ -16,6 +16,7 @@ export class ContainerPages {
   readonly createdBy : string;
   readonly baseBrowsePath: string;
   readonly baseAPIPath: string;
+  readonly basePath: string;
   readonly baseBrowsePathHeading: Locator;
   readonly containerTableRow: Locator;
 
@@ -30,8 +31,9 @@ export class ContainerPages {
     this.playwrightContainerInvalidSlugs = ['&%&^%&','looks-almost-correct*'];
     this.duplicateContainerMessage = 'Failed to create Container: Conflict';
     this.createdBy = '/agents/dlipdev';
-    this.baseBrowsePath = '/browse/_for_tests';
-    this.baseAPIPath = '/repository/_for_tests/';
+    this.basePath = '/_for_tests/playwright-testing';
+    this.baseBrowsePath = `/browse${this.basePath}`;
+    this.baseAPIPath = `/repository${this.basePath}/`;
 
     //Locators
     this.newFolderButton = page.getByRole('button', {name: 'New Folder'});
@@ -39,7 +41,7 @@ export class ContainerPages {
     this.folderPathTitleInput = page.getByRole('textbox', {name: 'Folder title'});
     this.createNewFolderConfirmationButton = page.getByRole('button', {name:'Create New Folder'});
     this.alertMessage = page.getByRole('alert');
-    this.baseBrowsePathHeading = page.getByRole('heading', {name: 'Browse - For Tests'});
+    this.baseBrowsePathHeading = page.getByRole('heading', {name: 'Browse - Playwright Testing'});
     this.containerTableRow = page.getByRole('row');
   }
 
@@ -58,7 +60,14 @@ export class ContainerPages {
     await this.folderPathNameInput.fill(slug);
     await this.folderPathTitleInput.fill(title);
     await this.createNewFolderConfirmationButton.click();
-    
+  };
+
+  async checkCorrectContainerTitle(folderTitle: string){
+    await expect(this.page.getByRole('heading', {name: `Browse - ${folderTitle.toLowerCase()}`}), 'We have successfully navigated into the Container').toBeVisible();
+  };
+
+  getFolderTitle(folderTitle: string) : Locator {
+    return this.page.getByRole('link', {name: folderTitle, exact:true});
   };
 
 }

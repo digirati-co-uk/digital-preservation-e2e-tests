@@ -1,28 +1,40 @@
-import { expect, Locator, Page } from '@playwright/test';
-import { ContainerPages } from './pages/ContainerPages';
-import { generateUniqueId } from '../helpers/helpers';
-import { apiContext, test } from '../../fixture';
+import { test } from '../../fixture';
+import {NavigationPage} from "./pages/NavigationPage";
+import {expect} from "@playwright/test";
 
 test.describe('Navigation Tests', () => {
 
-  let containerPage: ContainerPages;
+  let navigationPage: NavigationPage;
 
   test.beforeEach('Set up POM', async ({ page }) => {
-    containerPage = new ContainerPages(page);    
+    navigationPage = new NavigationPage(page);
   });
 
   test(`test the Dashboard link in the Left Hand Nav`, async ({page}) => {
-    await containerPage.getStarted();  
-    //TODO test 'Dashboard' link on LHS navigates to the homepage and 
+    await navigationPage.getStarted();
+
+    //Test 'Dashboard' link on LHS navigates to the homepage and
     //displays the Browse and connectivity checks
+    await navigationPage.dashboardMenuOption.click();
+
+    await expect(navigationPage.browseTheRepositoryLink).toBeVisible();
+
     //Check that the Browse link navigates into the Folder browsing
+    await navigationPage.browseTheRepositoryLink.click();
+    await expect(navigationPage.repositoryBrowsePathHeading).toBeVisible();
+
+    //Return to the Dashboard and check that connectivity link works
+    await navigationPage.dashboardMenuOption.click();
+    await navigationPage.connectivityChecksLink.click();
+    await expect(navigationPage.connectivityChecksHeading).toBeVisible();
 
   });
 
   test(`test the Browse link in the Left Hand Nav`, async ({page}) => {
-    await containerPage.getStarted();  
-    //TODO test that Browser on the LHS navigates into Browse - repository
-
+    await navigationPage.getStarted();
+    //Test the Browse link exists and takes you into the Browse repository page
+    await navigationPage.browseMenuOption.click();
+    await expect(navigationPage.repositoryBrowsePathHeading).toBeVisible();
   });
 
   
