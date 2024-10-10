@@ -37,6 +37,13 @@ test.describe('Navigation Tests', () => {
     await expect(navigationPage.repositoryBrowsePathHeading).toBeVisible();
   });
 
+  test(`test the Deposit link in the Left Hand Nav`, async ({page}) => {
+    await navigationPage.getStarted();
+    //Test the Deposits link exists and takes you into the Deposits page
+    await navigationPage.depositMenuOption.click();
+    await expect(navigationPage.depositsHeading).toBeVisible();
+  });
+
   
 
   

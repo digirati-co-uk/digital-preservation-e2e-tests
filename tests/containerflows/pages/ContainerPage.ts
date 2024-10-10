@@ -1,7 +1,9 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
+import {NavigationPage} from "./NavigationPage";
 export class ContainerPage {
   readonly page: Page;
+  readonly navigation : NavigationPage;
   readonly newFolderButton: Locator;
   readonly folderPathNameInput: Locator;
   readonly folderPathTitleInput: Locator;
@@ -14,14 +16,11 @@ export class ContainerPage {
   readonly duplicateContainerMessage: string;
   readonly playwrightContainerInvalidSlugs: string[];
   readonly createdBy : string;
-  readonly baseBrowsePath: string;
-  readonly baseAPIPath: string;
-  readonly basePath: string;
-  readonly baseBrowsePathHeading: Locator;
   readonly containerTableRow: Locator;
 
   constructor(page: Page) {
     this.page = page;
+    this.navigation = new NavigationPage(this.page);
 
     //consts
     this.incorrectPathFormatMessage = 'Invalid container file path - only a-z, 0-9 and .-_ are allowed.';
@@ -31,9 +30,6 @@ export class ContainerPage {
     this.playwrightContainerInvalidSlugs = ['&%&^%&','looks-almost-correct*'];
     this.duplicateContainerMessage = 'Failed to create Container: Conflict';
     this.createdBy = '/agents/dlipdev';
-    this.basePath = '/_for_tests/playwright-testing';
-    this.baseBrowsePath = `/browse${this.basePath}`;
-    this.baseAPIPath = `/repository${this.basePath}/`;
 
     //Locators
     this.newFolderButton = page.getByRole('button', {name: 'New Folder'});
@@ -41,17 +37,16 @@ export class ContainerPage {
     this.folderPathTitleInput = page.getByRole('textbox', {name: 'Folder title'});
     this.createNewFolderConfirmationButton = page.getByRole('button', {name:'Create New Folder'});
     this.alertMessage = page.getByRole('alert');
-    this.baseBrowsePathHeading = page.getByRole('heading', {name: 'Browse - Playwright Testing'});
     this.containerTableRow = page.getByRole('row');
   }
 
   async goto() {
-    await this.page.goto(this.baseBrowsePath);
+    await this.page.goto(this.navigation.baseBrowsePath);
   }
 
   async getStarted() {
     await this.goto();
-    await expect(this.baseBrowsePathHeading).toBeVisible();
+    await expect(this.navigation.baseBrowsePathHeading).toBeVisible();
     await expect(this.newFolderButton).toBeVisible();
   }
 

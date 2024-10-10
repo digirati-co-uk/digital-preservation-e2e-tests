@@ -1,6 +1,6 @@
 import { expect, Locator } from '@playwright/test';
 import { ContainerPage } from './pages/ContainerPage';
-import { generateUniqueId } from '../helpers/helpers';
+import {checkDateIsApproximatelyNow, generateUniqueId} from '../helpers/helpers';
 import { apiContext, test } from '../../fixture';
 
 test.describe('Container Tests', () => {
@@ -11,7 +11,7 @@ test.describe('Container Tests', () => {
     containerPage = new ContainerPage(page);
   });
 
-  test(`cannot create a container/folder without a properly formed slug`, async ({page}) => {
+  test(`cannot create a container/folder without a properly formed slug`, async ({}) => {
     await containerPage.getStarted();  
     
     //Note passing title into slug here, which isn't properly formed as it's a Title not a slug
@@ -20,7 +20,7 @@ test.describe('Container Tests', () => {
     await expect(containerPage.getFolderTitle(containerPage.playwrightContainerTitle), 'We cannot see the Container on the page, because it was not created').not.toBeVisible();
   });
 
-  test(`cannot create a container/folder with invalid characters in the path`, async ({page}) => {
+  test(`cannot create a container/folder with invalid characters in the path`, async ({}) => {
     await containerPage.getStarted();  
 
     for (let slug of containerPage.playwrightContainerInvalidSlugs){
@@ -51,7 +51,7 @@ test.describe('Container Tests', () => {
 
     await test.step(`API contains all the expected fields`, async () => {
 
-      const containerResponse = await apiContext.get(`${containerPage.baseAPIPath}${folderSlug.toLowerCase()}`);
+      const containerResponse = await apiContext.get(`${containerPage.navigation.baseAPIPath}${folderSlug.toLowerCase()}`);
       const body = await containerResponse.body();
       containerItem = JSON.parse(body.toString('utf-8'));
 
@@ -59,7 +59,7 @@ test.describe('Container Tests', () => {
       expect(containerItem.type, 'Type is set to Container').toEqual('Container');
 
       //id matches what we sent in the get
-      expect(containerItem.id, 'ID matches').toEqual(expect.stringContaining(`${containerPage.baseAPIPath}${folderSlug.toLowerCase()}`));
+      expect(containerItem.id, 'ID matches').toEqual(expect.stringContaining(`${containerPage.navigation.baseAPIPath}${folderSlug.toLowerCase()}`));
       //name matches the title
       expect(containerItem.name, 'Name is set to the correct Title').toEqual(folderTitle);
 
@@ -70,21 +70,10 @@ test.describe('Container Tests', () => {
       expect(containerItem.binaries, 'Binaries is empty').toHaveLength(0);
 
       //created date is within last few seconds
-      const now = new Date();
-      const createdDate = new Date(containerItem.created);
-      expect(createdDate < now, 'Created date is in the past (just)').toBeTruthy();
-
-      //Add 5 seconds to createdDate
-      const createdDatePlus = new Date(createdDate.getTime() + 5000);
-      expect(createdDatePlus < now , 'Created date is in the last 5 seconds').toBeFalsy();
+      checkDateIsApproximatelyNow(containerItem.created);
 
       //lastmodified is within the last few seconds
-      const modifiedDate = new Date(containerItem.lastModified);
-      expect(modifiedDate < now, 'Modified date is in the past (just)' ).toBeTruthy();
-
-      //Add 5 seconds to modifiedDate
-      const modifiedDatePlus = new Date(modifiedDate.getTime() + 5000);
-      expect(modifiedDatePlus < now, 'Modified date is in the last 5 seconds' ).toBeFalsy();
+      checkDateIsApproximatelyNow(containerItem.lastModified);
 
       //check that the created ad modified dates match
       expect(containerItem.lastModified, 'Created and Modified dates match').toEqual(containerItem.created);
@@ -125,7 +114,7 @@ test.describe('Container Tests', () => {
     });
   });
 
-  test(`cannot create a container/folder with an existing slug`, async ({page}) => {
+  test(`cannot create a container/folder with an existing slug`, async ({}) => {
 
     await containerPage.getStarted();  
     const uniqueId = generateUniqueId();
@@ -143,7 +132,7 @@ test.describe('Container Tests', () => {
     //TODO check count is 1
   });
 
-  test(`can create a container/folder without a title and title defaults to the slug, and create a child`, async ({page}) => {
+  test(`can create a container/folder without a title and title defaults to the slug, and create a child`, async ({}) => {
 
     await containerPage.getStarted();
 
