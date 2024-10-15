@@ -45,6 +45,7 @@ export class DepositPage {
   readonly newTestFolderSlug : string;
   readonly newTestFolderInTable : Locator;
   readonly newTestFileInTable : Locator;
+  readonly testFileLocation : string;
 
 
   constructor(page: Page) {
@@ -53,7 +54,8 @@ export class DepositPage {
     //consts
     this.notYetPopulated = '-';
     this.depositsURL = /deposits\/\w{8}/;
-    this.testImageLocation = '../../../test-data/deposit/test_image.png';
+    this.testFileLocation = '../../../test-data/deposit/';
+    this.testImageLocation = 'test_image.png';
     this.cannotUploadTopLevelMessage = 'Uploaded files must go in or below the objects folder.';
     this.newTestFolderTitle = 'New test folder inside objects';
     this.newTestFolderSlug = 'objects/new-test-folder-inside-objects';
@@ -76,8 +78,8 @@ export class DepositPage {
     this.depositFilesFiles = this.depositFilesTable.locator('*[data-type="file"]');
     this.objectsFolder = this.depositFilesTable.locator('[data-type="directory"][data-path="objects"]');
     this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="__METSlike.json"]');
-    this.testImageInFilesToplevel = this.depositFilesTable.locator('[data-type="file"][data-path="test_image.png"]');
-    this.testImageInFilesCorrect = this.depositFilesTable.locator('[data-type="file"][data-path="objects/test_image.png"]');
+    this.testImageInFilesToplevel = this.depositFilesTable.locator(`[data-type="file"][data-path="${this.testImageLocation}"]`);
+    this.testImageInFilesCorrect = this.depositFilesTable.locator(`[data-type="file"][data-path="objects/${this.testImageLocation}"]`);
     this.uploadFileToDepositButton = page.getByRole('button', {name: 'Upload file'});
     this.archivalGroupInput = this.page.locator('#agUri');
     this.archivalGroupNameInput = this.page.locator('#agName');
@@ -86,7 +88,7 @@ export class DepositPage {
     this.createNewFolder = this.page.getByRole('button', {name: 'New folder'});
     this.alertMessage = page.getByRole('alert');
     this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
-    this.newTestFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/test_image.png'"]`);
+    this.newTestFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
 
     //New folder dialog
     this.newFolderNameInput = page.locator('#newFolderName');

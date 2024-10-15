@@ -85,7 +85,7 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step('Validate that we cannot add a file or folder at the top level', async() => {
-      await depositPage.uploadFile(depositPage.testImageLocation);
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation);
       await expect(depositPage.testImageInFilesToplevel).not.toBeVisible();
       await expect(depositPage.alertMessage).toHaveText(depositPage.cannotUploadTopLevelMessage);
     });
@@ -94,6 +94,7 @@ test.describe('Deposit Tests', () => {
     await test.step('Validate that we can create a sub folder, and add a variety of files', async() => {
       //Create a new sub folder
       await depositPage.objectsFolder.click();
+      //TODO verify that the objects folder is displayed in the tableRowContext
       await depositPage.createNewFolder.click();
       await depositPage.newFolderNameInput.fill(depositPage.newTestFolderTitle);
       await depositPage.newFolderDialogButton.click();
@@ -101,9 +102,11 @@ test.describe('Deposit Tests', () => {
 
       //Add a file to the new folder
       await depositPage.newTestFolderInTable.click();
-      await depositPage.uploadFile(depositPage.testImageLocation);
+      //TODO verify that the new folder is displayed in the tableRowContext
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation);
       await expect(depositPage.newTestFileInTable).toBeVisible();
 
+      //TODO Add another few test files
 
     });
 
@@ -112,7 +115,8 @@ test.describe('Deposit Tests', () => {
 
     });
 
-    //TODO
+    //TODO not sure if I can test the visual of the tree structure, but
+    //we have tested nested in the create subfolder/files tests
     await test.step('Validate that folders and files are displayed in a tree structure, with the correct metadata', async() => {
 
     });
