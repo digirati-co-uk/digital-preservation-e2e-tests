@@ -1,6 +1,6 @@
 import { expect, Locator } from '@playwright/test';
 import { ContainerPage } from './pages/ContainerPage';
-import {checkDateIsApproximatelyNow, generateUniqueId} from '../helpers/helpers';
+import { checkDateIsWithinNumberOfSeconds, generateUniqueId} from '../helpers/helpers';
 import { apiContext, test } from '../../fixture';
 
 test.describe('Container Tests', () => {
@@ -70,10 +70,10 @@ test.describe('Container Tests', () => {
       expect(containerItem.binaries, 'Binaries is empty').toHaveLength(0);
 
       //created date is within last few seconds
-      checkDateIsApproximatelyNow(containerItem.created);
+      checkDateIsWithinNumberOfSeconds(containerItem.created, 5_000);
 
       //lastmodified is within the last few seconds
-      checkDateIsApproximatelyNow(containerItem.lastModified);
+      checkDateIsWithinNumberOfSeconds(containerItem.lastModified, 5_000);
 
       //check that the created ad modified dates match
       expect(containerItem.lastModified, 'Created and Modified dates match').toEqual(containerItem.created);
