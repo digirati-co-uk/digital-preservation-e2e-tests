@@ -16,7 +16,7 @@ export function checkDateIsWithinNumberOfSeconds(dateToValidate: string, seconds
 
     //Add 5 seconds to createdDate
     const dateToValidateAsDatePlus = new Date(dateToValidateAsDate.getTime() + seconds);
-    expect(dateToValidateAsDatePlus < now , 'Created date is in the last 5 seconds').toBeFalsy();
+    expect(dateToValidateAsDatePlus < now , `Created date is in the last ${seconds} seconds`).toBeFalsy();
 }
 
 // export function getJSONBody(){

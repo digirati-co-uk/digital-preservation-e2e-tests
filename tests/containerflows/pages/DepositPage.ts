@@ -34,6 +34,7 @@ export class DepositPage {
   readonly archivalGroupInput : Locator;
   readonly archivalGroupNameInput : Locator;
   readonly archivalGroupDepositNoteInput : Locator;
+  readonly updateArchivalPropertiesButton : Locator;
   readonly archivalGroupToggle : Locator;
   readonly createNewFolder : Locator;
   readonly newFolderNameInput : Locator;
@@ -44,8 +45,20 @@ export class DepositPage {
   readonly newTestFolderTitle : string;
   readonly newTestFolderSlug : string;
   readonly newTestFolderInTable : Locator;
-  readonly newTestFileInTable : Locator;
+  readonly newTestImageFileInTable : Locator;
+  readonly newTestWordFileInTable : Locator;
+  readonly newTestPdfFileInTable : Locator;
   readonly testFileLocation : string;
+  readonly deleteDepositModalButton : Locator;
+  readonly deleteDepositButton : Locator;
+  readonly confirmDeleteDeposit: Locator;
+  readonly newFolderCloseDialogButton : Locator;
+  readonly testArchivalGroupName : string;
+  readonly testDepositNote : string;
+  readonly tableRowContext : Locator;
+  readonly testWordDocLocation : string;
+  readonly testPdfDocLocation : string;
+
 
 
   constructor(page: Page) {
@@ -56,9 +69,14 @@ export class DepositPage {
     this.depositsURL = /deposits\/\w{8}/;
     this.testFileLocation = '../../../test-data/deposit/';
     this.testImageLocation = 'test_image.png';
+    this.testWordDocLocation = 'test_word_document.docx';
+    this.testPdfDocLocation = 'test_pdf_document.pdf';
     this.cannotUploadTopLevelMessage = 'Uploaded files must go in or below the objects folder.';
     this.newTestFolderTitle = 'New test folder inside objects';
     this.newTestFolderSlug = 'objects/new-test-folder-inside-objects';
+    this.testDepositNote = 'Playwright test archival group note';
+    this.testArchivalGroupName = 'Playwright test archival group name';
+
     //Locators
     this.newDepositButton = page.getByRole('button', { name: 'New Deposit' });
     this.modalCreateNewDepositButton = page.getByRole('button', { name: 'Create New Deposit' });
@@ -84,34 +102,47 @@ export class DepositPage {
     this.archivalGroupInput = this.page.locator('#agUri');
     this.archivalGroupNameInput = this.page.locator('#agName');
     this.archivalGroupDepositNoteInput = this.page.locator('#submissionText');
+    this.updateArchivalPropertiesButton = this.page.getByRole('button', { name: 'Update properties' });
     this.archivalGroupToggle = this.page.getByRole('button', {name: 'Toggle Details'});
     this.createNewFolder = this.page.getByRole('button', {name: 'New folder'});
     this.alertMessage = page.getByRole('alert');
     this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
-    this.newTestFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
+    this.newTestImageFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
+    this.newTestWordFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testWordDocLocation}"]`);
+    this.newTestPdfFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testPdfDocLocation}"]`);
+    this.deleteDepositButton = page.getByRole('button', { name: 'Delete Deposit' });
+    this.tableRowContext = page.locator('#tableRowContext');
 
     //New folder dialog
     this.newFolderNameInput = page.locator('#newFolderName');
     this.newFolderDialogButton = page.getByRole('button', {name: 'Create new folder'});
+    this.newFolderCloseDialogButton = page.getByRole('button', {name: 'Close'}).nth(1);
+
+    //Delete Deposit Modal
+    this.deleteDepositModalButton = page.locator('#deleteDepositButton');
+    this.confirmDeleteDeposit = page.getByRole('checkbox');
   }
 
   async goto() {
     await this.page.goto(this.navigation.baseBrowsePath);
-    await expect(this.navigation.baseBrowsePathHeading).toBeVisible();
+    await expect.soft(this.navigation.baseBrowsePathHeading).toBeVisible();
   }
 
   async getStarted() {
     await this.goto();
-    await expect(this.navigation.baseBrowsePathHeading).toBeVisible();
+    await expect.soft(this.navigation.baseBrowsePathHeading).toBeVisible();
   }
 
   async uploadFile(fileName:string){
     await this.uploadFileToDepositButton.click();
 
     //Select a file to upload
-
     await this.page.getByLabel('Choose a file to upload').setInputFiles(path.join(__dirname, fileName));
     await this.page.getByLabel('Upload file').getByRole('button', { name: 'Upload file' }).click();
+  }
+
+  depositLinkInTable(depositId : string) : Locator {
+    return this.page.getByRole('link', { name: depositId });
   }
 
 }
