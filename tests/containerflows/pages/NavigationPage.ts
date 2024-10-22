@@ -47,7 +47,7 @@ export class NavigationPage {
 
   async getStarted() {
     await this.goto();
-    await expect(this.baseBrowsePathHeading).toBeVisible();
+    await expect(this.baseBrowsePathHeading, 'The page heading is shown').toBeVisible();
   }
 
 

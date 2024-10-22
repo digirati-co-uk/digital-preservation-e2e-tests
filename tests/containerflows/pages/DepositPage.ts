@@ -58,6 +58,10 @@ export class DepositPage {
   readonly tableRowContext : Locator;
   readonly testWordDocLocation : string;
   readonly testPdfDocLocation : string;
+  readonly fileUploadWidget: Locator;
+  readonly fileUploadSubmitButton: Locator;
+  readonly fileNameField : Locator;
+  readonly checksumField : Locator;
 
 
 
@@ -121,24 +125,32 @@ export class DepositPage {
     //Delete Deposit Modal
     this.deleteDepositModalButton = page.locator('#deleteDepositButton');
     this.confirmDeleteDeposit = page.getByRole('checkbox');
+
+    //New file dialog
+    this.fileUploadWidget = this.page.getByLabel('Choose a file to upload');
+    this.fileUploadSubmitButton = this.page.getByLabel('Upload file').getByRole('button', { name: 'Upload file' });
+    this.fileNameField = this.page.getByLabel('File name');
+    this.checksumField = this.page.getByLabel('Checksum');
   }
 
   async goto() {
     await this.page.goto(this.navigation.baseBrowsePath);
-    await expect.soft(this.navigation.baseBrowsePathHeading).toBeVisible();
   }
 
   async getStarted() {
     await this.goto();
-    await expect.soft(this.navigation.baseBrowsePathHeading).toBeVisible();
+    await expect.soft(this.navigation.baseBrowsePathHeading, 'The page heading is shown').toBeVisible();
   }
 
-  async uploadFile(fileName:string){
+  async uploadFile(fileName:string, removeName: boolean){
     await this.uploadFileToDepositButton.click();
 
     //Select a file to upload
-    await this.page.getByLabel('Choose a file to upload').setInputFiles(path.join(__dirname, fileName));
-    await this.page.getByLabel('Upload file').getByRole('button', { name: 'Upload file' }).click();
+    await this.fileUploadWidget.setInputFiles(path.join(__dirname, fileName));
+    if (removeName){
+      await this.fileNameField.fill('');
+    }
+    await this.fileUploadSubmitButton.click();
   }
 
   depositLinkInTable(depositId : string) : Locator {

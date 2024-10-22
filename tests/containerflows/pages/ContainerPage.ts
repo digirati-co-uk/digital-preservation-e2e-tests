@@ -46,8 +46,8 @@ export class ContainerPage {
 
   async getStarted() {
     await this.goto();
-    await expect(this.navigation.baseBrowsePathHeading).toBeVisible();
-    await expect(this.newFolderButton).toBeVisible();
+    await expect(this.navigation.baseBrowsePathHeading, 'The page heading is shown').toBeVisible();
+    await expect(this.newFolderButton, 'The New Folder button is available').toBeVisible();
   }
 
   async createContainer(slug: string, title: string){

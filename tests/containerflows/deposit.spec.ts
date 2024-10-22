@@ -1,10 +1,13 @@
-import { expect, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { DepositPage } from './pages/DepositPage';
 import { test } from '../../fixture';
 import {checkDateIsWithinNumberOfSeconds, createdByUserName} from "../helpers/helpers";
+import * as path from 'path';
 
 test.describe('Deposit Tests', () => {
 
+  //Set a 5 minute timeout
+  test.setTimeout(300_000);
   let depositPage: DepositPage;
 
   test.beforeEach('Set up POM', async ({ page }) => {
@@ -29,7 +32,6 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.depositHeader, 'The new Deposit page has loaded').toBeVisible();
       depositId = await depositPage.depositHeader.textContent();
       depositId = depositId.replace('Deposit ', '');
-      console.log(depositId);
     });
     await test.step('Validate the created and modified dates are correct', async() => {
 
@@ -79,7 +81,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.navigation.depositMenuOption.click();
 
       //Check that the archival group name is shown on the listing page
-      await expect(page.getByRole('row').filter({has: depositPage.depositLinkInTable(depositId)}).getByText(depositPage.testArchivalGroupName)).toBeVisible();
+      await expect(page.getByRole('row').filter({has: depositPage.depositLinkInTable(depositId)}).getByText(depositPage.testArchivalGroupName), 'The deposit has no name in the table').toBeVisible();
 
       //navigate back to ensure the values have persisted
       await depositPage.depositLinkInTable(depositId).click();
@@ -105,12 +107,11 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step('Validate that we cannot add a file or folder at the top level', async() => {
-      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation);
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false);
       await expect(depositPage.testImageInFilesToplevel, 'File was not added').not.toBeVisible();
       await expect(depositPage.alertMessage, 'We see the corresponding error message').toHaveText(depositPage.cannotUploadTopLevelMessage);
     });
 
-    //TODO
     await test.step('Validate that we can create a sub folder, and add a variety of files', async() => {
 
       //Create a new sub folder
@@ -123,22 +124,54 @@ test.describe('Deposit Tests', () => {
 
       //Add some files to the new folder
       await expect(depositPage.tableRowContext, 'The new folder is shown as selected').toHaveText(depositPage.newTestFolderSlug);
-      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation);
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false);
       await expect.soft(depositPage.newTestImageFileInTable, 'We see the new file in the Deposits table').toBeVisible();
 
       await expect(depositPage.tableRowContext, 'The new folder is shown as selected').toHaveText(depositPage.newTestFolderSlug);
-      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testWordDocLocation);
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testWordDocLocation, false);
       await expect.soft(depositPage.newTestWordFileInTable, 'We see the new file in the Deposits table').toBeVisible();
-
-      await expect(depositPage.tableRowContext, 'The new folder is shown as selected').toHaveText(depositPage.newTestFolderSlug);
-      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testPdfDocLocation);
-      await expect.soft(depositPage.newTestPdfFileInTable, 'We see the new file in the Deposits table').toBeVisible();
 
     });
 
     //TODO
+    await test.step('Check that a file upload will be rejected if the checksum is not correct', async() => {
+
+      await expect(depositPage.tableRowContext, 'The new folder is shown as selected').toHaveText(depositPage.newTestFolderSlug);
+      await depositPage.uploadFileToDepositButton.click();
+      //Select a file to upload
+      await depositPage.fileUploadWidget.setInputFiles(path.join(__dirname, '../../test-data/deposit/'+depositPage.testPdfDocLocation));
+      await expect (depositPage.checksumField, 'The checksum has been calculated').not.toBeEmpty();
+      const checksum : string = await depositPage.checksumField.inputValue();
+
+      await page.route(`**/${depositId}?handler=UploadFile`, async route => {
+        // Fetch original request.
+        const request = route.request();
+        // Add a prefix to the title.
+        let body = request.postData();
+        body = body.replace(checksum, 'nonsensechecksum');
+        await route.continue({postData: body});
+      });
+
+      await depositPage.fileUploadSubmitButton.click();
+      await expect(depositPage.alertMessage, 'Checksum did not match message has been displayed').toContainText('Checksum on server did not match');
+    });
+
     await test.step('We can create a file without giving it a name', async() => {
 
+      //TODO no idea if this works
+      // Override previous await.route
+      await page.route(`**/${depositId}?handler=UploadFile`, async route => {
+        await route.continue();
+      });
+
+      await depositPage.navigation.depositMenuOption.click();
+      //navigate back to ensure the values have persisted
+      await depositPage.depositLinkInTable(depositId).click();
+      await depositPage.newTestFolderInTable.click();
+      await expect(depositPage.tableRowContext, 'The new folder is shown as selected').toHaveText(depositPage.newTestFolderSlug);
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testPdfDocLocation, true);
+      await expect.soft(depositPage.newTestPdfFileInTable, 'We see the new file in the Deposits table').toBeVisible();
+      await expect(depositPage.newTestPdfFileInTable.getByRole('cell', {name: 'name'}), 'There is no name displayed in the table').toBeEmpty();
     });
 
     //TODO not sure if I can test the visual of the tree structure, but
@@ -149,11 +182,13 @@ test.describe('Deposit Tests', () => {
 
     //TODO
     await test.step( 'The file path as stored in the deposit uses the reduced character set (0-9a-z._-)', async() => {
+      //TODO Try to add a test data file named with disallowed special characters in it
+      //Check that they were transposed to dashes
+      //TODO Need to actually check s3 for what's stored in there
     });
 
 
-    //TODO
-    await test.step('Check that a file upload will be rejected if the checksum is not correct', async() => {});
+
 
     //TODO
     await test.step('user cannot delete a folder that has contents', async() => {
@@ -195,7 +230,7 @@ test.describe('Deposit Tests', () => {
   });
 
   //TODO
-  test.skip(`can create a Deposit within a Container, and the slug defaults to that location`, async ({page}) => {
+  test.skip(`can create a Deposit within a Container, and the slug defaults to that location`, async ({}) => {
 
   });
 
@@ -212,7 +247,7 @@ test.describe('Deposit Tests', () => {
   // - filter by status, whether active
   // - deposits are paged when the number exceeds 100
 
-  test.skip(`Deposits listing`, async ({page}) => {
+  test.skip(`Deposits listing`, async ({}) => {
 
     await test.step( 'Deposits listing is in created date desc order', async() => {});
 
