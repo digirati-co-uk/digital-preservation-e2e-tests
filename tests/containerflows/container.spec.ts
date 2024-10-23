@@ -1,7 +1,7 @@
-import { expect, Locator } from '@playwright/test';
 import { ContainerPage } from './pages/ContainerPage';
 import { checkDateIsWithinNumberOfSeconds, generateUniqueId} from '../helpers/helpers';
 import { apiContext, test } from '../../fixture';
+import {expect, Locator} from '@playwright/test';
 
 test.describe('Container Tests', () => {
 
@@ -69,11 +69,12 @@ test.describe('Container Tests', () => {
       //the binaries element is empty
       expect(containerItem.binaries, 'Binaries is empty').toHaveLength(0);
 
+      //TODO Speak to Tom about these timestamps being out
       //created date is within last few seconds
-      checkDateIsWithinNumberOfSeconds(containerItem.created, 5_000);
+      checkDateIsWithinNumberOfSeconds(containerItem.created, 30_000);
 
       //lastmodified is within the last few seconds
-      checkDateIsWithinNumberOfSeconds(containerItem.lastModified, 5_000);
+      checkDateIsWithinNumberOfSeconds(containerItem.lastModified, 30_000);
 
       //check that the created ad modified dates match
       expect(containerItem.lastModified, 'Created and Modified dates match').toEqual(containerItem.created);

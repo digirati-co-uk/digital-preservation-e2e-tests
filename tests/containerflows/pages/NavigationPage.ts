@@ -22,9 +22,9 @@ export class NavigationPage {
     this.page = page;
 
     //consts
-    this.basePath = '/_for_tests/playwright-testing';
-    this.baseBrowsePath = `/browse${this.basePath}`;
-    this.baseAPIPath = `/repository${this.basePath}/`;
+    this.basePath = '_for_tests/playwright-testing';
+    this.baseBrowsePath = `/browse/${this.basePath}`;
+    this.baseAPIPath = `/repository/${this.basePath}/`;
 
     //Locators
     this.baseBrowsePathHeading = page.getByRole('heading', {name: 'Browse - Playwright Testing'});

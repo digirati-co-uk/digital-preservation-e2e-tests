@@ -22,7 +22,8 @@ export class DepositPage {
   readonly depositVersionExported  : Locator;
   readonly notYetPopulated:string;
   readonly depositsURL: RegExp;
-  readonly depositHeader : Locator;
+  readonly depositHeaderNoSlug : Locator;
+  readonly depositHeaderSlug : Locator;
   readonly depositFilesTable : Locator;
   readonly depositFilesDirectories : Locator;
   readonly depositFilesFiles : Locator;
@@ -53,6 +54,8 @@ export class DepositPage {
   readonly deleteDepositButton : Locator;
   readonly confirmDeleteDeposit: Locator;
   readonly newFolderCloseDialogButton : Locator;
+  readonly testInvalidArchivalURI : string;
+  readonly testValidArchivalURI : string;
   readonly testArchivalGroupName : string;
   readonly testDepositNote : string;
   readonly tableRowContext : Locator;
@@ -62,16 +65,24 @@ export class DepositPage {
   readonly fileUploadSubmitButton: Locator;
   readonly fileNameField : Locator;
   readonly checksumField : Locator;
-
+  readonly modalArchivalGroupName : Locator;
+  readonly modalArchivalNote : Locator;
+  readonly modalArchivalSlug : Locator;
+  readonly deleteSelectedItem : Locator;
+  readonly deleteItemModalButton : Locator;
+  readonly metsFileName : string;
+  readonly slugDisplayOnModal: Locator;
 
 
   constructor(page: Page) {
     this.page = page;
     this.navigation = new NavigationPage(page);
+
     //consts
     this.notYetPopulated = '-';
     this.depositsURL = /deposits\/\w{8}/;
     this.testFileLocation = '../../../test-data/deposit/';
+    this.metsFileName = '__METSlike.json';
     this.testImageLocation = 'test_image.png';
     this.testWordDocLocation = 'test_word_document.docx';
     this.testPdfDocLocation = 'test_pdf_document.pdf';
@@ -80,10 +91,11 @@ export class DepositPage {
     this.newTestFolderSlug = 'objects/new-test-folder-inside-objects';
     this.testDepositNote = 'Playwright test archival group note';
     this.testArchivalGroupName = 'Playwright test archival group name';
+    this.testInvalidArchivalURI = 'playwright invalid slug';
+    this.testValidArchivalURI = 'playwright-valid-slug';
 
     //Locators
     this.newDepositButton = page.getByRole('button', { name: 'New Deposit' });
-    this.modalCreateNewDepositButton = page.getByRole('button', { name: 'Create New Deposit' });
     this.depositCreatedDate = page.getByLabel('created', {exact:true});
     this.depositCreatedBy = page.getByLabel('created-by', {exact:true});
     this.depositLastModified = page.getByLabel('last-modified', {exact:true});
@@ -94,7 +106,8 @@ export class DepositPage {
     this.depositExported = page.getByLabel('exported', {exact:true});
     this.depositExportedBy = page.getByLabel('exported-by', {exact:true});
     this.depositVersionExported = page.getByLabel('version-exported', {exact:true});
-    this.depositHeader = page.getByRole('heading', {name: /Deposit \w{8}/});
+    this.depositHeaderNoSlug = page.getByRole('heading', {name: /Deposit \w{8}/});
+    this.depositHeaderSlug = page.getByRole('heading', {name: /Deposit/});
     this.depositFilesTable = page.getByRole('table', {name: 'table-deposit-files'});
     this.depositFilesDirectories = this.depositFilesTable.locator('*[data-type="directory"]');
     this.depositFilesFiles = this.depositFilesTable.locator('*[data-type="file"]');
@@ -116,6 +129,14 @@ export class DepositPage {
     this.newTestPdfFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testPdfDocLocation}"]`);
     this.deleteDepositButton = page.getByRole('button', { name: 'Delete Deposit' });
     this.tableRowContext = page.locator('#tableRowContext');
+    this.deleteSelectedItem = page.getByRole('button', { name: 'Delete selected' });
+
+    //New Deposit Dialog
+    this.modalCreateNewDepositButton = page.getByRole('button', { name: 'Create New Deposit' });
+    this.modalArchivalGroupName = page.locator('#archivalGroupProposedName');
+    this.modalArchivalNote = page.locator('#submissionText');
+    this.modalArchivalSlug = page.locator('#archivalGroupSlug');
+    this.slugDisplayOnModal = page.locator('#slugDisplay');
 
     //New folder dialog
     this.newFolderNameInput = page.locator('#newFolderName');
@@ -125,6 +146,9 @@ export class DepositPage {
     //Delete Deposit Modal
     this.deleteDepositModalButton = page.locator('#deleteDepositButton');
     this.confirmDeleteDeposit = page.getByRole('checkbox');
+
+    //Delete item modal
+    this.deleteItemModalButton = page.getByRole('button', {name: 'Delete', exact: true});
 
     //New file dialog
     this.fileUploadWidget = this.page.getByLabel('Choose a file to upload');
@@ -139,7 +163,7 @@ export class DepositPage {
 
   async getStarted() {
     await this.goto();
-    await expect.soft(this.navigation.baseBrowsePathHeading, 'The page heading is shown').toBeVisible();
+    await expect(this.navigation.baseBrowsePathHeading, 'The page heading is shown').toBeVisible();
   }
 
   async uploadFile(fileName:string, removeName: boolean){
@@ -155,6 +179,14 @@ export class DepositPage {
 
   depositLinkInTable(depositId : string) : Locator {
     return this.page.getByRole('link', { name: depositId });
+  }
+
+  async deleteFile (fileToDelete : Locator, fileName: string){
+    await fileToDelete.click();
+    await this.deleteSelectedItem.click();
+    await this.deleteItemModalButton.click();
+    await expect(fileToDelete).toBeHidden();
+    await expect(this.alertMessage, 'Success message is shown').toContainText(`${fileName} DELETED`);
   }
 
 }
