@@ -30,6 +30,7 @@ export class DepositPage {
   readonly depositFilesDirectories : Locator;
   readonly depositFilesFiles : Locator;
   readonly objectsFolder : Locator;
+  readonly objectsFolderName : string;
   readonly metsFile : Locator;
   readonly uploadFileToDepositButton : Locator;
   readonly testImageInFilesToplevel : Locator;
@@ -88,6 +89,7 @@ export class DepositPage {
     this.notYetPopulated = '-';
     this.depositsURL = /deposits\/\w{8}/;
     this.testFileLocation = '../../../test-data/deposit/';
+    this.objectsFolderName = 'objects';
     this.metsFileName = '__METSlike.json';
     this.testImageLocation = 'test_image.png';
     this.testImageWithInvalidCharsLocation = 'test&&image.png';
@@ -95,7 +97,7 @@ export class DepositPage {
     this.testPdfDocLocation = 'test_pdf_document.pdf';
     this.cannotUploadTopLevelMessage = 'Uploaded files must go in or below the objects folder.';
     this.newTestFolderTitle = 'New test folder inside objects';
-    this.newTestFolderSlug = 'objects/new-test-folder-inside-objects';
+    this.newTestFolderSlug = this.objectsFolderName + '/new-test-folder-inside-objects';
     this.testFolderSlugShouldNotExist = 'new-test-folder-inside-objects';
     this.testDepositNote = 'Playwright test archival group note';
     this.testArchivalGroupName = 'Playwright test archival group name';
@@ -126,15 +128,15 @@ export class DepositPage {
     this.depositFilesTable = page.getByRole('table', {name: 'table-deposit-files'});
     this.depositFilesDirectories = this.depositFilesTable.locator('*[data-type="directory"]');
     this.depositFilesFiles = this.depositFilesTable.locator('*[data-type="file"]');
-    this.objectsFolder = this.depositFilesTable.locator('[data-type="directory"][data-path="objects"]')
+    this.objectsFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.objectsFolderName}"]`)
     this.uploadFileToObjectsFolder = this.objectsFolder.getByLabel('upload file');
     this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="__METSlike.json"]');
     this.testImageInFilesToplevel = this.depositFilesTable.locator(`[data-type="file"][data-path="${this.testImageLocation}"]`);
-    this.testImageInFilesCorrect = this.depositFilesTable.locator(`[data-type="file"][data-path="objects/${this.testImageLocation}"]`);
+    this.testImageInFilesCorrect = this.depositFilesTable.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageLocation}"]`);
     this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
     this.newTestFolderInTableShouldNotExist = page.locator(`[data-type="directory"][data-path="${this.testFolderSlugShouldNotExist}"]`);
     this.newTestImageFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
-    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="objects/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
+    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
     this.newTestWordFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testWordDocLocation}"]`);
     this.newTestPdfFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testPdfDocLocation}"]`);
 

@@ -44,11 +44,15 @@ export class ArchivalGroupPage {
   //Run Import Result Page
   readonly importJobPageTitle : Locator;
 
-  //Archival Group Page
+  //Archival Group Pages
   readonly archivalGroupPageHeading : Locator;
   readonly breadcrumbs : Locator;
   readonly versionsButton : Locator;
   readonly iiifButton : Locator;
+  readonly resourcesTableRows : Locator;
+  readonly objectsFolderInTable : Locator;
+  readonly goToArchivalGroupButton : Locator;
+  readonly objectsPageTitle : Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -96,29 +100,27 @@ export class ArchivalGroupPage {
     this.breadcrumbs = page.getByRole('navigation');
     this.versionsButton = page.getByRole('link', { name: 'Versions' });
     this.iiifButton = page.getByRole('link', { name: 'IIIF' });
+    this.resourcesTableRows = page.getByRole('table', {name: 'table-resources'}).locator('tbody tr');
+    this.objectsFolderInTable = this.resourcesTableRows.first().getByLabel('td-path');
+    this.goToArchivalGroupButton = page.getByRole('link', {name: 'Go to Archival Group'});
+    this.objectsPageTitle = page.getByRole('heading', {name: this.deposit.objectsFolderName});
 
-  }
-
-  async goto() {
-  }
-
-  async getStarted() {
   }
 
   async checkModifiedBinariesFoldersEmpty(){
-    await expect(this.diffBinariesPatched).toBeEmpty();
-    await expect(this.diffContainersDeleted).toBeEmpty();
-    await expect(this.diffBinariesDeleted).toBeEmpty();
-    await expect(this.diffContainersRenamed).toBeEmpty();
-    await expect(this.diffBinariesRemoved).toBeEmpty();
+    await expect(this.diffBinariesPatched, 'Binaries Patched is empty').toBeEmpty();
+    await expect(this.diffContainersDeleted, 'Containers Deleted is empty').toBeEmpty();
+    await expect(this.diffBinariesDeleted, 'Binaries Deleted is empty').toBeEmpty();
+    await expect(this.diffContainersRenamed, 'Containers Renamed is empty').toBeEmpty();
+    await expect(this.diffBinariesRemoved, 'Binaries Removed is empty').toBeEmpty();
   }
 
   async checkToModifyBinariesFoldersEmpty(){
-    await expect(this.diffBinariesToPatch).toBeEmpty();
-    await expect(this.diffContainersToDelete).toBeEmpty();
-    await expect(this.diffBinariesToDelete).toBeEmpty();
-    await expect(this.diffContainersToRename).toBeEmpty();
-    await expect(this.diffBinariesToRemove).toBeEmpty();
+    await expect(this.diffBinariesToPatch, 'Binaries to Patch is empty').toBeEmpty();
+    await expect(this.diffContainersToDelete, 'Containers to Delete is empty').toBeEmpty();
+    await expect(this.diffBinariesToDelete, 'Binaries to Delete is empty').toBeEmpty();
+    await expect(this.diffContainersToRename, 'Containers to Rename is empty').toBeEmpty();
+    await expect(this.diffBinariesToRemove, 'Binaries to Remove is empty').toBeEmpty();
   }
 
   async allowJobToComplete(){
@@ -129,13 +131,13 @@ export class ArchivalGroupPage {
       //Wait for a few seconds before reloading to give the job time to complete
       await this.page.waitForTimeout(2_000);
       await this.page.goto(importJobURL);
-      await expect(this.diffStatus).toBeVisible();
+      await expect(this.diffStatus, 'The Status of the diff is visible').toBeVisible();
       const status = await this.diffStatus.textContent();
       jobCompleted =  status == 'completed';
     }
   }
 
-  generateBreadcrumb( breadcrumbName: string): Locator{
+  generateBreadcrumbLocator( breadcrumbName: string): Locator{
     return this.breadcrumbs.getByRole('link', { name:  breadcrumbName});
   }
 

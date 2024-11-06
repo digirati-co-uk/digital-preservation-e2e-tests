@@ -143,7 +143,7 @@ test.describe('Deposit Tests', () => {
 
       //Create a new sub folder
       await depositPage.objectsFolder.click();
-      await expect(depositPage.tableRowContext, 'objects is shown as selected').toHaveText('objects');
+      await expect(depositPage.tableRowContext, 'objects is shown as selected').toHaveText(depositPage.objectsFolderName);
       await depositPage.createNewFolder.click();
       await depositPage.newFolderNameInput.fill(depositPage.newTestFolderTitle);
       await depositPage.newFolderDialogButton.click();
@@ -212,7 +212,7 @@ test.describe('Deposit Tests', () => {
 
       //Add a test data file named with disallowed special characters in it
       await depositPage.objectsFolder.click();
-      await expect(depositPage.tableRowContext, 'objects is shown as selected').toHaveText('objects');
+      await expect(depositPage.tableRowContext, 'objects is shown as selected').toHaveText(depositPage.objectsFolderName);
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageWithInvalidCharsLocation, false);
       await expect(depositPage.newTestImageFileTranslatedCharsInTable, 'We see the new file in the Deposits table').toBeVisible();
 

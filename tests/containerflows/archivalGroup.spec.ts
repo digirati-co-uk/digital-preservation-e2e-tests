@@ -1,12 +1,9 @@
-import {expect, Locator} from "@playwright/test";
-import { DepositPage } from './pages/DepositPage';
+import {expect} from "@playwright/test";
 import { test } from '../../fixture';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 import {checkDateIsWithinNumberOfSeconds, createdByUserName, generateUniqueId} from "../helpers/helpers";
-import {arch} from "node:os";
 
 test.describe('Archival Group Tests', () => {
-
 
   let archivalGroupPage: ArchivalGroupPage;
 
@@ -14,16 +11,16 @@ test.describe('Archival Group Tests', () => {
     archivalGroupPage = new ArchivalGroupPage(page);
   });
 
-  test(`can create an Archival Group from a Deposit`, async ({page, baseURL}, testInfo) => {
+  test(`can create an Archival Group from a Deposit`, async ({page}) => {
 
-    //Set a 5 minute timeout
+    //Set a 5-minute timeout
     test.setTimeout(300_000);
 
     let archivalGroupString : string = archivalGroupPage.deposit.testValidArchivalURI + generateUniqueId();
     let depositId : string;
     let objectsFolderFullPath : string = archivalGroupPage.navigation.basePath +'/';
-    let testImageFileFullPath : string = archivalGroupPage.navigation.basePath +'/';;
-    let testWordFileFullPath : string = archivalGroupPage.navigation.basePath +'/';;
+    let testImageFileFullPath : string = archivalGroupPage.navigation.basePath +'/';
+    let testWordFileFullPath : string = archivalGroupPage.navigation.basePath +'/';
 
     await test.step('Create a Deposit from within the structure to ensure archival group already set', async () => {
       await archivalGroupPage.deposit.getStarted();
@@ -46,8 +43,8 @@ test.describe('Archival Group Tests', () => {
       await archivalGroupPage.deposit.updateArchivalPropertiesButton.click();
       await expect(archivalGroupPage.deposit.alertMessage, 'Successful update message is shown').toHaveText('Deposit successfully updated');
       //Add some files to the new folder
-      await archivalGroupPage.deposit.uploadFile(archivalGroupPage.deposit.testFileLocation+archivalGroupPage.deposit.testImageLocation, false, archivalGroupPage.deposit.uploadFileToObjectsFolder);
-      await archivalGroupPage.deposit.uploadFile(archivalGroupPage.deposit.testFileLocation+archivalGroupPage.deposit.testWordDocLocation, false, archivalGroupPage.deposit.uploadFileToObjectsFolder);
+      await archivalGroupPage.deposit.uploadFile(archivalGroupPage.deposit.testFileLocation + archivalGroupPage.deposit.testImageLocation, false, archivalGroupPage.deposit.uploadFileToObjectsFolder);
+      await archivalGroupPage.deposit.uploadFile(archivalGroupPage.deposit.testFileLocation + archivalGroupPage.deposit.testWordDocLocation, false, archivalGroupPage.deposit.uploadFileToObjectsFolder);
 
       objectsFolderFullPath = objectsFolderFullPath + archivalGroupString + '/objects';
       testImageFileFullPath = objectsFolderFullPath + '/' + archivalGroupPage.deposit.testImageLocation;
@@ -65,44 +62,45 @@ test.describe('Archival Group Tests', () => {
       await archivalGroupPage.createDiffImportJobButton.click();
 
       //Validate the fields on the page are correct
-      await expect(page.getByRole('heading', {name: `Diff from ${depositId} to ${archivalGroupPage.deposit.testArchivalGroupName}`})).toBeVisible();
-      await expect(page.getByRole('link', {name: depositId})).toHaveAttribute('href', `/deposits/${depositId}`);
-      await expect(archivalGroupPage.diffArchivalGroup).toHaveText(`${archivalGroupPage.navigation.basePath}/${archivalGroupString}`);
-      await expect(archivalGroupPage.diffArchivalGroupName).toHaveText(archivalGroupPage.deposit.testArchivalGroupName);
-      await expect(archivalGroupPage.diffSourceVersion).toHaveText('(none)');
+      await expect(page.getByRole('heading', {name: `Diff from ${depositId} to ${archivalGroupPage.deposit.testArchivalGroupName}`}), 'The correct page heading is shown').toBeVisible();
+      await expect(page.getByRole('link', {name: depositId}), 'The deposit link is correct').toHaveAttribute('href', `/deposits/${depositId}`);
+      await expect(archivalGroupPage.diffArchivalGroup, 'The Archival Group slug is correct').toHaveText(`${archivalGroupPage.navigation.basePath}/${archivalGroupString}`);
+      await expect(archivalGroupPage.diffArchivalGroupName, 'The archival group name is correct').toHaveText(archivalGroupPage.deposit.testArchivalGroupName);
+      await expect(archivalGroupPage.diffSourceVersion, 'There is no diffSourceVersion').toHaveText('(none)');
 
       //Check objects only thing in the list
-      await expect(archivalGroupPage.diffContainersToAdd.getByRole('listitem')).toHaveCount(1);
-      await expect(archivalGroupPage.diffContainersToAdd).toContainText(objectsFolderFullPath);
+      await expect(archivalGroupPage.diffContainersToAdd.getByRole('listitem'), 'There is only 1 item in the Containers to Add').toHaveCount(1);
+      await expect(archivalGroupPage.diffContainersToAdd, 'The Container to Add is objects').toContainText(objectsFolderFullPath);
 
       //Check the 2 files are in the list, and that's the only 2 things there
-      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem')).toHaveCount(2);
-      await expect(archivalGroupPage.diffBinariesToAdd).toContainText(testImageFileFullPath);
-      await expect(archivalGroupPage.diffBinariesToAdd).toContainText(testWordFileFullPath);
+      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 2 items in the Binaries to add').toHaveCount(2);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(testImageFileFullPath);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(testWordFileFullPath);
 
       await archivalGroupPage.checkToModifyBinariesFoldersEmpty();
 
     });
 
     await test.step('Run the import job, ', async () => {
-      //Check that initially we have status of waiting, deposit link, archival group link, created, created by, importjob& original import job set and mcatch
+      //Check that initially we have status of waiting, deposit link, archival group link, created, created by,
+      //import job & original import job set and match
       await archivalGroupPage.runImportPreserveButton.click();
       await expect(archivalGroupPage.importJobPageTitle, 'We can see the import job title').toBeVisible();
       await expect(archivalGroupPage.diffStatus, 'The initial Waiting status is shown').toContainText('waiting');
-      await expect(archivalGroupPage.diffDepositValue).toHaveText(depositId);
-      await expect(archivalGroupPage.diffDepositValue.getByRole('link')).toHaveAttribute('href', `/deposits/${depositId}`);
-      await expect(archivalGroupPage.diffArchivalGroup).toHaveText(`${archivalGroupPage.navigation.basePath}/${archivalGroupString}`);
-      await expect(archivalGroupPage.diffArchivalGroup.getByRole('link')).toHaveAttribute('href', `${archivalGroupPage.navigation.baseBrowsePath}/${archivalGroupString}`);
+      await expect(archivalGroupPage.diffDepositValue, 'The deposit link is correct').toHaveText(depositId);
+      await expect(archivalGroupPage.diffDepositValue.getByRole('link'), 'The deposit link is correct').toHaveAttribute('href', `/deposits/${depositId}`);
+      await expect(archivalGroupPage.diffArchivalGroup, 'The Archival Group slug is correct').toHaveText(`${archivalGroupPage.navigation.basePath}/${archivalGroupString}`);
+      await expect(archivalGroupPage.diffArchivalGroup.getByRole('link'), 'The Archival Group slug link is correct').toHaveAttribute('href', `${archivalGroupPage.navigation.baseBrowsePath}/${archivalGroupString}`);
 
-      await expect(archivalGroupPage.diffDateBegun).toBeEmpty();
-      await expect(archivalGroupPage.diffDateFinished).toBeEmpty();
-      await expect(archivalGroupPage.diffSourceVersion).toHaveText('(none)');
-      await expect(archivalGroupPage.diffNewVersion).toHaveText('...');
+      await expect(archivalGroupPage.diffDateBegun, 'Date Begun is empty').toBeEmpty();
+      await expect(archivalGroupPage.diffDateFinished, 'Date Finished is empty').toBeEmpty();
+      await expect(archivalGroupPage.diffSourceVersion, 'There is no diffSourceVersion').toHaveText('(none)');
+      await expect(archivalGroupPage.diffNewVersion, 'There is no diffNewVersion').toHaveText('...');
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffCreated.textContent(), 30_000);
-      await expect(archivalGroupPage.diffCreatedBy).toHaveText(createdByUserName);
-      await expect(archivalGroupPage.diffImportJob).toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
-      await expect(archivalGroupPage.diffContainersAdded).toBeEmpty();
-      await expect(archivalGroupPage.diffBinariesAdded).toBeEmpty();
+      await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
+      await expect(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
+      await expect(archivalGroupPage.diffContainersAdded, 'No Containers have been added yet').toBeEmpty();
+      await expect(archivalGroupPage.diffBinariesAdded, 'No Binaries have been added yet').toBeEmpty();
 
       await archivalGroupPage.checkModifiedBinariesFoldersEmpty();
 
@@ -112,10 +110,10 @@ test.describe('Archival Group Tests', () => {
       //Check the new completed values are as expected
       await expect(archivalGroupPage.importJobPageTitle, 'We can see the import job title').toBeVisible();
       await expect(archivalGroupPage.diffStatus, 'The initial Waiting status is shown').toContainText('completed');
-      await expect(archivalGroupPage.diffDepositValue).toHaveText(depositId);
-      await expect(archivalGroupPage.diffDepositValue.getByRole('link')).toHaveAttribute('href', `/deposits/${depositId}`);
-      await expect(archivalGroupPage.diffArchivalGroup).toHaveText(`${archivalGroupPage.navigation.basePath}/${archivalGroupString}`);
-      await expect(archivalGroupPage.diffArchivalGroup.getByRole('link')).toHaveAttribute('href', `${archivalGroupPage.navigation.baseBrowsePath}/${archivalGroupString}`);
+      await expect(archivalGroupPage.diffDepositValue, 'The deposit link is correct').toHaveText(depositId);
+      await expect(archivalGroupPage.diffDepositValue.getByRole('link'), 'The deposit link is correct').toHaveAttribute('href', `/deposits/${depositId}`);
+      await expect(archivalGroupPage.diffArchivalGroup, 'The Archival Group slug is correct').toHaveText(`${archivalGroupPage.navigation.basePath}/${archivalGroupString}`);
+      await expect(archivalGroupPage.diffArchivalGroup.getByRole('link'), 'The Archival Group slug link is correct').toHaveAttribute('href', `${archivalGroupPage.navigation.baseBrowsePath}/${archivalGroupString}`);
 
 
       //TODO the same as created?? Check this with Tom, if there's a delay begun maybe later??
@@ -129,51 +127,92 @@ test.describe('Archival Group Tests', () => {
       //Check finished in the last 10 seconds
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffDateFinished.textContent(), 10_000);
 
-      await expect(archivalGroupPage.diffSourceVersion).toHaveText('(none)');
-      await expect(archivalGroupPage.diffNewVersion).toHaveText('v1');
+      await expect(archivalGroupPage.diffSourceVersion, 'There is no diffSourceVersion').toHaveText('(none)');
+      await expect(archivalGroupPage.diffNewVersion, 'New version is set to v1').toHaveText('v1');
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffCreated.textContent(), 60_000);
-      await expect(archivalGroupPage.diffCreatedBy).toHaveText(createdByUserName);
-      await expect(archivalGroupPage.diffImportJob).toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
+      await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
+      await expect(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
 
       //Check objects only thing in the list
-      await expect(archivalGroupPage.diffContainersAdded.getByRole('listitem')).toHaveCount(1);
-      await expect(archivalGroupPage.diffContainersAdded).toContainText(objectsFolderFullPath);
+      await expect(archivalGroupPage.diffContainersAdded.getByRole('listitem'), 'There is only 1 item in the Containers Added').toHaveCount(1);
+      await expect(archivalGroupPage.diffContainersAdded, 'The Container Added is objects').toContainText(objectsFolderFullPath);
 
       //Check the 2 files are in the list, and that's the only 2 things there
-      await expect(archivalGroupPage.diffBinariesAdded.getByRole('listitem')).toHaveCount(2);
-      await expect(archivalGroupPage.diffBinariesAdded).toContainText(testImageFileFullPath);
-      await expect(archivalGroupPage.diffBinariesAdded).toContainText(testWordFileFullPath);
+      await expect(archivalGroupPage.diffBinariesAdded.getByRole('listitem'), 'There are only 2 items in the Binaries added').toHaveCount(2);
+      await expect(archivalGroupPage.diffBinariesAdded, 'First test file added is correct').toContainText(testImageFileFullPath);
+      await expect(archivalGroupPage.diffBinariesAdded, 'Second test file added is correct').toContainText(testWordFileFullPath);
 
       await archivalGroupPage.checkModifiedBinariesFoldersEmpty();
 
     });
 
-    await test.step('Navigate to the archival group', async () => {
+    await test.step('Navigate to the archival group top level folder', async () => {
       //Follow the archival group link
       await archivalGroupPage.diffArchivalGroup.click();
-      await expect(page).toHaveURL(`${archivalGroupPage.navigation.baseBrowsePath}/${archivalGroupString}`);
+      await expect(page, 'The URL is correct').toHaveURL(`${archivalGroupPage.navigation.baseBrowsePath}/${archivalGroupString}`);
 
-      await expect(archivalGroupPage.archivalGroupPageHeading).toBeVisible();
-      await expect(archivalGroupPage.versionsButton).toBeVisible();
-      await expect(archivalGroupPage.iiifButton).toBeVisible();
-      await expect(archivalGroupPage.deposit.newDepositButton).toBeVisible();
+      //Check correct header and buttons visible
+      await expect(archivalGroupPage.archivalGroupPageHeading, 'The correct page title is displayed').toBeVisible();
+      await expect(archivalGroupPage.versionsButton, 'The Versions button is shown').toBeVisible();
+      await expect(archivalGroupPage.iiifButton, 'The IIIF button is shown').toBeVisible();
+      await expect(archivalGroupPage.deposit.newDepositButton, 'Can see the New Deposit button').toBeVisible();
 
       // breadcrumbs
-      const breadcrumbElements : string[] = archivalGroupPage.navigation.basePath.split('/');
-      for (let breadcrumb of breadcrumbElements){
-        await expect(archivalGroupPage.generateBreadcrumb(breadcrumb)).toBeVisible();
+      const breadcrumbElements: string[] = archivalGroupPage.navigation.basePath.split('/');
+      for (let breadcrumb of breadcrumbElements) {
+        await expect(archivalGroupPage.generateBreadcrumbLocator(breadcrumb), 'Breadcrumb link is displayed as expected').toBeVisible();
       }
-      await expect(archivalGroupPage.breadcrumbs.getByText(archivalGroupString)).toBeVisible();
+      await expect(archivalGroupPage.breadcrumbs.getByText(archivalGroupString), 'Breadcrumb link is displayed as expected').toBeVisible();
 
-      //TODO
-      // Create, created by, modified fields,
-      await archivalGroupPage.getArchivalGroupHistoryItem('Created');
-      expect(await archivalGroupPage.getArchivalGroupHistoryItem('Created by')).toEqual(createdByUserName);
-      await archivalGroupPage.getArchivalGroupHistoryItem('Last modified');
-      expect(await archivalGroupPage.getArchivalGroupHistoryItem('Last modified by')).toEqual(createdByUserName);
+      //Check the created and modified dates are in the last 20 seconds, and the expected author is displayed
+      checkDateIsWithinNumberOfSeconds(await archivalGroupPage.getArchivalGroupHistoryItem('Created'), 20_000);
+      expect(await archivalGroupPage.getArchivalGroupHistoryItem('Created by'), 'Created by is correct').toEqual(createdByUserName);
+      checkDateIsWithinNumberOfSeconds(await archivalGroupPage.getArchivalGroupHistoryItem('Last modified'), 20_000);
+      expect(await archivalGroupPage.getArchivalGroupHistoryItem('Last modified by'), 'Last modified by is correct').toEqual(createdByUserName);
 
+      //TODO after Tom looks at the formatting of the version table
       //versions - 1 only, date should match created
+
       //Validate the file structure matches
+      await expect(archivalGroupPage.resourcesTableRows, 'We correctly have only the one row in the Resources table').toHaveCount(1);
+      await expect(archivalGroupPage.objectsFolderInTable, 'That row is the objects folder, as expected').toHaveText(archivalGroupPage.deposit.objectsFolderName);
+
+    });
+
+    await test.step('Navigate into the archival group sub directory', async () => {
+
+      await archivalGroupPage.objectsFolderInTable.getByRole('link').click();
+
+      //Validate that the page has changed
+      let expectedURL : string = `${archivalGroupPage.navigation.baseBrowsePath}/${archivalGroupString}/${archivalGroupPage.deposit.objectsFolderName}`;
+      await expect(page, 'The URL is correct').toHaveURL(expectedURL);
+
+      //we can see the title and buttons
+      await expect(archivalGroupPage.objectsPageTitle, 'The correct page title is displayed').toBeVisible();
+      await expect(archivalGroupPage.deposit.newDepositButton, 'Can see the New Deposit button').toBeVisible();
+      await expect(archivalGroupPage.goToArchivalGroupButton, 'Can see the Go to Archival Group button').toBeVisible();
+
+      // breadcrumbs
+      const breadcrumbElements: string[] = objectsFolderFullPath.replace(archivalGroupPage.deposit.objectsFolderName, '').split('/');
+      console.log(breadcrumbElements);
+      for (let breadcrumb of breadcrumbElements){
+        if (breadcrumb.trim().length >0){
+          await expect(archivalGroupPage.generateBreadcrumbLocator(breadcrumb), 'Breadcrumb link is displayed as expected').toBeVisible();
+        }
+      }
+      await expect(archivalGroupPage.breadcrumbs.getByText(archivalGroupPage.deposit.objectsFolderName), 'Breadcrumb link is displayed as expected').toBeVisible();
+
+      //We can see our 2 images
+      await expect(archivalGroupPage.resourcesTableRows, 'We correctly have 2 rows in the Resources table').toHaveCount(2);
+      await expect(archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.deposit.testImageLocation), 'Test file one is correct').toBeVisible();
+      await expect(archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.deposit.testWordDocLocation), 'Test file two is correct').toBeVisible();
+
+      //Click and verify we see the file
+      await archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.deposit.testImageLocation).click();
+
+      //TODO this will be removed and redone when the file page is built.
+      await expect(page.getByText('A binary woah')).toBeVisible();
+
     });
 
     //TODO - can do
