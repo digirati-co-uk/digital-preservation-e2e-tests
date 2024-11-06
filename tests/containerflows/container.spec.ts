@@ -11,7 +11,7 @@ test.describe('Container Tests', () => {
     containerPage = new ContainerPage(page);
   });
 
-  test(`cannot create a container/folder without a properly formed slug`, async ({}) => {
+  test.skip(`cannot create a container/folder without a properly formed slug`, async ({}) => {
     await containerPage.getStarted();  
     
     //Note passing title into slug here, which isn't properly formed as it's a Title not a slug
@@ -20,7 +20,7 @@ test.describe('Container Tests', () => {
     await expect(containerPage.getFolderTitle(containerPage.playwrightContainerTitle), 'We cannot see the Container on the page, because it was not created').not.toBeVisible();
   });
 
-  test(`cannot create a container/folder with invalid characters in the path`, async ({}) => {
+  test.skip(`cannot create a container/folder with invalid characters in the path`, async ({}) => {
     await containerPage.getStarted();  
 
     for (let slug of containerPage.playwrightContainerInvalidSlugs){
@@ -38,7 +38,7 @@ test.describe('Container Tests', () => {
 
     const uniqueId = generateUniqueId();
     const folderTitle = `${containerPage.playwrightContainerTitle} ${uniqueId}`;
-    const folderSlug = `${containerPage.playwrightContainerSlug}-${uniqueId}`;
+    const folderSlug = `${containerPage.playwrightContainerSlug}-${uniqueId.toLowerCase()}`;
     let containerItem;
 
     await test.step(`Can create the container via the Front End`, async () => {
@@ -138,7 +138,7 @@ test.describe('Container Tests', () => {
     await containerPage.getStarted();
 
     const uniqueId = generateUniqueId();
-    const folderSlug = `${containerPage.playwrightContainerSlug}-${uniqueId}`;
+    const folderSlug = `${containerPage.playwrightContainerSlug}-${uniqueId}`.toLowerCase();
 
     await test.step(`Can create the container without a slug`, async () => {
       

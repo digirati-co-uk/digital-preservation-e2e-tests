@@ -10,6 +10,8 @@ export class DepositPage {
   readonly modalCreateNewDepositButton : Locator;
 
   //Deposit page
+  readonly uploadFileToObjectsFolder :Locator;
+
   readonly depositCreatedDate : Locator;
   readonly depositCreatedBy : Locator;
   readonly depositLastModified : Locator;
@@ -42,11 +44,15 @@ export class DepositPage {
   readonly newFolderDialogButton : Locator;
   readonly alertMessage : Locator;
   readonly testImageLocation : string;
+  readonly testImageWithInvalidCharsLocation : string;
   readonly cannotUploadTopLevelMessage : string;
   readonly newTestFolderTitle : string;
   readonly newTestFolderSlug : string;
+  readonly testFolderSlugShouldNotExist: string;
   readonly newTestFolderInTable : Locator;
+  readonly newTestFolderInTableShouldNotExist: Locator;
   readonly newTestImageFileInTable : Locator;
+  readonly newTestImageFileTranslatedCharsInTable : Locator;
   readonly newTestWordFileInTable : Locator;
   readonly newTestPdfFileInTable : Locator;
   readonly testFileLocation : string;
@@ -84,18 +90,23 @@ export class DepositPage {
     this.testFileLocation = '../../../test-data/deposit/';
     this.metsFileName = '__METSlike.json';
     this.testImageLocation = 'test_image.png';
+    this.testImageWithInvalidCharsLocation = 'test&&image.png';
     this.testWordDocLocation = 'test_word_document.docx';
     this.testPdfDocLocation = 'test_pdf_document.pdf';
     this.cannotUploadTopLevelMessage = 'Uploaded files must go in or below the objects folder.';
     this.newTestFolderTitle = 'New test folder inside objects';
     this.newTestFolderSlug = 'objects/new-test-folder-inside-objects';
+    this.testFolderSlugShouldNotExist = 'new-test-folder-inside-objects';
     this.testDepositNote = 'Playwright test archival group note';
     this.testArchivalGroupName = 'Playwright test archival group name';
     this.testInvalidArchivalURI = 'playwright invalid slug';
     this.testValidArchivalURI = 'playwright-valid-slug';
 
-    //Locators
+    //Locator to initially create the deposit
     this.newDepositButton = page.getByRole('button', { name: 'New Deposit' });
+
+    //DEPOSIT PAGE:
+    //Deposit history information
     this.depositCreatedDate = page.getByLabel('created', {exact:true});
     this.depositCreatedBy = page.getByLabel('created-by', {exact:true});
     this.depositLastModified = page.getByLabel('last-modified', {exact:true});
@@ -106,32 +117,47 @@ export class DepositPage {
     this.depositExported = page.getByLabel('exported', {exact:true});
     this.depositExportedBy = page.getByLabel('exported-by', {exact:true});
     this.depositVersionExported = page.getByLabel('version-exported', {exact:true});
+
+    //Header Locators
     this.depositHeaderNoSlug = page.getByRole('heading', {name: /Deposit \w{8}/});
     this.depositHeaderSlug = page.getByRole('heading', {name: /Deposit/});
+
+    //Deposit file structure table locators
     this.depositFilesTable = page.getByRole('table', {name: 'table-deposit-files'});
     this.depositFilesDirectories = this.depositFilesTable.locator('*[data-type="directory"]');
     this.depositFilesFiles = this.depositFilesTable.locator('*[data-type="file"]');
-    this.objectsFolder = this.depositFilesTable.locator('[data-type="directory"][data-path="objects"]');
+    this.objectsFolder = this.depositFilesTable.locator('[data-type="directory"][data-path="objects"]')
+    this.uploadFileToObjectsFolder = this.objectsFolder.getByLabel('upload file');
     this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="__METSlike.json"]');
     this.testImageInFilesToplevel = this.depositFilesTable.locator(`[data-type="file"][data-path="${this.testImageLocation}"]`);
     this.testImageInFilesCorrect = this.depositFilesTable.locator(`[data-type="file"][data-path="objects/${this.testImageLocation}"]`);
-    this.uploadFileToDepositButton = page.getByRole('button', {name: 'Upload file'});
+    this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
+    this.newTestFolderInTableShouldNotExist = page.locator(`[data-type="directory"][data-path="${this.testFolderSlugShouldNotExist}"]`);
+    this.newTestImageFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
+    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="objects/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
+    this.newTestWordFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testWordDocLocation}"]`);
+    this.newTestPdfFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testPdfDocLocation}"]`);
+
+
+    //DELETE?
+    //this.uploadFileToDepositButton = page.getByRole('button', {name: 'Upload file'});
+    //this.archivalGroupToggle = this.page.getByRole('button', {name: 'Toggle Details'});
+    //this.createNewFolder = this.page.getByRole('button', {name: 'New folder'});
+    //this.tableRowContext = page.locator('#tableRowContext');
+    //this.deleteSelectedItem = page.getByRole('button', { name: 'Delete selected' });
+
+
+    //Archival Group input fields
     this.archivalGroupInput = this.page.locator('#agUri');
     this.archivalGroupNameInput = this.page.locator('#agName');
     this.archivalGroupDepositNoteInput = this.page.locator('#submissionText');
-    this.updateArchivalPropertiesButton = this.page.getByRole('button', { name: 'Update properties' });
-    this.archivalGroupToggle = this.page.getByRole('button', {name: 'Toggle Details'});
-    this.createNewFolder = this.page.getByRole('button', {name: 'New folder'});
-    this.alertMessage = page.getByRole('alert');
-    this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
-    this.newTestImageFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
-    this.newTestWordFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testWordDocLocation}"]`);
-    this.newTestPdfFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testPdfDocLocation}"]`);
-    this.deleteDepositButton = page.getByRole('button', { name: 'Delete Deposit' });
-    this.tableRowContext = page.locator('#tableRowContext');
-    this.deleteSelectedItem = page.getByRole('button', { name: 'Delete selected' });
 
-    //New Deposit Dialog
+    //Top level buttons,alerts
+    this.updateArchivalPropertiesButton = this.page.getByRole('button', { name: 'Update properties' });
+    this.alertMessage = page.getByRole('alert');
+    this.deleteDepositButton = page.getByRole('button', { name: 'Delete Deposit' });
+
+    //New Deposit Dialog used in 'Browse - create deposit ' journey
     this.modalCreateNewDepositButton = page.getByRole('button', { name: 'Create New Deposit' });
     this.modalArchivalGroupName = page.locator('#archivalGroupProposedName');
     this.modalArchivalNote = page.locator('#submissionText');
@@ -166,8 +192,10 @@ export class DepositPage {
     await expect(this.navigation.baseBrowsePathHeading, 'The page heading is shown').toBeVisible();
   }
 
-  async uploadFile(fileName:string, removeName: boolean){
-    await this.uploadFileToDepositButton.click();
+  async uploadFile(fileName:string, removeName: boolean, uploadButton: Locator){
+
+    //await this.uploadFileToDepositButton.click();
+    await uploadButton.click();
 
     //Select a file to upload
     await this.fileUploadWidget.setInputFiles(path.join(__dirname, fileName));

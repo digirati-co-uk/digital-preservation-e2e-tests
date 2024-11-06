@@ -26,7 +26,7 @@ export class ContainerPage {
     this.incorrectPathFormatMessage = 'Invalid container file path - only a-z, 0-9 and .-_ are allowed.';
     this.createdContainerMessage = 'Created Container';
     this.playwrightContainerTitle = 'Playwright Container Testing';
-    this.playwrightContainerSlug = 'Playwright-Container-Slug';
+    this.playwrightContainerSlug = 'playwright-container-testing';
     this.playwrightContainerInvalidSlugs = ['&%&^%&','looks-almost-correct*'];
     this.duplicateContainerMessage = 'Failed to create Container: Conflict';
     this.createdBy = '/agents/dlipdev';
@@ -52,13 +52,14 @@ export class ContainerPage {
 
   async createContainer(slug: string, title: string){
     await this.newFolderButton.click();
-    await this.folderPathNameInput.fill(slug);
     await this.folderPathTitleInput.fill(title);
+    //TODO
+    await this.folderPathNameInput.fill(slug);
     await this.createNewFolderConfirmationButton.click();
   };
 
   async checkCorrectContainerTitle(folderTitle: string){
-    await expect(this.page.getByRole('heading', {name: `Browse - ${folderTitle.toLowerCase()}`}), 'We have successfully navigated into the Container').toBeVisible();
+    await expect(this.page.getByRole('heading', {name: `${folderTitle.toLowerCase()}`}), 'We have successfully navigated into the Container').toBeVisible();
   };
 
   getFolderTitle(folderTitle: string) : Locator {

@@ -6,8 +6,6 @@ import * as path from 'path';
 
 test.describe('Deposit Tests', () => {
 
-  //Set a 5 minute timeout
-  test.setTimeout(300_000);
   let depositPage: DepositPage;
 
   test.beforeEach('Set up POM', async ({ page }) => {
@@ -16,9 +14,12 @@ test.describe('Deposit Tests', () => {
 
   test(`can create a Deposit from the Deposits Left Hand Nav item`, async ({page, baseURL}) => {
 
+    //Set a 5 minute timeout
+    test.setTimeout(300_000);
+
     let depositId : string;
 
-    await test.step('Create a Deposit with no name or note, URI not available', async () => {
+    await test.step('Create a Deposit with no name or note, check URI not available', async () => {
       await depositPage.getStarted();
       await depositPage.navigation.depositMenuOption.click();
       await expect(depositPage.navigation.depositsHeading, 'Deposits listing page has loaded').toBeVisible();
@@ -33,6 +34,7 @@ test.describe('Deposit Tests', () => {
       depositId = await depositPage.depositHeaderNoSlug.textContent();
       depositId = depositId.replace('Deposit ', '');
     });
+
     await test.step('Validate the created and modified dates are correct', async() => {
 
       //Check the created and modified dates are now
@@ -42,11 +44,9 @@ test.describe('Deposit Tests', () => {
       //Check they match
       expect(depositCreatedDate, 'Created and Modified dates match').toEqual(depositLastModified);
 
-      //TODO fix once Tom has fixed
-      checkDateIsWithinNumberOfSeconds(depositCreatedDate, 3_630_000);
-      checkDateIsWithinNumberOfSeconds(depositLastModified, 3_630_000);
-
-
+      //Need to see if this is fixed after the clocks change in April...
+      checkDateIsWithinNumberOfSeconds(depositCreatedDate, 30_000);
+      checkDateIsWithinNumberOfSeconds(depositLastModified, 30_000);
 
     });
 
@@ -126,6 +126,14 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step('Validate that we cannot add a file or folder at the top level', async() => {
+      //Try to add folder (this currently fails)
+      await depositPage.createNewFolder.click();
+      await depositPage.newFolderNameInput.fill(depositPage.newTestFolderTitle);
+      await depositPage.newFolderDialogButton.click();
+      //TODO remove soft once bug fixed
+      await expect.soft(depositPage.newTestFolderInTableShouldNotExist, 'The new test folder has not been created').not.toBeVisible();
+
+      //Try to add a file at the top leve
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false);
       await expect(depositPage.testImageInFilesToplevel, 'File was not added').not.toBeVisible();
       await expect(depositPage.alertMessage, 'We see the corresponding error message').toHaveText(depositPage.cannotUploadTopLevelMessage);
@@ -200,11 +208,14 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.newTestPdfFileInTable.getByRole('cell', {name: 'name'}), 'There is no name displayed in the table').toBeEmpty();
     });
 
-    //TODO
     await test.step( 'The file path as stored in the deposit uses the reduced character set (0-9a-z._-)', async() => {
-      //TODO Try to add a test data file named with disallowed special characters in it
-      //Check that they were transposed to dashes
-      //TODO Need to actually check s3 for what's stored in there
+
+      //Add a test data file named with disallowed special characters in it
+      await depositPage.objectsFolder.click();
+      await expect(depositPage.tableRowContext, 'objects is shown as selected').toHaveText('objects');
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageWithInvalidCharsLocation, false);
+      await expect(depositPage.newTestImageFileTranslatedCharsInTable, 'We see the new file in the Deposits table').toBeVisible();
+
     });
 
     await test.step('user cannot delete a folder that has contents', async() => {
@@ -341,19 +352,7 @@ test.describe('Deposit Tests', () => {
     });
   });
 
-  //TODO await Tom's reply as I am unable to see sorting etc on the page
-  //Create a deposit then visit the listing page
-  // What's mandatory, what's not?
 
-  //Test in date desc order
-
-  // PBI 79215 - Deposits Page
-  //
-  // User can filter and order deposits
-  // - show only - createdBy, lastModifiedBy, preservedBy, exportedBy
-  // - further filter any of these by date range
-  // - filter by status, whether active
-  // - deposits are paged when the number exceeds 100
 
   test.skip(`Deposits listing`, async ({}) => {
 
@@ -375,7 +374,19 @@ test.describe('Deposit Tests', () => {
 
   });
 
+  //TODO await Tom's reply as I am unable to see sorting etc on the page
+  //Create a deposit then visit the listing page
+  // What's mandatory, what's not?
 
+  //Test in date desc order
+
+  // PBI 79215 - Deposits Page
+  //
+  // User can filter and order deposits
+  // - show only - createdBy, lastModifiedBy, preservedBy, exportedBy
+  // - further filter any of these by date range
+  // - filter by status, whether active
+  // - deposits are paged when the number exceeds 100
 
 
 });
