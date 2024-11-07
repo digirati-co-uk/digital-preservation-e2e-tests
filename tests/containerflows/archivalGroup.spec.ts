@@ -220,14 +220,13 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.createDiffImportJobButton, 'Button to create an archival group is now hidden').toBeHidden();
 
       //check there are no delete/add buttons
-      await expect(archivalGroupPage.depositPage.uploadFileIcon).toBeHidden();
-      await expect(archivalGroupPage.depositPage.createFolderIcon).toBeHidden();
-      await expect(archivalGroupPage.depositPage.deleteFolderIcon).toBeHidden();
-      await expect(archivalGroupPage.depositPage.deleteFileIcon).toBeHidden();
+      await expect(archivalGroupPage.depositPage.uploadFileIcon, 'Correctly cannot see upload icons').toBeHidden();
+      await expect(archivalGroupPage.depositPage.createFolderIcon, 'Correctly cannot see create folder icons').toBeHidden();
+      await expect(archivalGroupPage.depositPage.deleteFolderIcon, 'Correctly cannot see delete folder icons').toBeHidden();
+      await expect(archivalGroupPage.depositPage.deleteFileIcon, 'Correctly cannot see delete item icons').toBeHidden();
 
       //Check status of job is completed
-      await expect(archivalGroupPage.depositPage.importJobStatusCompleted).toBeVisible();
-
+      await expect(archivalGroupPage.depositPage.importJobStatusCompleted, 'Job is marked as completed').toBeVisible();
     });
 
   });

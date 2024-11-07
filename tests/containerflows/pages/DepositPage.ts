@@ -6,12 +6,31 @@ import * as path from 'path';
 export class DepositPage {
   readonly page: Page;
   readonly navigationPage: NavigationPage;
+
+  //consts
+  readonly notYetPopulated:string;
+  readonly objectsFolderName : string;
+  readonly testImageLocation : string;
+  readonly testImageWithInvalidCharsLocation : string;
+  //readonly cannotUploadTopLevelMessage : string;
+  readonly newTestFolderTitle : string;
+  readonly newTestFolderSlug : string;
+  readonly testFolderSlugShouldNotExist: string;
+  readonly depositsURL: RegExp;
+  readonly testInvalidArchivalURI : string;
+  readonly testFileLocation : string;
+  readonly testValidArchivalURI : string;
+  readonly testArchivalGroupName : string;
+  readonly testDepositNote : string;
+  readonly testWordDocLocation : string;
+  readonly testPdfDocLocation : string;
+  readonly metsFileName : string;
+
+  //Locator to initially create the deposit
   readonly newDepositButton: Locator;
-  readonly modalCreateNewDepositButton : Locator;
 
   //Deposit page
-  readonly uploadFileToObjectsFolder :Locator;
-
+  //Deposit history information
   readonly depositCreatedDate : Locator;
   readonly depositCreatedBy : Locator;
   readonly depositLastModified : Locator;
@@ -22,67 +41,70 @@ export class DepositPage {
   readonly depositExported : Locator;
   readonly depositExportedBy  : Locator;
   readonly depositVersionExported  : Locator;
-  readonly notYetPopulated:string;
-  readonly depositsURL: RegExp;
+
+  //Header Locators
   readonly depositHeaderNoSlug : Locator;
   readonly depositHeaderSlug : Locator;
+
+  //Deposit file structure table locators
   readonly depositFilesTable : Locator;
-  readonly depositFilesDirectories : Locator;
-  readonly depositFilesFiles : Locator;
+  //readonly depositFilesDirectories : Locator;
+  //readonly depositFilesFiles : Locator;
   readonly objectsFolder : Locator;
-  readonly objectsFolderName : string;
+  readonly uploadFileToObjectsFolder :Locator;
+  readonly createFolderWithinObjectsFolder : Locator;
   readonly metsFile : Locator;
-  readonly uploadFileToDepositButton : Locator;
-  readonly testImageInFilesToplevel : Locator;
-  readonly testImageInFilesCorrect: Locator;
-  readonly archivalGroupInput : Locator;
-  readonly archivalGroupNameInput : Locator;
-  readonly archivalGroupDepositNoteInput : Locator;
-  readonly updateArchivalPropertiesButton : Locator;
-  readonly archivalGroupToggle : Locator;
-  readonly createNewFolder : Locator;
-  readonly newFolderNameInput : Locator;
-  readonly newFolderDialogButton : Locator;
-  readonly alertMessage : Locator;
-  readonly testImageLocation : string;
-  readonly testImageWithInvalidCharsLocation : string;
-  readonly cannotUploadTopLevelMessage : string;
-  readonly newTestFolderTitle : string;
-  readonly newTestFolderSlug : string;
-  readonly testFolderSlugShouldNotExist: string;
+  //readonly testImageInFilesToplevel : Locator;
+  //readonly testImageInFilesCorrect: Locator;
+  //readonly newTestFolderInTableShouldNotExist: Locator;
   readonly newTestFolderInTable : Locator;
-  readonly newTestFolderInTableShouldNotExist: Locator;
+  readonly uploadFileToTestFolder : Locator;
+  readonly deleteTestFolder : Locator;
   readonly newTestImageFileInTable : Locator;
   readonly newTestImageFileTranslatedCharsInTable : Locator;
   readonly newTestWordFileInTable : Locator;
   readonly newTestPdfFileInTable : Locator;
-  readonly testFileLocation : string;
-  readonly deleteDepositModalButton : Locator;
-  readonly deleteDepositButton : Locator;
-  readonly confirmDeleteDeposit: Locator;
-  readonly newFolderCloseDialogButton : Locator;
-  readonly testInvalidArchivalURI : string;
-  readonly testValidArchivalURI : string;
-  readonly testArchivalGroupName : string;
-  readonly testDepositNote : string;
-  readonly tableRowContext : Locator;
-  readonly testWordDocLocation : string;
-  readonly testPdfDocLocation : string;
-  readonly fileUploadWidget: Locator;
-  readonly fileUploadSubmitButton: Locator;
-  readonly fileNameField : Locator;
-  readonly checksumField : Locator;
-  readonly modalArchivalGroupName : Locator;
-  readonly modalArchivalNote : Locator;
-  readonly modalArchivalSlug : Locator;
-  readonly deleteSelectedItem : Locator;
-  readonly deleteItemModalButton : Locator;
-  readonly metsFileName : string;
-  readonly slugDisplayOnModal: Locator;
+
+  //Actions on files and folders
   readonly uploadFileIcon : Locator;
   readonly createFolderIcon : Locator;
   readonly deleteFileIcon : Locator;
   readonly deleteFolderIcon : Locator;
+
+  //Archival Group input fields
+  readonly archivalGroupInput : Locator;
+  readonly archivalGroupNameInput : Locator;
+  readonly archivalGroupDepositNoteInput : Locator;
+
+  //Top level buttons,alerts
+  readonly alertMessage : Locator;
+  readonly deleteDepositButton : Locator;
+  readonly updateArchivalPropertiesButton : Locator;
+
+  //New Deposit Dialog used in 'Browse - create deposit ' journey
+  //readonly modalArchivalGroupName : Locator;
+  //readonly modalArchivalNote : Locator;
+  readonly modalArchivalSlug : Locator;
+  readonly modalCreateNewDepositButton : Locator;
+  readonly slugDisplayOnModal: Locator;
+
+  //New folder dialog
+  readonly newFolderCloseDialogButton : Locator;
+  readonly newFolderNameInput : Locator;
+  readonly newFolderDialogButton : Locator;
+
+  //Delete Deposit Modal
+  readonly deleteDepositModalButton : Locator;
+  readonly confirmDeleteDeposit: Locator;
+
+  //Delete item modal
+  readonly deleteItemModalButton : Locator;
+
+  //New file dialog
+  readonly fileUploadWidget: Locator;
+  readonly fileUploadSubmitButton: Locator;
+  readonly fileNameField : Locator;
+  readonly checksumField : Locator;
 
   //Import job fields
   readonly importJobStatusCompleted : Locator;
@@ -102,7 +124,7 @@ export class DepositPage {
     this.testImageWithInvalidCharsLocation = 'test&&image.png';
     this.testWordDocLocation = 'test_word_document.docx';
     this.testPdfDocLocation = 'test_pdf_document.pdf';
-    this.cannotUploadTopLevelMessage = 'Uploaded files must go in or below the objects folder.';
+    //this.cannotUploadTopLevelMessage = 'Uploaded files must go in or below the objects folder.';
     this.newTestFolderTitle = 'New test folder inside objects';
     this.newTestFolderSlug = this.objectsFolderName + '/new-test-folder-inside-objects';
     this.testFolderSlugShouldNotExist = 'new-test-folder-inside-objects';
@@ -131,35 +153,38 @@ export class DepositPage {
     this.depositHeaderNoSlug = page.getByRole('heading', {name: /Deposit \w{8}/});
     this.depositHeaderSlug = page.getByRole('heading', {name: /Deposit/});
 
-    //Deposit file structure table locators
-    this.depositFilesTable = page.getByRole('table', {name: 'table-deposit-files'});
-    this.depositFilesDirectories = this.depositFilesTable.locator('*[data-type="directory"]');
-    this.depositFilesFiles = this.depositFilesTable.locator('*[data-type="file"]');
-    this.objectsFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.objectsFolderName}"]`)
-    this.uploadFileToObjectsFolder = this.objectsFolder.getByLabel('upload file');
-    this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="__METSlike.json"]');
-    this.testImageInFilesToplevel = this.depositFilesTable.locator(`[data-type="file"][data-path="${this.testImageLocation}"]`);
-    this.testImageInFilesCorrect = this.depositFilesTable.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageLocation}"]`);
-    this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
-    this.newTestFolderInTableShouldNotExist = page.locator(`[data-type="directory"][data-path="${this.testFolderSlugShouldNotExist}"]`);
-    this.newTestImageFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
-    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
-    this.newTestWordFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testWordDocLocation}"]`);
-    this.newTestPdfFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testPdfDocLocation}"]`);
-
     //Actions on files and folders
     this.uploadFileIcon = page.getByLabel('upload file', { exact: true });
-    this.createFolderIcon = page.getByLabel('new folder', { exact: true })
+    this.createFolderIcon = page.getByLabel('new folder', { exact: true });
     this.deleteFileIcon = page.getByLabel('delete file', { exact: true });
     this.deleteFolderIcon = page.getByLabel('delete folder', { exact: true });
 
+    //Deposit file structure table locators
+    this.depositFilesTable = page.getByRole('table', {name: 'table-deposit-files'});
+    //this.depositFilesDirectories = this.depositFilesTable.locator('*[data-type="directory"]');
+    //this.depositFilesFiles = this.depositFilesTable.locator('*[data-type="file"]');
 
-    //DELETE?
-    //this.uploadFileToDepositButton = page.getByRole('button', {name: 'Upload file'});
-    //this.archivalGroupToggle = this.page.getByRole('button', {name: 'Toggle Details'});
-    //this.createNewFolder = this.page.getByRole('button', {name: 'New folder'});
-    //this.tableRowContext = page.locator('#tableRowContext');
-    //this.deleteSelectedItem = page.getByRole('button', { name: 'Delete selected' });
+    //Locators specific to the objects folder
+    this.objectsFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.objectsFolderName}"]`);
+    this.uploadFileToObjectsFolder = this.objectsFolder.locator(this.uploadFileIcon);
+    this.createFolderWithinObjectsFolder = this.objectsFolder.locator(this.createFolderIcon);
+
+    //METS file locators
+    this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="__METSlike.json"]');
+
+    //Locators specific to the test folders / files
+    //this.testImageInFilesToplevel = this.depositFilesTable.locator(`[data-type="file"][data-path="${this.testImageLocation}"]`);
+    //this.testImageInFilesCorrect = this.depositFilesTable.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageLocation}"]`);
+    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
+    this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
+    this.uploadFileToTestFolder = this.newTestFolderInTable.locator(this.uploadFileIcon);
+    this.deleteTestFolder = this.newTestFolderInTable.locator(this.deleteFolderIcon);
+    //this.newTestFolderInTableShouldNotExist = page.locator(`[data-type="directory"][data-path="${this.testFolderSlugShouldNotExist}"]`);
+
+    //Locators for test files within the new test folder
+    this.newTestImageFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
+    this.newTestWordFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testWordDocLocation}"]`);
+    this.newTestPdfFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testPdfDocLocation}"]`);
 
     //Archival Group input fields
     this.archivalGroupInput = this.page.locator('#agPathUnderRoot');
@@ -173,8 +198,8 @@ export class DepositPage {
 
     //New Deposit Dialog used in 'Browse - create deposit ' journey
     this.modalCreateNewDepositButton = page.getByRole('button', { name: 'Create New Deposit' });
-    this.modalArchivalGroupName = page.locator('#archivalGroupProposedName');
-    this.modalArchivalNote = page.locator('#submissionText');
+    //this.modalArchivalGroupName = page.locator('#archivalGroupProposedName');
+    //this.modalArchivalNote = page.locator('#submissionText');
     this.modalArchivalSlug = page.locator('#archivalGroupSlug');
     this.slugDisplayOnModal = page.locator('#slugDisplay');
 
@@ -227,8 +252,7 @@ export class DepositPage {
   }
 
   async deleteFile (fileToDelete : Locator, fileName: string){
-    await fileToDelete.click();
-    await this.deleteSelectedItem.click();
+    await fileToDelete.locator(this.deleteFileIcon).click();
     await this.deleteItemModalButton.click();
     await expect(fileToDelete).toBeHidden();
     await expect(this.alertMessage, 'Success message is shown').toContainText(`${fileName} DELETED`);

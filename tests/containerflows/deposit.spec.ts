@@ -1,7 +1,12 @@
 import {expect} from "@playwright/test";
 import { DepositPage } from './pages/DepositPage';
 import { test } from '../../fixture';
-import {checkDateIsWithinNumberOfSeconds, createdByUserName, frontendBaseUrl} from "../helpers/helpers";
+import {
+  checkDateIsWithinNumberOfSeconds,
+  createdByUserName,
+  frontendBaseUrl,
+  generateUniqueId
+} from "../helpers/helpers";
 import * as path from 'path';
 
 test.describe('Deposit Tests', () => {
@@ -112,50 +117,36 @@ test.describe('Deposit Tests', () => {
 
     });
 
-    await test.step('Can toggle to hide and show the Archival group information', async() => {
-      await depositPage.archivalGroupToggle.click();
-      await expect(depositPage.archivalGroupInput, 'Archival Group is hidden').toBeHidden();
-      await expect(depositPage.archivalGroupNameInput, 'Archival Group Name is hidden').toBeHidden();
-      await expect(depositPage.archivalGroupDepositNoteInput, 'Archival Group Note is hidden').toBeHidden();
-
-      await depositPage.archivalGroupToggle.click();
-      await expect(depositPage.archivalGroupInput, 'Archival Group is visible').toBeVisible();
-      await expect(depositPage.archivalGroupNameInput, 'Archival Group Name is visible').toBeVisible();
-      await expect(depositPage.archivalGroupDepositNoteInput, 'Archival Group Note is visible').toBeVisible();
-
-    });
-
     await test.step('Validate that we cannot add a file or folder at the top level', async() => {
-      //Try to add folder (this currently fails)
-      await depositPage.createNewFolder.click();
-      await depositPage.newFolderNameInput.fill(depositPage.newTestFolderTitle);
-      await depositPage.newFolderDialogButton.click();
-      //TODO remove soft once bug fixed
-      await expect.soft(depositPage.newTestFolderInTableShouldNotExist, 'The new test folder has not been created').not.toBeVisible();
-
-      //Try to add a file at the top leve
-      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false);
-      await expect(depositPage.testImageInFilesToplevel, 'File was not added').not.toBeVisible();
-      await expect(depositPage.alertMessage, 'We see the corresponding error message').toHaveText(depositPage.cannotUploadTopLevelMessage);
+      //With the rework to put the buttons inline in the deposit structure, there is just no way to do this any more
+      //There's not really an explicit test that can be written, simply that the upload tests below load the file into the
+      //correct place
+      // //Try to add folder (this currently fails)
+      // await depositPage.createNewFolder.click();
+      // await depositPage.newFolderNameInput.fill(depositPage.newTestFolderTitle);
+      // await depositPage.newFolderDialogButton.click();
+      // //TODO remove soft once bug fixed
+      // await expect.soft(depositPage.newTestFolderInTableShouldNotExist, 'The new test folder has not been created').not.toBeVisible();
+      //
+      // //Try to add a file at the top leve
+      // await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false);
+      // await expect(depositPage.testImageInFilesToplevel, 'File was not added').not.toBeVisible();
+      // await expect(depositPage.alertMessage, 'We see the corresponding error message').toHaveText(depositPage.cannotUploadTopLevelMessage);
     });
 
     await test.step('Validate that we can create a sub folder, and add a variety of files', async() => {
 
       //Create a new sub folder
-      await depositPage.objectsFolder.click();
-      await expect(depositPage.tableRowContext, 'objects is shown as selected').toHaveText(depositPage.objectsFolderName);
-      await depositPage.createNewFolder.click();
+      await depositPage.createFolderWithinObjectsFolder.click();
       await depositPage.newFolderNameInput.fill(depositPage.newTestFolderTitle);
       await depositPage.newFolderDialogButton.click();
       await expect(depositPage.newTestFolderInTable, 'The new test folder has been created in the correct place in the hierarchy').toBeVisible();
 
       //Add some files to the new folder
-      await expect(depositPage.tableRowContext, 'The new folder is shown as selected').toHaveText(depositPage.newTestFolderSlug);
-      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false);
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false, depositPage.uploadFileToTestFolder);
       await expect(depositPage.newTestImageFileInTable, 'We see the new file in the Deposits table').toBeVisible();
 
-      await expect(depositPage.tableRowContext, 'The new folder is shown as selected').toHaveText(depositPage.newTestFolderSlug);
-      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testWordDocLocation, false);
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testWordDocLocation, false, depositPage.uploadFileToTestFolder);
       await expect(depositPage.newTestWordFileInTable, 'We see the new file in the Deposits table').toBeVisible();
 
     });
@@ -163,8 +154,7 @@ test.describe('Deposit Tests', () => {
     await test.step('Check that a file upload will be rejected if the checksum is not correct', async() => {
 
       //Start upload process to the right location
-      await expect(depositPage.tableRowContext, 'The correct upload folder is shown as selected').toHaveText(depositPage.newTestFolderSlug);
-      await depositPage.uploadFileToDepositButton.click();
+      await depositPage.uploadFileToTestFolder.click();
 
       //Select a file to upload
       await depositPage.fileUploadWidget.setInputFiles(path.join(__dirname, '../../test-data/deposit/'+depositPage.testPdfDocLocation));
@@ -199,9 +189,7 @@ test.describe('Deposit Tests', () => {
 
       //Click on the correct parent folder, then upload the file,
       //blanking out the filename
-      await depositPage.newTestFolderInTable.click();
-      await expect(depositPage.tableRowContext, 'The  correct upload is shown as selected').toHaveText(depositPage.newTestFolderSlug);
-      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testPdfDocLocation, true);
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testPdfDocLocation, true, depositPage.uploadFileToTestFolder);
 
       //Verify that the file has been uploaded and that the name is blank
       await expect(depositPage.newTestPdfFileInTable, 'We see the new file in the Deposits table').toBeVisible();
@@ -211,19 +199,14 @@ test.describe('Deposit Tests', () => {
     await test.step( 'The file path as stored in the deposit uses the reduced character set (0-9a-z._-)', async() => {
 
       //Add a test data file named with disallowed special characters in it
-      await depositPage.objectsFolder.click();
-      await expect(depositPage.tableRowContext, 'objects is shown as selected').toHaveText(depositPage.objectsFolderName);
-      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageWithInvalidCharsLocation, false);
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageWithInvalidCharsLocation, false, depositPage.uploadFileToObjectsFolder);
       await expect(depositPage.newTestImageFileTranslatedCharsInTable, 'We see the new file in the Deposits table').toBeVisible();
 
     });
 
     await test.step('user cannot delete a folder that has contents', async() => {
       //Try to delete the folder we created earlier, which has 3 files in it
-      //Ensure we have it selected by selecting another item, then selecting it
-      await depositPage.newTestPdfFileInTable.click();
-      await depositPage.newTestFolderInTable.click();
-      await depositPage.deleteSelectedItem.click();
+      await depositPage.deleteTestFolder.click();
       await depositPage.deleteItemModalButton.click();
       await expect(depositPage.alertMessage, 'Failure message is shown').toHaveText('You cannot delete a folder that has files in it; delete the files first.');
     });
@@ -236,27 +219,18 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step('user can delete an empty folder from the deposit', async() => {
-      await depositPage.newTestFolderInTable.click();
-      await depositPage.deleteSelectedItem.click();
+      await depositPage.deleteTestFolder.click();
       await depositPage.deleteItemModalButton.click();
       await expect(depositPage.alertMessage, 'Success message is shown').toContainText(`Folder ${depositPage.newTestFolderSlug} DELETED.`);
     });
 
     await test.step('user cannot delete any files in the root', async() => {
-      //Try to delete the objects folder
-      await depositPage.objectsFolder.click();
-      await expect(depositPage.objectsFolder, 'The row is now the active one').toHaveClass('deposit-row table-active');
-      await depositPage.deleteSelectedItem.click();
-      await depositPage.deleteItemModalButton.click();
-      await expect(depositPage.alertMessage, 'Error message is shown').toContainText(`You cannot delete the objects directory.`);
-      await expect(depositPage.objectsFolder, 'objects folder is still there').toBeVisible();
+      //Verify no delete button on objects row
+      await expect(depositPage.objectsFolder.locator(depositPage.deleteFolderIcon), 'There is no delete on the objects row').not.toBeVisible();
 
-      //Try to delete the __METSlike.json file
-      await depositPage.metsFile.click();
-      //Verify that it is NOT selected and therefore clicking Delete will not attempt to
-      //delete this file
-      await expect(depositPage.tableRowContext, 'The Mets file is not the currently selected context').not.toHaveText(depositPage.metsFileName);
-      await expect(depositPage.metsFile, 'The row is not the active one').not.toHaveClass('deposit-row table-active');
+      //Verify no delete button on __METSlike.json file row
+      await expect(depositPage.metsFile.locator(depositPage.deleteFolderIcon), 'There is no delete on the __METSlike.json row').not.toBeVisible();
+
     });
 
     await test.step('Delete the deposit', async() => {
@@ -272,7 +246,7 @@ test.describe('Deposit Tests', () => {
 
       //Open the dialog again, this time click the delete button
       await depositPage.deleteDepositButton.click();
-      //TODO highlight to Tom and check if he agrees the checking of this box shouldn't be retained
+      //TODO highlight to Tom and check if he agrees the checking of this box shouldn't be retained - agreed bu still a bug
       //await expect.soft(depositPage.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
       //await depositPage.confirmDeleteDeposit.check();
       await depositPage.deleteDepositModalButton.click();
@@ -308,21 +282,23 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.slugDisplayOnModal, 'The invalid slug has the spaces stripped.').toHaveText(depositPage.testInvalidArchivalURI.replaceAll(' ', ''));
     });
 
+    const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
+
     await test.step('Try to create Deposit with a VALID slug', async() => {
       //This click into the archival group slug field is important,
       //otherwise the typing doesn't register properly in the following step
       await depositPage.modalArchivalSlug.click();
       //Clear the previous slug
       await depositPage.modalArchivalSlug.clear();
-      await depositPage.modalArchivalSlug.pressSequentially(depositPage.testValidArchivalURI);
-      await expect(depositPage.slugDisplayOnModal, 'The slug is as expected').toHaveText(depositPage.testValidArchivalURI);
+      await depositPage.modalArchivalSlug.pressSequentially(validSlug);
+      await expect(depositPage.slugDisplayOnModal, 'The slug is as expected').toHaveText(validSlug);
       await depositPage.modalCreateNewDepositButton.click();
 
       //Validate that we're navigated into the new Deposit
       depositURL = page.url();
       await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(depositPage.depositsURL);
       await expect(depositPage.depositHeaderSlug, 'The new Deposit page has loaded').toBeVisible();
-      await expect(depositPage.depositHeaderSlug, 'The slug is listed in the deposit title').toContainText(depositPage.testValidArchivalURI);
+      await expect(depositPage.depositHeaderSlug, 'The slug is listed in the deposit title').toContainText(validSlug);
     });
 
     await test.step('Verify we cannot create a second deposit at the same slug', async() => {
@@ -334,8 +310,8 @@ test.describe('Deposit Tests', () => {
       //This click into the archival group slug field is important,
       //otherwise the typing doesn't register properly in the following step
       await depositPage.modalArchivalSlug.click();
-      await depositPage.modalArchivalSlug.pressSequentially(depositPage.testValidArchivalURI);
-      await expect(depositPage.slugDisplayOnModal, 'The slug is as expected').toHaveText(depositPage.testValidArchivalURI);
+      await depositPage.modalArchivalSlug.pressSequentially(validSlug);
+      await expect(depositPage.slugDisplayOnModal, 'The slug is as expected').toHaveText(validSlug);
       await depositPage.modalCreateNewDepositButton.click();
 
       //Cannot create message is displayed to the user
