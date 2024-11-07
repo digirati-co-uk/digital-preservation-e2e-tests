@@ -12,7 +12,7 @@ test.describe('Deposit Tests', () => {
     depositPage = new DepositPage(page);
   });
 
-  test(`can create a Deposit from the Deposits Left Hand Nav item`, async ({page, baseURL}) => {
+  test(`can create a Deposit from the Deposits Left Hand Nav item`, async ({page}) => {
 
     //Set a 5 minute timeout
     test.setTimeout(300_000);
@@ -21,8 +21,8 @@ test.describe('Deposit Tests', () => {
 
     await test.step('Create a Deposit with no name or note, check URI not available', async () => {
       await depositPage.getStarted();
-      await depositPage.navigation.depositMenuOption.click();
-      await expect(depositPage.navigation.depositsHeading, 'Deposits listing page has loaded').toBeVisible();
+      await depositPage.navigationPage.depositMenuOption.click();
+      await expect(depositPage.navigationPage.depositsHeading, 'Deposits listing page has loaded').toBeVisible();
       await depositPage.newDepositButton.click();
 
       await expect(depositPage.modalArchivalSlug, 'There is NO URI field').not.toBeVisible();
@@ -91,7 +91,7 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.alertMessage, 'Successful update message is shown').toHaveText('Deposit successfully updated');
 
       //navigate to the main deposits page
-      await depositPage.navigation.depositMenuOption.click();
+      await depositPage.navigationPage.depositMenuOption.click();
 
       //Check that the archival group name and URI are shown on the listing page
       await expect(page.getByRole('row').filter({has: depositPage.depositLinkInTable(depositId)}).getByText(depositPage.testArchivalGroupName), 'The deposit has a name in the table').toBeVisible();

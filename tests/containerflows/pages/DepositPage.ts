@@ -5,7 +5,7 @@ import * as path from 'path';
 
 export class DepositPage {
   readonly page: Page;
-  readonly navigation: NavigationPage;
+  readonly navigationPage: NavigationPage;
   readonly newDepositButton: Locator;
   readonly modalCreateNewDepositButton : Locator;
 
@@ -79,11 +79,18 @@ export class DepositPage {
   readonly deleteItemModalButton : Locator;
   readonly metsFileName : string;
   readonly slugDisplayOnModal: Locator;
+  readonly uploadFileIcon : Locator;
+  readonly createFolderIcon : Locator;
+  readonly deleteFileIcon : Locator;
+  readonly deleteFolderIcon : Locator;
+
+  //Import job fields
+  readonly importJobStatusCompleted : Locator;
 
 
   constructor(page: Page) {
     this.page = page;
-    this.navigation = new NavigationPage(page);
+    this.navigationPage = new NavigationPage(page);
 
     //consts
     this.notYetPopulated = '-';
@@ -140,6 +147,12 @@ export class DepositPage {
     this.newTestWordFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testWordDocLocation}"]`);
     this.newTestPdfFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testPdfDocLocation}"]`);
 
+    //Actions on files and folders
+    this.uploadFileIcon = page.getByLabel('upload file', { exact: true });
+    this.createFolderIcon = page.getByLabel('new folder', { exact: true })
+    this.deleteFileIcon = page.getByLabel('delete file', { exact: true });
+    this.deleteFolderIcon = page.getByLabel('delete folder', { exact: true });
+
 
     //DELETE?
     //this.uploadFileToDepositButton = page.getByRole('button', {name: 'Upload file'});
@@ -148,9 +161,8 @@ export class DepositPage {
     //this.tableRowContext = page.locator('#tableRowContext');
     //this.deleteSelectedItem = page.getByRole('button', { name: 'Delete selected' });
 
-
     //Archival Group input fields
-    this.archivalGroupInput = this.page.locator('#agUri');
+    this.archivalGroupInput = this.page.locator('#agPathUnderRoot');
     this.archivalGroupNameInput = this.page.locator('#agName');
     this.archivalGroupDepositNoteInput = this.page.locator('#submissionText');
 
@@ -183,15 +195,18 @@ export class DepositPage {
     this.fileUploadSubmitButton = this.page.getByLabel('Upload file').getByRole('button', { name: 'Upload file' });
     this.fileNameField = this.page.getByLabel('File name');
     this.checksumField = this.page.getByLabel('Checksum');
+
+    //Import job fields
+    this.importJobStatusCompleted = page.getByRole('link', { name: 'completed' });
   }
 
   async goto() {
-    await this.page.goto(this.navigation.baseBrowsePath);
+    await this.page.goto(this.navigationPage.baseBrowsePath);
   }
 
   async getStarted() {
     await this.goto();
-    await expect(this.navigation.baseBrowsePathHeading, 'The page heading is shown').toBeVisible();
+    await expect(this.navigationPage.baseBrowsePathHeading, 'The page heading is shown').toBeVisible();
   }
 
   async uploadFile(fileName:string, removeName: boolean, uploadButton: Locator){

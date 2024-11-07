@@ -5,12 +5,13 @@ import {DepositPage} from "./DepositPage";
 
 export class ArchivalGroupPage {
   readonly page: Page;
-  readonly navigation: NavigationPage;
-  readonly deposit: DepositPage;
+  readonly navigationPage: NavigationPage;
+  readonly depositPage: DepositPage;
 
   //Deposit page
   readonly createDiffImportJobButton :Locator ;
   readonly noCurrentImportJobsText : Locator;
+  readonly depositNotActiveText : Locator;
 
   //Create diff page
   readonly runImportPreserveButton : Locator;
@@ -56,12 +57,14 @@ export class ArchivalGroupPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.navigation = new NavigationPage(page);
-    this.deposit = new DepositPage(page);
+    this.navigationPage = new NavigationPage(page);
+    this.depositPage = new DepositPage(page);
 
     //Deposit page
     this.createDiffImportJobButton = page.getByRole('button', { name: 'Create diff import job' });
     this.noCurrentImportJobsText = page.getByText('There are no submitted import jobs for this Deposit');
+    this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.');
+
 
     //Create diff page
     this.runImportPreserveButton = page.getByRole('button', { name: 'Run Import (Preserve)' });
@@ -96,14 +99,14 @@ export class ArchivalGroupPage {
     this.diffBinariesRemoved = page.getByLabel('binaries renamed');
 
     //Archival Group Page
-    this.archivalGroupPageHeading = page.getByRole('heading', { name: this.deposit.testArchivalGroupName });
+    this.archivalGroupPageHeading = page.getByRole('heading', { name: this.depositPage.testArchivalGroupName });
     this.breadcrumbs = page.getByRole('navigation');
     this.versionsButton = page.getByRole('link', { name: 'Versions' });
     this.iiifButton = page.getByRole('link', { name: 'IIIF' });
     this.resourcesTableRows = page.getByRole('table', {name: 'table-resources'}).locator('tbody tr');
     this.objectsFolderInTable = this.resourcesTableRows.first().getByLabel('td-path');
     this.goToArchivalGroupButton = page.getByRole('link', {name: 'Go to Archival Group'});
-    this.objectsPageTitle = page.getByRole('heading', {name: this.deposit.objectsFolderName});
+    this.objectsPageTitle = page.getByRole('heading', {name: this.depositPage.objectsFolderName});
 
   }
 

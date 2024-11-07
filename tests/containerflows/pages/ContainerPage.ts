@@ -3,7 +3,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import {NavigationPage} from "./NavigationPage";
 export class ContainerPage {
   readonly page: Page;
-  readonly navigation : NavigationPage;
+  readonly navigationPage : NavigationPage;
   readonly newFolderButton: Locator;
   readonly folderPathNameInput: Locator;
   readonly folderPathTitleInput: Locator;
@@ -20,7 +20,7 @@ export class ContainerPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.navigation = new NavigationPage(this.page);
+    this.navigationPage = new NavigationPage(this.page);
 
     //consts
     this.incorrectPathFormatMessage = 'Invalid container file path - only a-z, 0-9 and .-_ are allowed.';
@@ -41,12 +41,12 @@ export class ContainerPage {
   }
 
   async goto() {
-    await this.page.goto(this.navigation.baseBrowsePath);
+    await this.page.goto(this.navigationPage.baseBrowsePath);
   }
 
   async getStarted() {
     await this.goto();
-    await expect(this.navigation.baseBrowsePathHeading, 'The page heading is shown').toBeVisible();
+    await expect(this.navigationPage.baseBrowsePathHeading, 'The page heading is shown').toBeVisible();
     await expect(this.newFolderButton, 'The New Folder button is available').toBeVisible();
   }
 
