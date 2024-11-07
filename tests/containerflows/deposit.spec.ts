@@ -66,7 +66,6 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.depositExportedBy, 'Exported by field not yet set').toHaveText(depositPage.notYetPopulated);
       await expect(depositPage.depositVersionExported, 'Version Exported field not yet set').toHaveText(depositPage.notYetPopulated);
 
-
     });
 
     await test.step('Validate that the METS file and objects folder exist at the top level', async() => {
@@ -197,11 +196,9 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step( 'The file path as stored in the deposit uses the reduced character set (0-9a-z._-)', async() => {
-
       //Add a test data file named with disallowed special characters in it
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageWithInvalidCharsLocation, false, depositPage.uploadFileToObjectsFolder);
       await expect(depositPage.newTestImageFileTranslatedCharsInTable, 'We see the new file in the Deposits table').toBeVisible();
-
     });
 
     await test.step('user cannot delete a folder that has contents', async() => {
@@ -230,7 +227,6 @@ test.describe('Deposit Tests', () => {
 
       //Verify no delete button on __METSlike.json file row
       await expect(depositPage.metsFile.locator(depositPage.deleteFolderIcon), 'There is no delete on the __METSlike.json row').not.toBeVisible();
-
     });
 
     await test.step('Delete the deposit', async() => {

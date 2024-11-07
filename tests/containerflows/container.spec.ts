@@ -11,6 +11,7 @@ test.describe('Container Tests', () => {
     containerPage = new ContainerPage(page);
   });
 
+  //TODO with the new auto generation of the slug which strips invalid chars, this test needs removed or rewritten
   test.skip(`cannot create a container/folder without a properly formed slug`, async ({}) => {
     await containerPage.getStarted();  
     
@@ -20,6 +21,7 @@ test.describe('Container Tests', () => {
     await expect(containerPage.getFolderTitle(containerPage.playwrightContainerTitle), 'We cannot see the Container on the page, because it was not created').not.toBeVisible();
   });
 
+  //TODO with the new auto generation of the slug which strips invalid chars, this test needs removed or rewritten
   test.skip(`cannot create a container/folder with invalid characters in the path`, async ({}) => {
     await containerPage.getStarted();  
 

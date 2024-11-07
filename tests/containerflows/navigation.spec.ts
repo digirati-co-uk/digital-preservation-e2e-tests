@@ -44,10 +44,6 @@ test.describe('Navigation Tests', () => {
     await expect(navigationPage.depositsHeading).toBeVisible();
   });
 
-  
-
-  
-
 });
 
 
