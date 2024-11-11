@@ -12,6 +12,7 @@ export class ArchivalGroupPage {
   readonly createDiffImportJobButton :Locator ;
   readonly noCurrentImportJobsText : Locator;
   readonly depositNotActiveText : Locator;
+  readonly depositNoFiles: Locator;
 
   //Create diff page
   readonly runImportPreserveButton : Locator;
@@ -64,6 +65,7 @@ export class ArchivalGroupPage {
     this.createDiffImportJobButton = page.getByRole('button', { name: 'Create diff import job' });
     this.noCurrentImportJobsText = page.getByText('There are no submitted import jobs for this Deposit');
     this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.');
+    this.depositNoFiles = page.getByText('No jobs can be run as there are no valid files in the Deposit.');
 
 
     //Create diff page
@@ -126,6 +128,7 @@ export class ArchivalGroupPage {
     await expect(this.diffBinariesToRemove, 'Binaries to Remove is empty').toBeEmpty();
   }
 
+  //TODO may need to rethink this, if the environment takes some time to process jobs to completion
   async allowJobToComplete(){
     //Refresh the page until changes to completed
     let jobCompleted : boolean = false;

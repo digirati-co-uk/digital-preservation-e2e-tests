@@ -79,14 +79,14 @@ test.describe('Deposit Tests', () => {
       await depositPage.archivalGroupInput.fill(depositPage.testInvalidArchivalURI);
       //Save changes, verify failed
       await depositPage.updateArchivalPropertiesButton.click();
-      await expect(depositPage.alertMessage, 'Failure message is shown').toHaveText('UnknownError: Status InternalServerError');
+      await expect(depositPage.alertMessage, 'Failure message is shown').toHaveText(`BadRequest: Archive path '${depositPage.testInvalidArchivalURI}' is not valid.`);
       await expect(depositPage.archivalGroupInput, 'The Archival group was not set').toBeEmpty();
 
       //Wait for a second so that we can see if the modified time stamp properly updates
       await page.waitForTimeout(1_000);
 
       //Use a valid URI this time
-      await depositPage.archivalGroupInput.fill(frontendBaseUrl+depositPage.testValidArchivalURI);
+      await depositPage.archivalGroupInput.fill(depositPage.navigationPage.basePath + '/' +depositPage.testValidArchivalURI);
       await depositPage.archivalGroupNameInput.fill(depositPage.testArchivalGroupName);
       await depositPage.archivalGroupDepositNoteInput.fill(depositPage.testDepositNote);
 
@@ -106,8 +106,7 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.archivalGroupNameInput, 'The Archival Group Name is correct').toHaveValue(depositPage.testArchivalGroupName);
       await expect(depositPage.archivalGroupDepositNoteInput, 'The archival group Note is correct').toHaveValue(depositPage.testDepositNote);
 
-      //TODO Is this right? Have added a note to Google doc
-      //await expect(depositPage.archivalGroupInput, 'The archival group URI is correct').toHaveValue(baseURL+depositPage.testValidArchivalURI);
+      await expect(depositPage.archivalGroupInput, 'The archival group URI is correct').toHaveValue(depositPage.navigationPage.basePath + '/' +depositPage.testValidArchivalURI);
 
       //Check that the modified date no longer matches the created date
       const depositCreatedDate = await depositPage.depositCreatedDate.textContent();
@@ -124,8 +123,8 @@ test.describe('Deposit Tests', () => {
       // await depositPage.createNewFolder.click();
       // await depositPage.newFolderNameInput.fill(depositPage.newTestFolderTitle);
       // await depositPage.newFolderDialogButton.click();
-      // //TODO remove soft once bug fixed
-      // await expect.soft(depositPage.newTestFolderInTableShouldNotExist, 'The new test folder has not been created').not.toBeVisible();
+      //
+      // await expect(depositPage.newTestFolderInTableShouldNotExist, 'The new test folder has not been created').not.toBeVisible();
       //
       // //Try to add a file at the top leve
       // await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false);
@@ -213,6 +212,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.deleteFile(depositPage.newTestPdfFileInTable, depositPage.testPdfDocLocation);
       await depositPage.deleteFile(depositPage.newTestWordFileInTable, depositPage.testWordDocLocation);
       await depositPage.deleteFile(depositPage.newTestImageFileInTable, depositPage.testImageLocation);
+      await depositPage.deleteFile(depositPage.newTestImageFileTranslatedCharsInTable, depositPage.testImageWithInvalidCharsLocation.replaceAll('&','-'));
     });
 
     await test.step('user can delete an empty folder from the deposit', async() => {
@@ -242,9 +242,8 @@ test.describe('Deposit Tests', () => {
 
       //Open the dialog again, this time click the delete button
       await depositPage.deleteDepositButton.click();
-      //TODO highlight to Tom and check if he agrees the checking of this box shouldn't be retained - agreed bu still a bug
-      //await expect.soft(depositPage.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
-      //await depositPage.confirmDeleteDeposit.check();
+      await expect.soft(depositPage.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
+      await depositPage.confirmDeleteDeposit.check();
       await depositPage.deleteDepositModalButton.click();
 
       //Check back at the main deposits page and the deposit we created is not on the page

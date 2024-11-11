@@ -116,6 +116,10 @@ export class DepositPage {
 
     //consts
     this.notYetPopulated = '-';
+    //Note - format of deposits might change in the future
+    //At some point we might acquire identifiers for Deposits (and other things) from a Leeds external
+    //identity service, in which case they might no longer be 8-char alphanumeric.
+    //They will be for now though.
     this.depositsURL = /deposits\/\w{8}/;
     this.testFileLocation = '../../../test-data/deposit/';
     this.objectsFolderName = 'objects';
@@ -131,7 +135,7 @@ export class DepositPage {
     this.testDepositNote = 'Playwright test archival group note';
     this.testArchivalGroupName = 'Playwright test archival group name';
     this.testInvalidArchivalURI = 'playwright invalid slug';
-    this.testValidArchivalURI = 'playwright-valid-slug';
+    this.testValidArchivalURI = 'playwright-valid-slug-1';
 
     //Locator to initially create the deposit
     this.newDepositButton = page.getByRole('button', { name: 'New Deposit' });

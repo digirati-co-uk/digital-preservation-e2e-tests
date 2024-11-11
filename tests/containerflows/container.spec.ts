@@ -48,6 +48,9 @@ test.describe('Container Tests', () => {
       await containerPage.createContainer(folderSlug, folderTitle);
       await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
       await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderTitle);
+      //TODO - note in the future if pagination is intricued we may not be on the page that
+      //the container is on - address this once pagination/search/filtering/sorting introduced
+      //by sorting on created desc e.g.
       await expect(containerPage.getFolderTitle(folderTitle), 'The new Container is visible on the page').toBeVisible();
     });
 
@@ -73,7 +76,7 @@ test.describe('Container Tests', () => {
 
       //TODO Speak to Tom about these timestamps being out
       //created date is within last few seconds
-      checkDateIsWithinNumberOfSeconds(containerItem.created, 30_000);
+      checkDateIsWithinNumberOfSeconds(containerItem.created, 10_000);
 
       //lastmodified is within the last few seconds
       checkDateIsWithinNumberOfSeconds(containerItem.lastModified, 30_000);
@@ -93,6 +96,9 @@ test.describe('Container Tests', () => {
 
     await test.step('Verify correct columns shown with the correct data', async () => {
 
+      //TODO - note in the future if pagination is introduced we may not be on the page that
+      //the container is on - address this once pagination/search/filtering/sorting introduced
+      //by sorting on created desc e.g.
       //TODO - modify to use Tom's aria-labels once deployed
       const  newContainerRow: Locator = containerPage.containerTableRow.filter({has: page.getByRole('link', {name: folderTitle})});
       await expect(newContainerRow).toBeVisible();
@@ -174,6 +180,7 @@ test.describe('Container Tests', () => {
     });
 
     //TODO Navigate to Fedora and delete the new Container?
+    //Or Tom provide API to do this
 
   });
 

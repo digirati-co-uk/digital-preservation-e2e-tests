@@ -35,8 +35,8 @@ test.describe('Archival Group Tests', () => {
     });
 
     await test.step('Check that we cannot create an archival group until we add some files', async () => {
-      //TODO Fix this once we know how Tom is going to prohibit the creation
-      //await expect.soft (archivalGroupPage.createDiffImportJobButton, 'Button to create an archival group is disabled until we add files').toBeDisabled();
+      await expect.soft (archivalGroupPage.createDiffImportJobButton, 'Button to create an archival group is hidden until we add files').toBeHidden();
+      await expect(archivalGroupPage.depositNoFiles).toBeVisible();
     });
 
     await test.step('Add a name and some files to the Deposit', async () => {
@@ -148,9 +148,11 @@ test.describe('Archival Group Tests', () => {
 
       //Check correct header and buttons visible
       await expect(archivalGroupPage.archivalGroupPageHeading, 'The correct page title is displayed').toBeVisible();
-      await expect(archivalGroupPage.versionsButton, 'The Versions button is shown').toBeVisible();
-      await expect(archivalGroupPage.iiifButton, 'The IIIF button is shown').toBeVisible();
       await expect(archivalGroupPage.depositPage.newDepositButton, 'Can see the New Deposit button').toBeVisible();
+
+      //Versions and IIIF should be disabled for now, and therefore aren't 'active' links
+      await expect(archivalGroupPage.versionsButton, 'The Versions button is shown').not.toBeVisible();
+      await expect(archivalGroupPage.iiifButton, 'The IIIF button is shown').not.toBeVisible();
 
       // breadcrumbs
       const breadcrumbElements: string[] = archivalGroupPage.navigationPage.basePath.split('/');
