@@ -27,6 +27,7 @@ test.describe('Archival Group Tests', () => {
       await archivalGroupPage.depositPage.getStarted();
       await archivalGroupPage.depositPage.newDepositButton.click();
       await archivalGroupPage.depositPage.modalArchivalSlug.click();
+      //TODO fill versus pressSequentially and the autocorrect one does versus the other
       await archivalGroupPage.depositPage.modalArchivalSlug.pressSequentially(archivalGroupString);
       await archivalGroupPage.depositPage.modalCreateNewDepositButton.click();
       await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(archivalGroupPage.depositPage.depositsURL);
@@ -40,6 +41,7 @@ test.describe('Archival Group Tests', () => {
     });
 
     await test.step('Add a name and some files to the Deposit', async () => {
+      //TODO fill versus pressSequentially and the autocorrect one does versus the other
       await archivalGroupPage.depositPage.archivalGroupNameInput.fill(archivalGroupPage.depositPage.testArchivalGroupName);
       await archivalGroupPage.depositPage.updateArchivalPropertiesButton.click();
       await expect(archivalGroupPage.depositPage.alertMessage, 'Successful update message is shown').toHaveText('Deposit successfully updated');
@@ -169,6 +171,7 @@ test.describe('Archival Group Tests', () => {
 
       //TODO after Tom looks at the formatting of the version table
       //versions - 1 only, date should match created
+      //deposits -  1 only
 
       //Validate the file structure matches
       await expect(archivalGroupPage.resourcesTableRows, 'We correctly have only the one row in the Resources table').toHaveCount(1);
@@ -232,10 +235,6 @@ test.describe('Archival Group Tests', () => {
     });
 
   });
-
-
-
-
 
 });
 

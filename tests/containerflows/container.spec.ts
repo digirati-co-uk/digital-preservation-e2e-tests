@@ -48,7 +48,7 @@ test.describe('Container Tests', () => {
       await containerPage.createContainer(folderSlug, folderTitle);
       await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
       await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderTitle);
-      //TODO - note in the future if pagination is intricued we may not be on the page that
+      //TODO - note in the future if pagination is introduced we may not be on the page that
       //the container is on - address this once pagination/search/filtering/sorting introduced
       //by sorting on created desc e.g.
       await expect(containerPage.getFolderTitle(folderTitle), 'The new Container is visible on the page').toBeVisible();

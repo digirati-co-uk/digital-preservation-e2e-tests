@@ -75,7 +75,11 @@ test.describe('Deposit Tests', () => {
 
     await test.step('Can add the Archival Group name and a note, and the URI', async() => {
 
+      //TODO Test that initially there is no create archival group button, and
+      //message indicating no Archival group set
+
       //Shouldn't be allowed to enter with spaces in a URI
+      //TODO fill versus pressSequentially and the autocorrect one does versus the other
       await depositPage.archivalGroupInput.fill(depositPage.testInvalidArchivalURI);
       //Save changes, verify failed
       await depositPage.updateArchivalPropertiesButton.click();
@@ -113,23 +117,6 @@ test.describe('Deposit Tests', () => {
       const depositLastModified = await depositPage.depositLastModified.textContent();
       expect(depositCreatedDate, 'Created and Modified dates no longer match').not.toEqual(depositLastModified);
 
-    });
-
-    await test.step('Validate that we cannot add a file or folder at the top level', async() => {
-      //With the rework to put the buttons inline in the deposit structure, there is just no way to do this any more
-      //There's not really an explicit test that can be written, simply that the upload tests below load the file into the
-      //correct place
-      // //Try to add folder (this currently fails)
-      // await depositPage.createNewFolder.click();
-      // await depositPage.newFolderNameInput.fill(depositPage.newTestFolderTitle);
-      // await depositPage.newFolderDialogButton.click();
-      //
-      // await expect(depositPage.newTestFolderInTableShouldNotExist, 'The new test folder has not been created').not.toBeVisible();
-      //
-      // //Try to add a file at the top leve
-      // await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false);
-      // await expect(depositPage.testImageInFilesToplevel, 'File was not added').not.toBeVisible();
-      // await expect(depositPage.alertMessage, 'We see the corresponding error message').toHaveText(depositPage.cannotUploadTopLevelMessage);
     });
 
     await test.step('Validate that we can create a sub folder, and add a variety of files', async() => {
@@ -254,7 +241,6 @@ test.describe('Deposit Tests', () => {
     });
   });
 
-
   test(`can create a Deposit within a Container, and the slug defaults to that location`, async ({page}) => {
 
     //We have tested in detail the Deposit functionality in the test above,
@@ -262,6 +248,7 @@ test.describe('Deposit Tests', () => {
     //Browse Containers view, with a slug
 
     let depositURL: string;
+    const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
 
     await test.step('Try to create Deposit with an invalid slug', async() => {
       await depositPage.getStarted();
@@ -272,12 +259,11 @@ test.describe('Deposit Tests', () => {
       //This click into the archival group slug field is important,
       //otherwise the typing doesn't register properly in the following step
       await depositPage.modalArchivalSlug.click();
+      //TODO fill versus pressSequentially and the autocorrect one does versus the other
       await depositPage.modalArchivalSlug.pressSequentially(depositPage.testInvalidArchivalURI);
       //The slug should have had the spaces removed
       await expect(depositPage.slugDisplayOnModal, 'The invalid slug has the spaces stripped.').toHaveText(depositPage.testInvalidArchivalURI.replaceAll(' ', ''));
     });
-
-    const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
 
     await test.step('Try to create Deposit with a VALID slug', async() => {
       //This click into the archival group slug field is important,
@@ -285,6 +271,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.modalArchivalSlug.click();
       //Clear the previous slug
       await depositPage.modalArchivalSlug.clear();
+      //TODO fill versus pressSequentially and the autocorrect one does versus the other
       await depositPage.modalArchivalSlug.pressSequentially(validSlug);
       await expect(depositPage.slugDisplayOnModal, 'The slug is as expected').toHaveText(validSlug);
       await depositPage.modalCreateNewDepositButton.click();
@@ -323,41 +310,38 @@ test.describe('Deposit Tests', () => {
     });
   });
 
-
-
   test.skip(`Deposits listing`, async ({}) => {
 
-    await test.step( 'Deposits listing is in created date desc order', async() => {});
+    //Create a deposit to ensure we have one new deposit, then visit the listing page
+
+    await test.step('filter by status, whether active ', async() => {
+      //Test that the number of items increases when changing from active only to all
+    });
+
+    await test.step( 'Deposits listing is in created date desc order', async() => {
+      //test the initial ordering is correct (what should it be?) //Test in date desc order?
+    });
 
     await test.step('show only - createdBy, lastModifiedBy, preservedBy, exportedBy', async() => {
+      //Test that if active, then no preserved date
 
+      //Test if status is preserved, then all fields are set
     });
 
     await test.step('further filter any of these by date range', async() => {
-
+      // - further filter any of these by date range TODO? Await Tom's reply
     });
-    await test.step('filter by status, whether active ', async() => {
 
-    });
     await test.step('deposits are paged when the number exceeds 100', async() => {
-
+      //Test pagination - copy over the Portal code to validate pagination?
     });
+
+    //Test can sort by the various fields - copy over the Portal code to validate sorting
 
   });
 
-  //TODO await Tom's reply as I am unable to see sorting etc on the page
-  //Create a deposit then visit the listing page
-  // What's mandatory, what's not?
 
-  //Test in date desc order
 
-  // PBI 79215 - Deposits Page
-  //
-  // User can filter and order deposits
-  // - show only - createdBy, lastModifiedBy, preservedBy, exportedBy
-  // - further filter any of these by date range
-  // - filter by status, whether active
-  // - deposits are paged when the number exceeds 100
 
 
 });
