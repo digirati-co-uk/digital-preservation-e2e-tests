@@ -12,7 +12,7 @@ export class NavigationPage {
   readonly connectivityChecksHeading : Locator;
   readonly startingPathHeading : Locator;
   readonly depositsHeading : Locator;
-  readonly basePath: string = '_for_tests/playwright-testing';
+  readonly basePath: string = '_for_testing/playwright-testing';
   readonly baseBrowsePath: string = `/browse/${this.basePath}`;
   readonly baseAPIPath: string = `/repository/${this.basePath}/`;
   readonly baseBrowsePathHeading : Locator;
@@ -25,7 +25,7 @@ export class NavigationPage {
     this.baseBrowsePathHeading = page.getByRole('heading', {name: 'Playwright Testing'});
     this.dashboardMenuOption = page.getByRole('link', { name: 'Dashboard' });
     this.browseMenuOption = page.getByRole('link', { name: 'Browse' });
-    this.depositMenuOption = page.getByRole('link', { name: 'Deposits' });
+    this.depositMenuOption = page.getByRole('link', { name: 'Deposits', exact:true });
     this.homepageHeading = page.getByRole('heading', {name: 'Home page'});
     this.browseTheRepositoryLink = page.getByRole('link', { name: 'Browse the repository' });
     this.connectivityChecksLink = page.getByRole('link', { name: 'View connectivity checks' });

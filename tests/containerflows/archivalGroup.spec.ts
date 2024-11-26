@@ -194,7 +194,6 @@ test.describe('Archival Group Tests', () => {
 
       // breadcrumbs
       const breadcrumbElements: string[] = objectsFolderFullPath.replace(archivalGroupPage.depositPage.objectsFolderName, '').split('/');
-      console.log(breadcrumbElements);
       for (let breadcrumb of breadcrumbElements){
         if (breadcrumb.trim().length >0){
           await expect(archivalGroupPage.generateBreadcrumbLocator(breadcrumb), 'Breadcrumb link is displayed as expected').toBeVisible();

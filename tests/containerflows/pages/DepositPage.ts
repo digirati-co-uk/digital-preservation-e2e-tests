@@ -109,6 +109,40 @@ export class DepositPage {
   //Import job fields
   readonly importJobStatusCompleted : Locator;
 
+  //Deposit Listing Page
+  readonly depositsTable: Locator;
+  readonly depositTableRows: Locator;
+  readonly depositRow1: Locator;
+  readonly depositRow1Slug: Locator;
+  readonly depositRow1Status: Locator;
+  readonly showAllDepositsButton: Locator;
+  readonly showActiveDepositsButton: Locator;
+
+  //Deposit Listing Page - Locators to get all instances of a column value
+  readonly allRowsStatus: Locator;
+  readonly allRowsLastModifiedDate: Locator;
+  readonly allRowsLastModifiedBy: Locator;
+  readonly allRowsCreatedDate: Locator;
+  readonly allRowsCreatedBy: Locator;
+  readonly allRowsPreservedDate: Locator;
+  readonly allRowsPreservedBy: Locator;
+  readonly allRowsExportedDate: Locator;
+  readonly allRowsExportedBy: Locator;
+
+  //Deposit Listing Page - Locators to get all instances of a column value, for preserved rows only
+  readonly allPreservedRowsPreservedDate: Locator;
+  readonly allPreservedRowsPreservedBy: Locator;
+  readonly allPreservedRowsExportedDate: Locator;
+  readonly allPreservedRowsExportedBy: Locator;
+
+  //Deposit Listing Page - Locators to sort the columns
+  readonly sortByArchivalGroup: Locator;
+  readonly sortByStatus: Locator;
+  readonly sortByLastModified: Locator;
+  readonly sortByCreatedDate: Locator;
+
+
+
 
   constructor(page: Page) {
     this.page = page;
@@ -227,6 +261,33 @@ export class DepositPage {
 
     //Import job fields
     this.importJobStatusCompleted = page.getByRole('link', { name: 'completed' });
+
+    //Deposit Listing Page
+    this.depositsTable = page.getByRole('table', {name: 'table-deposits-index'});
+    this.depositTableRows = this.depositsTable.getByRole('row');
+    this.depositRow1 = page.getByRole('row', {name: 'row-1', exact:true});
+    this.depositRow1Slug = this.depositRow1.getByRole('cell', {name: 'td-archival-group'});
+    this.depositRow1Status = this.depositRow1.getByRole('cell', {name: 'td-status'});
+    this.allPreservedRowsPreservedDate = this.depositTableRows.filter({has: page.getByRole('cell', {name: 'td-status'}).getByText('preserved')}).getByRole('cell', {name: 'td-preserved'});
+    this.allPreservedRowsPreservedBy = this.depositTableRows.filter({has: page.getByRole('cell', {name: 'td-status'}).getByText('preserved')}).getByRole('cell', {name: 'td-preserved-by'});
+    this.allPreservedRowsExportedDate = this.depositTableRows.filter({has: page.getByRole('cell', {name: 'td-status'}).getByText('preserved')}).getByRole('cell', {name: 'td-exported'});
+    this.allPreservedRowsExportedBy = this.depositTableRows.filter({has: page.getByRole('cell', {name: 'td-status'}).getByText('preserved')}).getByRole('cell', {name: 'td-exported-by'});
+    this.allRowsStatus = this.depositTableRows.getByRole('cell', {name: 'td-status', exact: true});
+    this.allRowsLastModifiedDate= this.depositTableRows.getByRole('cell', {name: 'td-last-modified', exact: true});
+    this.allRowsLastModifiedBy= this.depositTableRows.getByRole('cell', {name: 'td-last-modified-by', exact: true});
+    this.allRowsCreatedDate= this.depositTableRows.getByRole('cell', {name: 'td-created', exact: true});
+    this.allRowsCreatedBy= this.depositTableRows.getByRole('cell', {name: 'td-created-by', exact: true});
+    this.allRowsPreservedDate = this.depositTableRows.getByRole('cell', {name: 'td-preserved', exact: true});
+    this.allRowsPreservedBy = this.depositTableRows.getByRole('cell', {name: 'td-preserved-by', exact: true});
+    this.allRowsExportedDate= this.depositTableRows.getByRole('cell', {name: 'td-exported', exact: true});
+    this.allRowsExportedBy= this.depositTableRows.getByRole('cell', {name: 'td-exported-by', exact: true});
+    this.showAllDepositsButton = page.getByRole('link', {name: 'Show all deposits'});
+    this.showActiveDepositsButton = page.getByRole('link', {name: 'Show active only'});
+    this.sortByArchivalGroup = page.getByRole('columnheader', {name: 'archival group'});
+    this.sortByStatus = page.getByRole('columnheader', {name: 'status'});
+    this.sortByLastModified = page.getByRole('columnheader', {name: 'last modified'});
+    this.sortByCreatedDate = page.getByRole('columnheader', {name: 'created'});
+
   }
 
   async goto() {
@@ -260,6 +321,22 @@ export class DepositPage {
     await this.deleteItemModalButton.click();
     await expect(fileToDelete).toBeHidden();
     await expect(this.alertMessage, 'Success message is shown').toContainText(`${fileName} DELETED`);
+  }
+
+  async navigateToDepositListingPageWithParams(urlParams : string){
+    await this.navigationPage.depositMenuOption.click();
+    const pageURL = this.page.url();
+    //Apply url param urlParams
+    const urlWithParams = pageURL + `?${urlParams}`;
+    await this.page.goto(urlWithParams);
+    await expect(this.depositsTable, 'The deposit table has loaded').toBeVisible();
+  }
+
+  generateDateInPast(daysInPast: number) : Date {
+    let myDate : Date = new Date();
+    myDate.setDate(myDate.getDate() - daysInPast);
+    myDate.setHours(0,0,0,0);
+    return myDate;
   }
 
 }
