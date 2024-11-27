@@ -120,6 +120,8 @@ export class DepositPage {
 
   //Deposit Listing Page - Locators to get all instances of a column value
   readonly allRowsArchivalGroup: Locator;
+  readonly allRowsArchivalGroupSlug: Locator;
+  readonly allRowsArchivalGroupName: Locator;
   readonly allRowsStatus: Locator;
   readonly allRowsLastModifiedDate: Locator;
   readonly allRowsLastModifiedBy: Locator;
@@ -274,6 +276,8 @@ export class DepositPage {
     this.allPreservedRowsExportedDate = this.depositTableRows.filter({has: page.getByRole('cell', {name: 'td-status'}).getByText('preserved')}).getByRole('cell', {name: 'td-exported'});
     this.allPreservedRowsExportedBy = this.depositTableRows.filter({has: page.getByRole('cell', {name: 'td-status'}).getByText('preserved')}).getByRole('cell', {name: 'td-exported-by'});
     this.allRowsArchivalGroup =  this.depositTableRows.getByRole('cell', {name: 'td-archival-group', exact: true});
+    this.allRowsArchivalGroupSlug =  this.depositTableRows.getByRole('cell', {name: 'td-archival-group', exact: true}).getByLabel('ag-path');
+    this.allRowsArchivalGroupName =  this.depositTableRows.getByRole('cell', {name: 'td-archival-group', exact: true}).getByLabel('ag-name');
     this.allRowsStatus = this.depositTableRows.getByRole('cell', {name: 'td-status', exact: true});
     this.allRowsLastModifiedDate= this.depositTableRows.getByRole('cell', {name: 'td-last-modified', exact: true});
     this.allRowsLastModifiedBy= this.depositTableRows.getByRole('cell', {name: 'td-last-modified-by', exact: true});
@@ -285,7 +289,7 @@ export class DepositPage {
     this.allRowsExportedBy= this.depositTableRows.getByRole('cell', {name: 'td-exported-by', exact: true});
     this.showAllDepositsButton = page.getByRole('link', {name: 'Show all deposits'});
     this.showActiveDepositsButton = page.getByRole('link', {name: 'Show active only'});
-    this.sortByArchivalGroup = page.getByRole('link', { name: 'Archival Group', exact: true })
+    this.sortByArchivalGroup = page.getByRole('link', { name: 'archival group' });
     this.sortByStatus = page.getByRole('link', {name: 'status'});
     this.sortByLastModified = page.getByRole('link', {name: 'last modified'});
     this.sortByCreatedDate = page.getByRole('link', {name: 'created'});

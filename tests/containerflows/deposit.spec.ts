@@ -228,7 +228,7 @@ test.describe('Deposit Tests', () => {
 
       //Open the dialog again, this time click the delete button
       await depositPage.deleteDepositButton.click();
-      await expect.soft(depositPage.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
+      await expect(depositPage.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
       await depositPage.confirmDeleteDeposit.check();
       await depositPage.deleteDepositModalButton.click();
 
@@ -344,8 +344,7 @@ test.describe('Deposit Tests', () => {
 
     await test.step('filter by status, whether active', async() => {
       //First check that all items show the 'new' status
-      //soft - This will fail until we remove the old invalid deposits sitting with preserved status
-      expect.soft((await depositPage.allRowsStatus.allTextContents()).every((currentValue : string) => currentValue === 'new'), 'The table shows only active Deposits').toBeTruthy();
+      expect((await depositPage.allRowsStatus.allTextContents()).every((currentValue : string) => currentValue === 'new'), 'The table shows only active Deposits').toBeTruthy();
 
       //Test that the number of items increases when changing from active only to all
       const activeRowCount : number = await depositPage.depositTableRows.count();
@@ -360,9 +359,8 @@ test.describe('Deposit Tests', () => {
 
     await test.step('show only - createdBy, lastModifiedBy, preservedBy, exportedBy', async() => {
       //Test that if active, then no preserved date, preserved By, Exported, or exported by
-      //This will fail until we remove the old invalid deposits sitting with preserved status
-      expect.soft((await depositPage.allRowsPreservedDate.allTextContents()).every((currentValue : string) => currentValue === ''), 'Preserved date is blank on new rows').toBeTruthy();
-      expect.soft((await depositPage.allRowsPreservedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Preserved By is blank on new rows').toBeTruthy();
+      expect((await depositPage.allRowsPreservedDate.allTextContents()).every((currentValue : string) => currentValue === ''), 'Preserved date is blank on new rows').toBeTruthy();
+      expect((await depositPage.allRowsPreservedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Preserved By is blank on new rows').toBeTruthy();
       expect((await depositPage.allRowsExportedDate.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported date is blank on new rows').toBeTruthy();
       expect((await depositPage.allRowsExportedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported by is blank on new rows').toBeTruthy();
 
@@ -439,18 +437,21 @@ test.describe('Deposit Tests', () => {
 
     //Test can sort by the various fields
     await test.step('columns are sortable - archival group', async() => {
-      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&`);
 
-      //TODO come back to this once we have something to distinguish the name and slug,
-      // as this is reading the whole of the name/slug combo and sorting
-      //   //sort by created date desc
-      //   await depositPage.sortByArchivalGroup.click();
-      //   await page.waitForLoadState('networkidle');
-      //   depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroup.allTextContents()), false, (value) => value);
-      //   //Ascending
-      //   await depositPage.sortByLastModified.click();
-      //   await page.waitForLoadState('networkidle');
-      //   depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroup.allTextContents()), true, (value) => value);
+      //sort by slug desc
+      await depositPage.sortByArchivalGroup.click();
+      depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupSlug.allTextContents()), false, (value) => value);
+      //Ascending
+      await depositPage.sortByArchivalGroup.click();
+      depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupSlug.allTextContents()), true, (value) => value);
+
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&orderby=archivalGroupName&ascending=true`);
+      depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupName.allTextContents()), false, (value) => value);
+
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&orderby=archivalGroupName`);
+      depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupName.allTextContents()), true, (value) => value);
+
     });
 
     await test.step('columns are sortable - status', async() => {
