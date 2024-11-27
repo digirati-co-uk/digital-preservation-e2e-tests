@@ -437,19 +437,54 @@ test.describe('Deposit Tests', () => {
       expect((await depositPage.allRowsLastModifiedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct modified by username').toBeTruthy();
     });
 
-    //Test can sort by the various fields - copy over the Portal code to validate sorting
-    await test.step('columns are sortable', async() => {
+    //Test can sort by the various fields
+    await test.step('columns are sortable - archival group', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //TODO come back to this once we have something to distinguish the name and slug,
+      // as this is reading the whole of the name/slug combo and sorting
+      //   //sort by created date desc
+      //   await depositPage.sortByArchivalGroup.click();
+      //   await page.waitForLoadState('networkidle');
+      //   depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroup.allTextContents()), false, (value) => value);
+      //   //Ascending
+      //   await depositPage.sortByLastModified.click();
+      //   await page.waitForLoadState('networkidle');
+      //   depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroup.allTextContents()), true, (value) => value);
+    });
+
+    await test.step('columns are sortable - status', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //sort by status descending
+      await depositPage.sortByStatus.click();
+      depositPage.validateSortOrder<String>((await depositPage.allRowsStatus.allTextContents()), false, (value) => value);
+      //Ascending
+      await depositPage.sortByStatus.click();
+      depositPage.validateSortOrder<String>((await depositPage.allRowsStatus.allTextContents()), true, (value) => value);
+    });
+
+    await test.step('columns are sortable - created date', async() => {
       await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
 
       //sort by created date desc
       await depositPage.sortByCreatedDate.click();
-      validateSortOrder<Date>((await depositPage.allRowsCreatedDate.allTextContents()), false, (value) => new Date(value));
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsCreatedDate.allTextContents()), false, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
       //Ascending
       await depositPage.sortByCreatedDate.click();
-      validateSortOrder<Date>((await depositPage.allRowsCreatedDate.allTextContents()), true, (value) => new Date(value));
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsCreatedDate.allTextContents()), true, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
     });
 
+    await test.step('columns are sortable - last modified date', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
 
+      //sort by modified date desc
+      await depositPage.sortByLastModified.click();
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsLastModifiedDate.allTextContents()), false, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
+      //Ascending
+      await depositPage.sortByLastModified.click();
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsLastModifiedDate.allTextContents()), true, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
+    });
 
     await test.step('TODO ONCE FEATURE BUILT filter by preservation fields', async() => {
 
@@ -480,20 +515,6 @@ test.describe('Deposit Tests', () => {
     });
   });
 
-  function validateSortOrder<T>(dataToValidate: string[], ascending: boolean, parser: (value: string) => T, sorter?: (value1: T, value2:T) => number): T[] {
-    let listOfItems: T[] = [];
-
-    for (let dataItem of dataToValidate) {
-      listOfItems.push(parser(dataItem));
-    }
-    let listOfItemsSorted = [...listOfItems].sort(sorter);
-    if (!ascending) {
-      listOfItemsSorted.reverse();
-    }
-    expect(listOfItems, `dataToValidate is in sorted order`).toEqual(listOfItemsSorted);
-
-    return listOfItems;
-  }
 
 });
 
