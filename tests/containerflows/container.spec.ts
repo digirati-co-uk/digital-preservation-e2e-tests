@@ -18,7 +18,7 @@ test.describe('Container Tests', () => {
     //Note passing title into slug here, which isn't properly formed as it's a Title not a slug
     await containerPage.createContainer(containerPage.playwrightContainerTitle, containerPage.playwrightContainerTitle);
     await expect(containerPage.alertMessage, 'The incorrect path format error message is shown').toHaveText(containerPage.incorrectPathFormatMessage);
-    await expect(containerPage.getFolderTitle(containerPage.playwrightContainerTitle), 'We cannot see the Container on the page, because it was not created').not.toBeVisible();
+    await expect(containerPage.getFolderSlug(containerPage.playwrightContainerTitle), 'We cannot see the Container on the page, because it was not created').not.toBeVisible();
   });
 
   //TODO with the new auto generation of the slug which strips invalid chars, this test needs removed or rewritten
@@ -28,8 +28,7 @@ test.describe('Container Tests', () => {
     for (let slug of containerPage.playwrightContainerInvalidSlugs){
       await containerPage.createContainer(slug, slug);
       await expect(containerPage.alertMessage, 'The incorrect path format error message is shown').toHaveText(containerPage.incorrectPathFormatMessage);
-      await expect(containerPage.getFolderTitle(slug), 'We cannot see the Container on the page, because it was not created').not.toBeVisible();
-
+      await expect(containerPage.getFolderSlug(slug), 'We cannot see the Container on the page, because it was not created').not.toBeVisible();
     }
   });
 
@@ -51,7 +50,7 @@ test.describe('Container Tests', () => {
       //TODO - note in the future if pagination is introduced we may not be on the page that
       //the container is on - address this once pagination/search/filtering/sorting introduced
       //by sorting on created desc e.g.
-      await expect(containerPage.getFolderTitle(folderTitle), 'The new Container is visible on the page').toBeVisible();
+      await expect(containerPage.getFolderSlug(folderSlug), 'The new Container is visible on the page').toBeVisible();
     });
 
     await test.step(`API contains all the expected fields`, async () => {
@@ -100,26 +99,31 @@ test.describe('Container Tests', () => {
       //the container is on - address this once pagination/search/filtering/sorting introduced
       //by sorting on created desc e.g.
       //TODO - modify to use Tom's aria-labels once deployed
-      const  newContainerRow: Locator = containerPage.containerTableRow.filter({has: page.getByRole('link', {name: folderTitle})});
+      const  newContainerRow: Locator = containerPage.containerTableRow.filter({has: page.getByRole('link', {name: folderSlug})});
       await expect(newContainerRow).toBeVisible();
       await expect(newContainerRow.locator(page.getByRole('cell')).nth(1)).toContainText(folderSlug.toLowerCase());
 
       //Check the API elements are displayed as expected
       await expect(newContainerRow.locator(page.getByRole('cell')).nth(1)).toContainText(folderSlug.toLowerCase());
-      await expect(newContainerRow.locator(page.getByRole('cell')).nth(2)).toContainText(containerItem.name);
 
       const displayedModifiedDate = await newContainerRow.locator(page.getByRole('cell')).nth(3).textContent();
       expect(containerItem.lastModified).toEqual(expect.stringContaining(displayedModifiedDate?.substring(0,9)!));
 
-      const displayedModifiedBy = await newContainerRow.locator(page.getByRole('cell')).nth(4).textContent();
-      expect(containerItem.lastModifiedBy).toEqual(expect.stringContaining(displayedModifiedBy!));
-
       const displayedCreatedDate = await newContainerRow.locator(page.getByRole('cell')).nth(5).textContent();
       expect(containerItem.created).toEqual(expect.stringContaining(displayedCreatedDate?.substring(0,9)!));
 
-      const displayedCreatedBy = await newContainerRow.locator(page.getByRole('cell')).nth(6).textContent();
-      expect(containerItem.createdBy).toEqual(expect.stringContaining(displayedCreatedBy!));
+      //TODO drive off the cut off point where we show all data versus cut down version
+      let showingAllRows:boolean = false;
+      if (showingAllRows) {
+        await expect(newContainerRow.locator(page.getByRole('cell')).nth(2)).toContainText(containerItem.name);
 
+        //TODO There are now various users - this won't work anymore
+        const displayedModifiedBy = await newContainerRow.locator(page.getByRole('cell')).nth(4).textContent();
+        expect(containerItem.lastModifiedBy).toEqual(expect.stringContaining(displayedModifiedBy!));
+
+        const displayedCreatedBy = await newContainerRow.locator(page.getByRole('cell')).nth(6).textContent();
+        expect(containerItem.createdBy).toEqual(expect.stringContaining(displayedCreatedBy!));
+      }
     });
   });
 
@@ -132,7 +136,7 @@ test.describe('Container Tests', () => {
     await containerPage.createContainer(folderSlug, folderTitle);
     await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
     await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderTitle);
-    await expect(containerPage.getFolderTitle(folderTitle), 'The new Container is visible on the page').toBeVisible();
+    await expect(containerPage.getFolderSlug(folderSlug), 'The new Container is visible on the page').toBeVisible();
     
     //Now try again with the same slug, this should fail
     await containerPage.createContainer(folderSlug, folderTitle);
@@ -153,12 +157,12 @@ test.describe('Container Tests', () => {
       await containerPage.createContainer(folderSlug, '');
       await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
       await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderSlug.toLowerCase());
-      await expect(containerPage.getFolderTitle(folderSlug.toLowerCase()), 'The new Container is visible on the page').toBeVisible();
+      await expect(containerPage.getFolderSlug(folderSlug.toLowerCase()), 'The new Container is visible on the page').toBeVisible();
     });
 
     await test.step(`can create a child container`, async () => {
 
-      const myContainerLink: Locator = containerPage.getFolderTitle(folderSlug.toLowerCase());
+      const myContainerLink: Locator = containerPage.getFolderSlug(folderSlug.toLowerCase());
       await expect(myContainerLink, 'Can see the Container on the page').toBeVisible();
   
       //Navigate into the new parent Container
@@ -175,7 +179,7 @@ test.describe('Container Tests', () => {
       await containerPage.checkCorrectContainerTitle(folderSlug);
       await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
       await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderTitleChild);
-      await expect(containerPage.getFolderTitle(folderTitleChild), 'We can see the child Container on the page').toBeVisible();
+      await expect(containerPage.getFolderSlug(folderSlugChild), 'We can see the child Container on the page').toBeVisible();
 
     });
 

@@ -172,7 +172,7 @@ export class DepositPage {
     this.testDepositNote = 'Playwright test archival group note';
     this.testArchivalGroupName = 'Playwright test archival group name';
     this.testInvalidArchivalURI = 'playwright invalid slug';
-    this.testValidArchivalURI = 'playwright-valid-slug-1';
+    this.testValidArchivalURI = 'playwright-valid-slug-abc';
 
     //Locator to initially create the deposit
     this.newDepositButton = page.getByRole('button', { name: 'New Deposit' });

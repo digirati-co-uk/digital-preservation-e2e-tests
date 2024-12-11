@@ -1,0 +1,1 @@
+export const frontendSessionFile = 'playwright/.auth/frontend.json';

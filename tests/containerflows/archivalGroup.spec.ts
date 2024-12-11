@@ -28,7 +28,7 @@ test.describe('Archival Group Tests', () => {
       await archivalGroupPage.depositPage.newDepositButton.click();
       await archivalGroupPage.depositPage.modalArchivalSlug.click();
       //TODO fill versus pressSequentially and the autocorrect one does versus the other
-      await archivalGroupPage.depositPage.modalArchivalSlug.pressSequentially(archivalGroupString);
+      await archivalGroupPage.depositPage.modalArchivalSlug.fill(archivalGroupString);
       await archivalGroupPage.depositPage.modalCreateNewDepositButton.click();
       await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(archivalGroupPage.depositPage.depositsURL);
       depositId = page.url();

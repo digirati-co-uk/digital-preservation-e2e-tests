@@ -62,8 +62,8 @@ export class ContainerPage {
     await expect(this.page.getByRole('heading', {name: `${folderTitle.toLowerCase()}`}), 'We have successfully navigated into the Container').toBeVisible();
   };
 
-  getFolderTitle(folderTitle: string) : Locator {
-    return this.page.getByRole('link', {name: folderTitle, exact:true});
+  getFolderSlug(folderSlug: string) : Locator {
+    return this.page.getByRole('link', {name: folderSlug, exact:true});
   };
 
 }
