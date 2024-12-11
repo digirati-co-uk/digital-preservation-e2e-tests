@@ -17,6 +17,8 @@ export class ContainerPage {
   readonly playwrightContainerInvalidSlugs: string[];
   readonly createdBy : string;
   readonly containerTableRow: Locator;
+  readonly deleteContainerButton: Locator;
+  readonly confirmDeleteContainer: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -38,6 +40,8 @@ export class ContainerPage {
     this.createNewFolderConfirmationButton = page.getByRole('button', {name:'Create New Folder'});
     this.alertMessage = page.getByRole('alert');
     this.containerTableRow = page.getByRole('row');
+    this.deleteContainerButton = page.getByRole('button', {name: 'Delete Container'});
+    this.confirmDeleteContainer = page.getByRole('button', {name: 'Delete', exact: true});
   }
 
   async goto() {

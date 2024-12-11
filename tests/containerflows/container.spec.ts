@@ -125,9 +125,22 @@ test.describe('Container Tests', () => {
         expect(containerItem.createdBy).toEqual(expect.stringContaining(displayedCreatedBy!));
       }
     });
+
+    await test.step('Delete the container', async () => {
+
+      const myContainerLink: Locator = containerPage.getFolderSlug(folderSlug.toLowerCase());
+      await myContainerLink.click();
+
+      //Delete the parent container
+      await containerPage.deleteContainerButton.click();
+      await containerPage.confirmDeleteContainer.click();
+
+      //Verify deleted
+      await expect(containerPage.alertMessage).toContainText(`${folderSlug} deleted successfully`);
+    });
   });
 
-  test(`cannot create a container/folder with an existing slug`, async ({}) => {
+  test(`cannot create a container/folder with an existing slug`, async () => {
 
     await containerPage.getStarted();  
     const uniqueId = generateUniqueId();
@@ -145,12 +158,14 @@ test.describe('Container Tests', () => {
     //TODO check count is 1
   });
 
-  test(`can create a container/folder without a title and title defaults to the slug, and create a child`, async ({}) => {
+  test(`can create a container/folder without a title and title defaults to the slug, and create a child`, async ({page}) => {
 
     await containerPage.getStarted();
 
     const uniqueId = generateUniqueId();
     const folderSlug = `${containerPage.playwrightContainerSlug}-${uniqueId}`.toLowerCase();
+    let folderSlugChild: string;
+    let folderTitleChild: string;
 
     await test.step(`Can create the container without a slug`, async () => {
       
@@ -164,32 +179,48 @@ test.describe('Container Tests', () => {
 
       const myContainerLink: Locator = containerPage.getFolderSlug(folderSlug.toLowerCase());
       await expect(myContainerLink, 'Can see the Container on the page').toBeVisible();
-  
+
       //Navigate into the new parent Container
       await myContainerLink.click();
       await containerPage.checkCorrectContainerTitle(folderSlug);
 
       //Create a child Container within the parent Container
       const uniqueIdChild = generateUniqueId();
-      const folderSlugChild = `${containerPage.playwrightContainerSlug}-${uniqueIdChild}`;
-      const folderTitleChild = `${containerPage.playwrightContainerTitle} ${uniqueIdChild}`;
+      folderSlugChild = `${containerPage.playwrightContainerSlug}-${uniqueIdChild}`;
+      folderTitleChild = `${containerPage.playwrightContainerTitle} ${uniqueIdChild}`;
       await containerPage.createContainer(folderSlugChild, folderTitleChild);
-  
+
       //Check we are still within the correct 'parent' Container
       await containerPage.checkCorrectContainerTitle(folderSlug);
       await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
       await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderTitleChild);
       await expect(containerPage.getFolderSlug(folderSlugChild), 'We can see the child Container on the page').toBeVisible();
 
+      //Navigate into the child container
+      await containerPage.getFolderSlug(folderSlugChild).click();
+      await containerPage.checkCorrectContainerTitle(folderTitleChild);
+
     });
 
-    //TODO Navigate to Fedora and delete the new Container?
-    //Or Tom provide API to do this
+    await test.step(`delete the created containers`, async () => {
 
+      //now delete the child container
+      await containerPage.deleteContainerButton.click();
+      await containerPage.confirmDeleteContainer.click();
+
+      //Check we are back within the correct 'parent' Container
+      await expect(containerPage.alertMessage).toContainText(`${folderSlugChild} deleted successfully`);
+      await containerPage.checkCorrectContainerTitle(folderSlug);
+
+      //Delete the parent container
+      await containerPage.deleteContainerButton.click();
+      await containerPage.confirmDeleteContainer.click();
+
+      //Verify deleted
+      await expect(containerPage.alertMessage).toContainText(`${folderSlug} deleted successfully`);
+
+    });
   });
-
-  
-
 });
 
 
