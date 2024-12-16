@@ -74,11 +74,11 @@ test.describe('Deposit Tests', () => {
 
     await test.step('Can add the Archival Group name and a note, and the URI', async() => {
 
-      //TODO Test that initially there is no create archival group button, and
+      //TODO** Test that initially there is no create archival group button, and
       //message indicating no Archival group set
 
       //Shouldn't be allowed to enter with spaces in a URI
-      //TODO fill versus pressSequentially and the autocorrect one does versus the other
+      //TODO** fill versus pressSequentially and the autocorrect one does versus the other
       await depositPage.archivalGroupInput.fill(depositPage.testInvalidArchivalURI);
       //Save changes, verify failed
       await depositPage.updateArchivalPropertiesButton.click();
@@ -258,7 +258,7 @@ test.describe('Deposit Tests', () => {
       //This click into the archival group slug field is important,
       //otherwise the typing doesn't register properly in the following step
       await depositPage.modalArchivalSlug.click();
-      //TODO fill versus pressSequentially and the autocorrect one does versus the other
+      //TODO** fill versus pressSequentially and the autocorrect one does versus the other
       await depositPage.modalArchivalSlug.pressSequentially(depositPage.testInvalidArchivalURI);
       //The slug should have had the spaces removed
       await expect(depositPage.slugDisplayOnModal, 'The invalid slug has the spaces stripped.').toHaveText(depositPage.testInvalidArchivalURI.replaceAll(' ', ''));
@@ -271,7 +271,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.modalArchivalSlug.click();
       //Clear the previous slug
       await depositPage.modalArchivalSlug.clear();
-      //TODO fill versus pressSequentially and the autocorrect one does versus the other
+      //TODO** fill versus pressSequentially and the autocorrect one does versus the other
       await depositPage.modalArchivalSlug.pressSequentially(validSlug);
       await expect(depositPage.slugDisplayOnModal, 'The slug is as expected').toHaveText(validSlug);
       await depositPage.modalCreateNewDepositButton.click();

@@ -129,6 +129,7 @@ export class ArchivalGroupPage {
   }
 
   //TODO may need to rethink this, if the environment takes some time to process jobs to completion
+  //as this will block the tests
   async allowJobToComplete(){
     //Refresh the page until changes to completed
     let jobCompleted : boolean = false;

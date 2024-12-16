@@ -57,7 +57,7 @@ export class ContainerPage {
   async createContainer(slug: string, title: string){
     await this.newFolderButton.click();
     await this.folderPathTitleInput.fill(title);
-    //TODO fill versus pressSequentially and the autocorrect one does versus the other
+    //TODO** fill versus pressSequentially and the autocorrect one does versus the other
     await this.folderPathNameInput.fill(slug);
     await this.createNewFolderConfirmationButton.click();
   };

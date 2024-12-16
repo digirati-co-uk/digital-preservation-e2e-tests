@@ -11,7 +11,7 @@ test.describe('Container Tests', () => {
     containerPage = new ContainerPage(page);
   });
 
-  //TODO with the new auto generation of the slug which strips invalid chars, this test needs removed or rewritten
+  //TODO** with the new auto generation of the slug which strips invalid chars, this test needs removed or rewritten
   test.skip(`cannot create a container/folder without a properly formed slug`, async ({}) => {
     await containerPage.getStarted();  
     
@@ -21,7 +21,7 @@ test.describe('Container Tests', () => {
     await expect(containerPage.getFolderSlug(containerPage.playwrightContainerTitle), 'We cannot see the Container on the page, because it was not created').not.toBeVisible();
   });
 
-  //TODO with the new auto generation of the slug which strips invalid chars, this test needs removed or rewritten
+  //TODO** with the new auto generation of the slug which strips invalid chars, this test needs removed or rewritten
   test.skip(`cannot create a container/folder with invalid characters in the path`, async ({}) => {
     await containerPage.getStarted();  
 
@@ -73,12 +73,11 @@ test.describe('Container Tests', () => {
       //the binaries element is empty
       expect(containerItem.binaries, 'Binaries is empty').toHaveLength(0);
 
-      //TODO Speak to Tom about these timestamps being out
       //created date is within last few seconds
       checkDateIsWithinNumberOfSeconds(containerItem.created, 10_000);
 
       //lastmodified is within the last few seconds
-      checkDateIsWithinNumberOfSeconds(containerItem.lastModified, 30_000);
+      checkDateIsWithinNumberOfSeconds(containerItem.lastModified, 10_000);
 
       //check that the created ad modified dates match
       expect(containerItem.lastModified, 'Created and Modified dates match').toEqual(containerItem.created);
@@ -89,7 +88,7 @@ test.describe('Container Tests', () => {
     });
 
     await test.step('Table headers are displayed as expected', async () => {
-      //TODO - modify to use Tom's aria-labels once deployed
+      //TODO** - modify to use Tom's aria-labels once deployed
       
     });
 
@@ -98,7 +97,7 @@ test.describe('Container Tests', () => {
       //TODO - note in the future if pagination is introduced we may not be on the page that
       //the container is on - address this once pagination/search/filtering/sorting introduced
       //by sorting on created desc e.g.
-      //TODO - modify to use Tom's aria-labels once deployed
+      //TODO** - modify to use Tom's aria-labels once deployed
       const  newContainerRow: Locator = containerPage.containerTableRow.filter({has: page.getByRole('link', {name: folderSlug})});
       await expect(newContainerRow).toBeVisible();
       await expect(newContainerRow.locator(page.getByRole('cell')).nth(1)).toContainText(folderSlug.toLowerCase());
@@ -112,7 +111,7 @@ test.describe('Container Tests', () => {
       const displayedCreatedDate = await newContainerRow.locator(page.getByRole('cell')).nth(5).textContent();
       expect(containerItem.created).toEqual(expect.stringContaining(displayedCreatedDate?.substring(0,9)!));
 
-      //TODO drive off the cut off point where we show all data versus cut down version
+      //TODO** drive off the cut off point where we show all data versus cut down version
       let showingAllRows:boolean = false;
       if (showingAllRows) {
         await expect(newContainerRow.locator(page.getByRole('cell')).nth(2)).toContainText(containerItem.name);
@@ -155,7 +154,7 @@ test.describe('Container Tests', () => {
     await containerPage.createContainer(folderSlug, folderTitle);
     await expect(containerPage.alertMessage, 'The duplicate path error message is shown').toContainText(containerPage.duplicateContainerMessage);
 
-    //TODO check count is 1
+    //TODO** check count is 1
   });
 
   test(`can create a container/folder without a title and title defaults to the slug, and create a child`, async ({page}) => {
