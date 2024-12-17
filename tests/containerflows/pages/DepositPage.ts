@@ -12,12 +12,12 @@ export class DepositPage {
   readonly objectsFolderName : string;
   readonly testImageLocation : string;
   readonly testImageWithInvalidCharsLocation : string;
-  //readonly cannotUploadTopLevelMessage : string;
   readonly newTestFolderTitle : string;
   readonly newTestFolderSlug : string;
   readonly testFolderSlugShouldNotExist: string;
   readonly depositsURL: RegExp;
   readonly testInvalidArchivalURI : string;
+  readonly invalidURIMadeValid: string;
   readonly testFileLocation : string;
   readonly testValidArchivalURI : string;
   readonly testArchivalGroupName : string;
@@ -30,6 +30,11 @@ export class DepositPage {
   readonly newDepositButton: Locator;
 
   //Deposit page
+  readonly createDiffImportJobButton :Locator ;
+  readonly noCurrentImportJobsText : Locator;
+  readonly depositNotActiveText : Locator;
+  readonly depositNoFiles: Locator;
+
   //Deposit history information
   readonly depositCreatedDate : Locator;
   readonly depositCreatedBy : Locator;
@@ -48,15 +53,10 @@ export class DepositPage {
 
   //Deposit file structure table locators
   readonly depositFilesTable : Locator;
-  //readonly depositFilesDirectories : Locator;
-  //readonly depositFilesFiles : Locator;
   readonly objectsFolder : Locator;
   readonly uploadFileToObjectsFolder :Locator;
   readonly createFolderWithinObjectsFolder : Locator;
   readonly metsFile : Locator;
-  //readonly testImageInFilesToplevel : Locator;
-  //readonly testImageInFilesCorrect: Locator;
-  //readonly newTestFolderInTableShouldNotExist: Locator;
   readonly newTestFolderInTable : Locator;
   readonly uploadFileToTestFolder : Locator;
   readonly deleteTestFolder : Locator;
@@ -76,14 +76,12 @@ export class DepositPage {
   readonly archivalGroupNameInput : Locator;
   readonly archivalGroupDepositNoteInput : Locator;
 
-  //Top level buttons,alerts
+  //buttons,alerts
   readonly alertMessage : Locator;
   readonly deleteDepositButton : Locator;
   readonly updateArchivalPropertiesButton : Locator;
 
   //New Deposit Dialog used in 'Browse - create deposit ' journey
-  //readonly modalArchivalGroupName : Locator;
-  //readonly modalArchivalNote : Locator;
   readonly modalArchivalSlug : Locator;
   readonly modalCreateNewDepositButton : Locator;
   readonly slugDisplayOnModal: Locator;
@@ -144,9 +142,6 @@ export class DepositPage {
   readonly sortByLastModified: Locator;
   readonly sortByCreatedDate: Locator;
 
-
-
-
   constructor(page: Page) {
     this.page = page;
     this.navigationPage = new NavigationPage(page);
@@ -172,7 +167,14 @@ export class DepositPage {
     this.testDepositNote = 'Playwright test archival group note';
     this.testArchivalGroupName = 'Playwright test archival group name';
     this.testInvalidArchivalURI = 'playwright invalid slug';
+    this.invalidURIMadeValid = 'playwrightinvalidslug';
     this.testValidArchivalURI = 'playwright-valid-slug-abc';
+    this.createDiffImportJobButton = page.getByRole('button', { name: 'Create diff import job' });
+    this.noCurrentImportJobsText = page.getByText('There are no submitted import jobs for this Deposit');
+    this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.');
+    this.depositNoFiles = page.getByText('No jobs can be run as there are no valid files in the Deposit.');
+
+
 
     //Locator to initially create the deposit
     this.newDepositButton = page.getByRole('button', { name: 'New Deposit' });
@@ -202,8 +204,6 @@ export class DepositPage {
 
     //Deposit file structure table locators
     this.depositFilesTable = page.getByRole('table', {name: 'table-deposit-files'});
-    //this.depositFilesDirectories = this.depositFilesTable.locator('*[data-type="directory"]');
-    //this.depositFilesFiles = this.depositFilesTable.locator('*[data-type="file"]');
 
     //Locators specific to the objects folder
     this.objectsFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.objectsFolderName}"]`);
@@ -214,13 +214,10 @@ export class DepositPage {
     this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="__METSlike.json"]');
 
     //Locators specific to the test folders / files
-    //this.testImageInFilesToplevel = this.depositFilesTable.locator(`[data-type="file"][data-path="${this.testImageLocation}"]`);
-    //this.testImageInFilesCorrect = this.depositFilesTable.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageLocation}"]`);
-    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
+   this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
     this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
     this.uploadFileToTestFolder = this.newTestFolderInTable.locator(this.uploadFileIcon);
     this.deleteTestFolder = this.newTestFolderInTable.locator(this.deleteFolderIcon);
-    //this.newTestFolderInTableShouldNotExist = page.locator(`[data-type="directory"][data-path="${this.testFolderSlugShouldNotExist}"]`);
 
     //Locators for test files within the new test folder
     this.newTestImageFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
@@ -232,15 +229,13 @@ export class DepositPage {
     this.archivalGroupNameInput = this.page.locator('#agName');
     this.archivalGroupDepositNoteInput = this.page.locator('#submissionText');
 
-    //Top level buttons,alerts
+    //buttons,alerts
     this.updateArchivalPropertiesButton = this.page.getByRole('button', { name: 'Update properties' });
     this.alertMessage = page.getByRole('alert');
     this.deleteDepositButton = page.getByRole('button', { name: 'Delete Deposit' });
 
     //New Deposit Dialog used in 'Browse - create deposit ' journey
     this.modalCreateNewDepositButton = page.getByRole('button', { name: 'Create New Deposit' });
-    //this.modalArchivalGroupName = page.locator('#archivalGroupProposedName');
-    //this.modalArchivalNote = page.locator('#submissionText');
     this.modalArchivalSlug = page.locator('#archivalGroupSlug');
     this.slugDisplayOnModal = page.locator('#slugDisplay');
 

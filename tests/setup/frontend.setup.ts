@@ -15,7 +15,7 @@ setup('login as user', async ({page}) => {
     await page.getByRole('textbox', {name: 'Enter the password'}).fill(process.env.FRONTEND_PASSWORD!);
     await page.getByRole('button', { name: 'Sign in' }).click();
 
-    await expect(page).toHaveURL('/', {timeout: 10_000});
+    await expect(page, 'After login, we have landed on the correct URL').toHaveURL('/', {timeout: 10_000});
   }
 
   await page.context().storageState({path: frontendSessionFile});

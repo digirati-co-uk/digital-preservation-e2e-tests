@@ -2,7 +2,6 @@ import {expect} from "@playwright/test";
 import { test } from '../../fixture';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 import {checkDateIsWithinNumberOfSeconds, createdByUserName, generateUniqueId} from "../helpers/helpers";
-import {arch} from "node:os";
 
 test.describe('Archival Group Tests', () => {
 
@@ -26,8 +25,21 @@ test.describe('Archival Group Tests', () => {
     await test.step('Create a Deposit from within the structure to ensure archival group already set', async () => {
       await archivalGroupPage.depositPage.getStarted();
       await archivalGroupPage.depositPage.newDepositButton.click();
+
+      //Use fill (equivalent of paste) of an invalid URI
       await archivalGroupPage.depositPage.modalArchivalSlug.click();
-      //TODO** fill versus pressSequentially and the autocorrect one does versus the other
+      await archivalGroupPage.depositPage.modalArchivalSlug.fill(archivalGroupPage.depositPage.testInvalidArchivalURI);
+      //Should be blank as the javascript popup will have blocked it
+      expect(await archivalGroupPage.depositPage.modalArchivalSlug.inputValue(), 'Javascript popup has blocked the paste action').toEqual('');
+
+      //Use pressSequentially (equivalent of typing) of an invalid URI
+      await archivalGroupPage.depositPage.modalArchivalSlug.click();
+      await archivalGroupPage.depositPage.modalArchivalSlug.pressSequentially(archivalGroupPage.depositPage.testInvalidArchivalURI, {delay: 200});
+      //Should have had the spaces stripped
+      expect(await archivalGroupPage.depositPage.modalArchivalSlug.inputValue(), 'The invalid characters have been stripped from the URI').toEqual(archivalGroupPage.depositPage.invalidURIMadeValid);
+
+      await archivalGroupPage.depositPage.modalArchivalSlug.clear();
+      await archivalGroupPage.depositPage.modalArchivalSlug.click();
       await archivalGroupPage.depositPage.modalArchivalSlug.fill(archivalGroupString);
       await archivalGroupPage.depositPage.modalCreateNewDepositButton.click();
       await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(archivalGroupPage.depositPage.depositsURL);
@@ -36,12 +48,11 @@ test.describe('Archival Group Tests', () => {
     });
 
     await test.step('Check that we cannot create an archival group until we add some files', async () => {
-      await expect.soft (archivalGroupPage.createDiffImportJobButton, 'Button to create an archival group is hidden until we add files').toBeHidden();
-      await expect(archivalGroupPage.depositNoFiles).toBeVisible();
+      await expect(archivalGroupPage.depositPage.createDiffImportJobButton, 'Button to create an archival group is hidden until we add files').toBeHidden();
+      await expect(archivalGroupPage.depositPage.depositNoFiles, 'We can see a message explaining why we cannot create a job').toBeVisible();
     });
 
     await test.step('Add a name and some files to the Deposit', async () => {
-      //TODO** fill versus pressSequentially and the autocorrect one does versus the other
       await archivalGroupPage.depositPage.archivalGroupNameInput.fill(archivalGroupPage.depositPage.testArchivalGroupName);
       await archivalGroupPage.depositPage.updateArchivalPropertiesButton.click();
       await expect(archivalGroupPage.depositPage.alertMessage, 'Successful update message is shown').toHaveText('Deposit successfully updated');
@@ -56,13 +67,13 @@ test.describe('Archival Group Tests', () => {
     });
 
     await test.step('Check for presence of required Import Jobs fields and info', async () => {
-      await expect(archivalGroupPage.createDiffImportJobButton, 'Button to create an archival group is now enabled').toBeEnabled();
-      await expect(archivalGroupPage.noCurrentImportJobsText, 'Message indicating no current jobs is visible').toBeVisible();
+      await expect(archivalGroupPage.depositPage.createDiffImportJobButton, 'Button to create an archival group is now enabled').toBeEnabled();
+      await expect(archivalGroupPage.depositPage.noCurrentImportJobsText, 'Message indicating no current jobs is visible').toBeVisible();
     });
 
     await test.step('Create a diff import job, validate expected fields are present and check values', async () => {
 
-      await archivalGroupPage.createDiffImportJobButton.click();
+      await archivalGroupPage.depositPage.createDiffImportJobButton.click();
 
       //Validate the fields on the page are correct
       await expect(page.getByRole('heading', {name: `Diff from ${depositId} to ${archivalGroupPage.depositPage.testArchivalGroupName}`}), 'The correct page heading is shown').toBeVisible();
@@ -169,7 +180,7 @@ test.describe('Archival Group Tests', () => {
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.getArchivalGroupHistoryItem('Last modified'), 20_000);
       expect(await archivalGroupPage.getArchivalGroupHistoryItem('Last modified by'), 'Last modified by is correct').toEqual(createdByUserName);
 
-      //TODO** after Tom looks at the formatting of the version table
+      //TODO after Tom looks at the formatting of the version table - we need some ids etc on this table
       //versions - 1 only, date should match created
       //deposits -  1 only
 
@@ -220,8 +231,8 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.depositPage.archivalGroupInput, 'Archival Group is disabled').toBeDisabled();
       await expect(archivalGroupPage.depositPage.archivalGroupNameInput, 'Archival Group Name is disabled').toBeDisabled();
       await expect(archivalGroupPage.depositPage.archivalGroupDepositNoteInput, 'Archival Group Note is disabled').toBeDisabled();
-      await expect(archivalGroupPage.depositNotActiveText).toBeVisible();
-      await expect(archivalGroupPage.createDiffImportJobButton, 'Button to create an archival group is now hidden').toBeHidden();
+      await expect(archivalGroupPage.depositPage.depositNotActiveText).toBeVisible();
+      await expect(archivalGroupPage.depositPage.createDiffImportJobButton, 'Button to create an archival group is now hidden').toBeHidden();
 
       //check there are no delete/add buttons
       await expect(archivalGroupPage.depositPage.uploadFileIcon, 'Correctly cannot see upload icons').toBeHidden();
@@ -232,9 +243,7 @@ test.describe('Archival Group Tests', () => {
       //Check status of job is completed
       await expect(archivalGroupPage.depositPage.importJobStatusCompleted, 'Job is marked as completed').toBeVisible();
     });
-
   });
-
 });
 
 

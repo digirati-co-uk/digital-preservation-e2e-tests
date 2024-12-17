@@ -8,12 +8,6 @@ export class ArchivalGroupPage {
   readonly navigationPage: NavigationPage;
   readonly depositPage: DepositPage;
 
-  //Deposit page
-  readonly createDiffImportJobButton :Locator ;
-  readonly noCurrentImportJobsText : Locator;
-  readonly depositNotActiveText : Locator;
-  readonly depositNoFiles: Locator;
-
   //Create diff page
   readonly runImportPreserveButton : Locator;
   readonly diffStatus : Locator;
@@ -60,13 +54,6 @@ export class ArchivalGroupPage {
     this.page = page;
     this.navigationPage = new NavigationPage(page);
     this.depositPage = new DepositPage(page);
-
-    //Deposit page
-    this.createDiffImportJobButton = page.getByRole('button', { name: 'Create diff import job' });
-    this.noCurrentImportJobsText = page.getByText('There are no submitted import jobs for this Deposit');
-    this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.');
-    this.depositNoFiles = page.getByText('No jobs can be run as there are no valid files in the Deposit.');
-
 
     //Create diff page
     this.runImportPreserveButton = page.getByRole('button', { name: 'Run Import (Preserve)' });
