@@ -17,16 +17,16 @@ test.describe('Navigation Tests', () => {
     //displays the Browse and connectivity checks
     await navigationPage.dashboardMenuOption.click();
 
-    await expect(navigationPage.browseTheRepositoryLink).toBeVisible();
+    await expect(navigationPage.browseTheRepositoryLink, 'Browse link is visible').toBeVisible();
 
     //Check that the Browse link navigates into the Folder browsing
     await navigationPage.browseTheRepositoryLink.click();
-    await expect(navigationPage.repositoryBrowsePathHeading).toBeVisible();
+    await expect(navigationPage.repositoryBrowsePathHeading, 'The correct heading is visible').toBeVisible();
 
     //Return to the Dashboard and check that connectivity link works
     await navigationPage.dashboardMenuOption.click();
     await navigationPage.connectivityChecksLink.click();
-    await expect(navigationPage.connectivityChecksHeading).toBeVisible();
+    await expect(navigationPage.connectivityChecksHeading, 'The correct heading is visible').toBeVisible();
 
   });
 
@@ -34,14 +34,14 @@ test.describe('Navigation Tests', () => {
     await navigationPage.getStarted();
     //Test the Browse link exists and takes you into the Browse repository page
     await navigationPage.browseMenuOption.click();
-    await expect(navigationPage.repositoryBrowsePathHeading).toBeVisible();
+    await expect(navigationPage.repositoryBrowsePathHeading, 'The correct heading is visible').toBeVisible();
   });
 
   test(`test the Deposit link in the Left Hand Nav`, async ({page}) => {
     await navigationPage.getStarted();
     //Test the Deposits link exists and takes you into the Deposits page
     await navigationPage.depositMenuOption.click();
-    await expect(navigationPage.depositsHeading).toBeVisible();
+    await expect(navigationPage.depositsHeading, 'The correct heading is visible').toBeVisible();
   });
 
 });

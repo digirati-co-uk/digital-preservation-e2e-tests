@@ -13,10 +13,22 @@ export class ContainerPage {
   readonly createdContainerMessage: string;
   readonly playwrightContainerTitle: string;
   readonly playwrightContainerSlug: string;
+  readonly titleStrippedOfUpperCaseSpaces: string;
   readonly duplicateContainerMessage: string;
-  readonly playwrightContainerInvalidSlugs: string[];
   readonly createdBy : string;
+  readonly maxTableRowsShowingAllColumns: number;
   readonly containerTableRow: Locator;
+  readonly deleteContainerButton: Locator;
+  readonly confirmDeleteContainer: Locator;
+  readonly resourcesTableRows: Locator;
+
+  //Column headers
+  readonly pathHeader: Locator;
+  readonly titleHeader: Locator;
+  readonly lastModifiedHeader: Locator;
+  readonly byHeader: Locator;
+  readonly createdHeader: Locator;
+  readonly archivalGroupHeader: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -27,9 +39,10 @@ export class ContainerPage {
     this.createdContainerMessage = 'Created Container';
     this.playwrightContainerTitle = 'Playwright Container Testing';
     this.playwrightContainerSlug = 'playwright-container-testing';
-    this.playwrightContainerInvalidSlugs = ['&%&^%&','looks-almost-correct*'];
+    this.titleStrippedOfUpperCaseSpaces= 'laywrightontaineresting';
     this.duplicateContainerMessage = 'Failed to create Container: Conflict';
     this.createdBy = '/agents/dlipdev';
+    this.maxTableRowsShowingAllColumns = 19;
 
     //Locators
     this.newFolderButton = page.getByRole('button', {name: 'New Folder'});
@@ -38,6 +51,17 @@ export class ContainerPage {
     this.createNewFolderConfirmationButton = page.getByRole('button', {name:'Create New Folder'});
     this.alertMessage = page.getByRole('alert');
     this.containerTableRow = page.getByRole('row');
+    this.deleteContainerButton = page.getByRole('button', {name: 'Delete Container'});
+    this.confirmDeleteContainer = page.getByRole('button', {name: 'Delete', exact: true});
+    this.resourcesTableRows = page.getByRole('table', {name: 'table-resources'}).getByRole('row');
+
+    //Column header locators
+    this.pathHeader = page.getByRole('columnheader', {name: 'Path'});
+    this.titleHeader = page.getByRole('columnheader', {name: 'Title'});
+    this.lastModifiedHeader = page.getByRole('columnheader', {name: 'Last Modified'});
+    this.byHeader = page.getByRole('columnheader', {name: 'By'});
+    this.createdHeader = page.getByRole('columnheader', {name: 'Created'});
+    this.archivalGroupHeader = page.getByRole('columnheader').getByRole('img');
   }
 
   async goto() {
@@ -53,7 +77,6 @@ export class ContainerPage {
   async createContainer(slug: string, title: string){
     await this.newFolderButton.click();
     await this.folderPathTitleInput.fill(title);
-    //TODO
     await this.folderPathNameInput.fill(slug);
     await this.createNewFolderConfirmationButton.click();
   };
@@ -62,8 +85,8 @@ export class ContainerPage {
     await expect(this.page.getByRole('heading', {name: `${folderTitle.toLowerCase()}`}), 'We have successfully navigated into the Container').toBeVisible();
   };
 
-  getFolderTitle(folderTitle: string) : Locator {
-    return this.page.getByRole('link', {name: folderTitle, exact:true});
+  getFolderSlug(folderSlug: string) : Locator {
+    return this.page.getByRole('link', {name: folderSlug, exact:true});
   };
 
 }

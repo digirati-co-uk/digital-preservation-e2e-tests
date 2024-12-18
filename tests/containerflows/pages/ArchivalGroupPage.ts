@@ -8,11 +8,6 @@ export class ArchivalGroupPage {
   readonly navigationPage: NavigationPage;
   readonly depositPage: DepositPage;
 
-  //Deposit page
-  readonly createDiffImportJobButton :Locator ;
-  readonly noCurrentImportJobsText : Locator;
-  readonly depositNotActiveText : Locator;
-
   //Create diff page
   readonly runImportPreserveButton : Locator;
   readonly diffStatus : Locator;
@@ -59,12 +54,6 @@ export class ArchivalGroupPage {
     this.page = page;
     this.navigationPage = new NavigationPage(page);
     this.depositPage = new DepositPage(page);
-
-    //Deposit page
-    this.createDiffImportJobButton = page.getByRole('button', { name: 'Create diff import job' });
-    this.noCurrentImportJobsText = page.getByText('There are no submitted import jobs for this Deposit');
-    this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.');
-
 
     //Create diff page
     this.runImportPreserveButton = page.getByRole('button', { name: 'Run Import (Preserve)' });
@@ -126,6 +115,8 @@ export class ArchivalGroupPage {
     await expect(this.diffBinariesToRemove, 'Binaries to Remove is empty').toBeEmpty();
   }
 
+  //TODO may need to rethink this, if the environment takes some time to process jobs to completion
+  //as this will block the tests
   async allowJobToComplete(){
     //Refresh the page until changes to completed
     let jobCompleted : boolean = false;

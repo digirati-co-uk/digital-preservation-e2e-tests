@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { frontendSessionFile } from './tests/auth';
 import 'dotenv/config';
 
 /**
@@ -32,14 +33,24 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    
     {
+      name: 'frontend-setup',
+      testDir: './tests/setup',
+      testMatch: /frontend\.setup\.ts/,
+      use: {
+        baseURL: process.env.FRONTEND_BASE_URL,
+        ...devices['Desktop Chrome'] ,
+      },
+    },
+    {
+      dependencies: ['frontend-setup'],
       name: 'frontendtests',
       testDir: './tests/containerflows',
       testMatch: /.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         baseURL: process.env.FRONTEND_BASE_URL,
+        storageState: frontendSessionFile,
       },
     },
   ],

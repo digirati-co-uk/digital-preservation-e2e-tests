@@ -1,10 +1,9 @@
-import {expect} from "@playwright/test";
+import {expect, Locator} from "@playwright/test";
 import { DepositPage } from './pages/DepositPage';
 import { test } from '../../fixture';
 import {
   checkDateIsWithinNumberOfSeconds,
   createdByUserName,
-  frontendBaseUrl,
   generateUniqueId
 } from "../helpers/helpers";
 import * as path from 'path';
@@ -75,18 +74,23 @@ test.describe('Deposit Tests', () => {
 
     await test.step('Can add the Archival Group name and a note, and the URI', async() => {
 
+      //Test that initially there is no create archival group button, and
+      //message indicating no Archival group set
+      await expect(depositPage.noCurrentImportJobsText, 'The message that we cannot create a job is visible').toBeVisible();
+      await expect(depositPage.createDiffImportJobButton, 'Button to create a diff import job is not yet visible').not.toBeVisible();
+
       //Shouldn't be allowed to enter with spaces in a URI
       await depositPage.archivalGroupInput.fill(depositPage.testInvalidArchivalURI);
       //Save changes, verify failed
       await depositPage.updateArchivalPropertiesButton.click();
-      await expect(depositPage.alertMessage, 'Failure message is shown').toHaveText('UnknownError: Status InternalServerError');
+      await expect(depositPage.alertMessage, 'Failure message is shown').toHaveText(`BadRequest: Archive path '${depositPage.testInvalidArchivalURI}' is not valid.`);
       await expect(depositPage.archivalGroupInput, 'The Archival group was not set').toBeEmpty();
 
       //Wait for a second so that we can see if the modified time stamp properly updates
       await page.waitForTimeout(1_000);
 
       //Use a valid URI this time
-      await depositPage.archivalGroupInput.fill(frontendBaseUrl+depositPage.testValidArchivalURI);
+      await depositPage.archivalGroupInput.fill(depositPage.navigationPage.basePath + '/' +depositPage.testValidArchivalURI);
       await depositPage.archivalGroupNameInput.fill(depositPage.testArchivalGroupName);
       await depositPage.archivalGroupDepositNoteInput.fill(depositPage.testDepositNote);
 
@@ -106,31 +110,13 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.archivalGroupNameInput, 'The Archival Group Name is correct').toHaveValue(depositPage.testArchivalGroupName);
       await expect(depositPage.archivalGroupDepositNoteInput, 'The archival group Note is correct').toHaveValue(depositPage.testDepositNote);
 
-      //TODO Is this right? Have added a note to Google doc
-      //await expect(depositPage.archivalGroupInput, 'The archival group URI is correct').toHaveValue(baseURL+depositPage.testValidArchivalURI);
+      await expect(depositPage.archivalGroupInput, 'The archival group URI is correct').toHaveValue(depositPage.navigationPage.basePath + '/' +depositPage.testValidArchivalURI);
 
       //Check that the modified date no longer matches the created date
       const depositCreatedDate = await depositPage.depositCreatedDate.textContent();
       const depositLastModified = await depositPage.depositLastModified.textContent();
       expect(depositCreatedDate, 'Created and Modified dates no longer match').not.toEqual(depositLastModified);
 
-    });
-
-    await test.step('Validate that we cannot add a file or folder at the top level', async() => {
-      //With the rework to put the buttons inline in the deposit structure, there is just no way to do this any more
-      //There's not really an explicit test that can be written, simply that the upload tests below load the file into the
-      //correct place
-      // //Try to add folder (this currently fails)
-      // await depositPage.createNewFolder.click();
-      // await depositPage.newFolderNameInput.fill(depositPage.newTestFolderTitle);
-      // await depositPage.newFolderDialogButton.click();
-      // //TODO remove soft once bug fixed
-      // await expect.soft(depositPage.newTestFolderInTableShouldNotExist, 'The new test folder has not been created').not.toBeVisible();
-      //
-      // //Try to add a file at the top leve
-      // await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false);
-      // await expect(depositPage.testImageInFilesToplevel, 'File was not added').not.toBeVisible();
-      // await expect(depositPage.alertMessage, 'We see the corresponding error message').toHaveText(depositPage.cannotUploadTopLevelMessage);
     });
 
     await test.step('Validate that we can create a sub folder, and add a variety of files', async() => {
@@ -213,6 +199,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.deleteFile(depositPage.newTestPdfFileInTable, depositPage.testPdfDocLocation);
       await depositPage.deleteFile(depositPage.newTestWordFileInTable, depositPage.testWordDocLocation);
       await depositPage.deleteFile(depositPage.newTestImageFileInTable, depositPage.testImageLocation);
+      await depositPage.deleteFile(depositPage.newTestImageFileTranslatedCharsInTable, depositPage.testImageWithInvalidCharsLocation.replaceAll('&','-'));
     });
 
     await test.step('user can delete an empty folder from the deposit', async() => {
@@ -242,9 +229,8 @@ test.describe('Deposit Tests', () => {
 
       //Open the dialog again, this time click the delete button
       await depositPage.deleteDepositButton.click();
-      //TODO highlight to Tom and check if he agrees the checking of this box shouldn't be retained - agreed bu still a bug
-      //await expect.soft(depositPage.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
-      //await depositPage.confirmDeleteDeposit.check();
+      await expect(depositPage.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
+      await depositPage.confirmDeleteDeposit.check();
       await depositPage.deleteDepositModalButton.click();
 
       //Check back at the main deposits page and the deposit we created is not on the page
@@ -255,7 +241,6 @@ test.describe('Deposit Tests', () => {
     });
   });
 
-
   test(`can create a Deposit within a Container, and the slug defaults to that location`, async ({page}) => {
 
     //We have tested in detail the Deposit functionality in the test above,
@@ -263,6 +248,7 @@ test.describe('Deposit Tests', () => {
     //Browse Containers view, with a slug
 
     let depositURL: string;
+    const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
 
     await test.step('Try to create Deposit with an invalid slug', async() => {
       await depositPage.getStarted();
@@ -278,9 +264,8 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.slugDisplayOnModal, 'The invalid slug has the spaces stripped.').toHaveText(depositPage.testInvalidArchivalURI.replaceAll(' ', ''));
     });
 
-    const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
+    await test.step('Create Deposit with a VALID slug', async() => {
 
-    await test.step('Try to create Deposit with a VALID slug', async() => {
       //This click into the archival group slug field is important,
       //otherwise the typing doesn't register properly in the following step
       await depositPage.modalArchivalSlug.click();
@@ -324,41 +309,214 @@ test.describe('Deposit Tests', () => {
     });
   });
 
+  test(`Deposits listing`, async ({page}) => {
 
+    let depositURL: string;
+    const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
 
-  test.skip(`Deposits listing`, async ({}) => {
+    //Create a recent date to filter by in later steps
+    const yesterday : Date = depositPage.generateDateInPast(1);
 
-    await test.step( 'Deposits listing is in created date desc order', async() => {});
+    //Create a deposit to ensure we have one new deposit, then visit the listing page
+    await test.step('Create a deposit to ensure something new in the listing', async() => {
+      await depositPage.getStarted();
+      await depositPage.newDepositButton.click();
+      await depositPage.modalArchivalSlug.click();
+      await depositPage.modalArchivalSlug.fill(validSlug);
+      await depositPage.modalCreateNewDepositButton.click();
+
+      //Validate that we're navigated into the new Deposit
+      await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(depositPage.depositsURL);
+      depositURL = page.url();
+    });
+
+    await test.step('navigate to the listings page', async() => {
+      await depositPage.navigationPage.depositMenuOption.click();
+      await expect(depositPage.depositsTable, 'Deposits table has loaded').toBeVisible();
+    });
+
+    await test.step('Deposits listing is in created date desc order', async() => {
+      //This means the item we just created should be at the top, in row position 1
+      await expect(depositPage.depositRow1Slug, 'The correct slug is shown in row 1').toContainText(validSlug);
+      await expect(depositPage.depositRow1Status, 'The correct status is shown in row 1').toContainText('new');
+    });
+
+    await test.step('filter by status, whether active', async() => {
+      //First check that all items show the 'new' status
+      expect((await depositPage.allRowsStatus.allTextContents()).every((currentValue : string) => currentValue === 'new'), 'The table shows only active Deposits').toBeTruthy();
+
+      //Test that the number of items increases when changing from active only to all
+      const activeRowCount : number = await depositPage.depositTableRows.count();
+      await depositPage.showAllDepositsButton.click();
+      await page.waitForLoadState('networkidle');
+      await expect(depositPage.showActiveDepositsButton, 'We can see the show active deposits button').toBeVisible();
+      const allDepositsRowCount = await depositPage.depositTableRows.count();
+      expect (allDepositsRowCount, 'We are now showing all deposits').toBeGreaterThan(activeRowCount);
+
+      //Check that clicking 'show active only' resets the count
+      await depositPage.showActiveDepositsButton.click();
+      expect(await depositPage.depositTableRows.getByRole('row').count(), 'The table is showing active deposits only now').toBeLessThan(allDepositsRowCount);
+    });
 
     await test.step('show only - createdBy, lastModifiedBy, preservedBy, exportedBy', async() => {
+      //Test that if active, then no preserved date, preserved By, Exported, or exported by
+      expect((await depositPage.allRowsPreservedDate.allTextContents()).every((currentValue : string) => currentValue === ''), 'Preserved date is blank on new rows').toBeTruthy();
+      expect((await depositPage.allRowsPreservedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Preserved By is blank on new rows').toBeTruthy();
+      expect((await depositPage.allRowsExportedDate.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported date is blank on new rows').toBeTruthy();
+      expect((await depositPage.allRowsExportedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported by is blank on new rows').toBeTruthy();
+
+      //Test if status is preserved, then the preserved fields are set, but exported still blank
+      await depositPage.showAllDepositsButton.click();
+      expect((await depositPage.allPreservedRowsPreservedDate.allTextContents()).every((currentValue : string) => currentValue != ''), 'Preserved date is populated on all preserved rows').toBeTruthy();
+      expect((await depositPage.allPreservedRowsPreservedBy.allTextContents()).every((currentValue : string) => currentValue != ''), 'Preserved by is populated on all preserved rows').toBeTruthy();
+      expect((await depositPage.allPreservedRowsExportedDate.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported date is blank on preserved rows').toBeTruthy();
+      expect((await depositPage.allPreservedRowsExportedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported by is blank on preserved rows').toBeTruthy();
 
     });
 
-    await test.step('further filter any of these by date range', async() => {
+    await test.step('filter by status', async() => {
 
-    });
-    await test.step('filter by status, whether active ', async() => {
-
-    });
-    await test.step('deposits are paged when the number exceeds 100', async() => {
-
+      //status param, set to new
+      await depositPage.navigateToDepositListingPageWithParams(`status=new`);
+      expect((await depositPage.allRowsStatus.allTextContents()).every((currentValue: string) => currentValue === 'new'), 'All rows have status new').toBeTruthy();
     });
 
+    await test.step('filter by archival group', async() => {
+
+      //archival group path filter - use the slug we just created, it should return only one row
+      await depositPage.navigateToDepositListingPageWithParams(`archivalGroupPath=${depositPage.navigationPage.basePath}/${validSlug}&showAll=true`);
+      await expect(depositPage.allRowsStatus, 'There is one matching row').toHaveCount(1);
+    });
+
+    await test.step('filter by created fields', async() => {
+
+      //Filter the listing by created date after
+      await depositPage.navigateToDepositListingPageWithParams(`createdAfter=${yesterday.toISOString().substring(0, 10)}&showAll=true`);
+      // Now check that the created column doesn't have any values prior to that date
+      let allDateFields: Date[] = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are created yesterday or later').toBeTruthy();
+
+      //Apply url param createdBefore, then check that the created column doesn't have any values after
+      //that date
+      await depositPage.navigateToDepositListingPageWithParams(`createdBefore=${yesterday.toISOString().substring(0, 10)}&showAll=true`);
+      // Now check that the created column doesn't have any values after to that date
+      allDateFields = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue < yesterday), 'All the rows are created earlier than yesterday').toBeTruthy();
+
+      //createdBy
+      await depositPage.navigateToDepositListingPageWithParams(`createdBy=${createdByUserName}`);
+      expect((await depositPage.allRowsCreatedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct created by username').toBeTruthy();
+
+      //Test multiple request parameters - test that we can combine a before and after filter
+      const now : Date = new Date();
+      await depositPage.navigateToDepositListingPageWithParams(`createdAfter=${yesterday.toISOString().substring(0, 10)}&createdBefore=${now.toISOString().substring(0, 10)}&showAll=true`);
+      allDateFields = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are created yesterday or later').toBeTruthy();
+      expect(allDateFields.every((currentValue: Date) => currentValue < now), 'All the rows are created earlier than now').toBeTruthy();
+
+    });
+
+    await test.step('filter by last modified fields', async() => {
+      //LAST MODIFIED FIELDS
+      //Filter the listing by modified date after
+      await depositPage.navigateToDepositListingPageWithParams(`lastModifiedAfter=${yesterday.toISOString().substring(0, 10)}&showAll=true`);
+      // Now check that the created column doesn't have any values prior to that date
+      let allDateFields: Date[] = (await depositPage.allRowsLastModifiedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are modified yesterday or later').toBeTruthy();
+
+      //Apply url param lastModifiedBefore, then check that the modified column doesn't have any values after
+      //that date
+      await depositPage.navigateToDepositListingPageWithParams(`lastModifiedBefore=${yesterday.toISOString().substring(0, 10)}&showAll=true`);
+      // Now check that the created column doesn't have any values after to that date
+      allDateFields = (await depositPage.allRowsLastModifiedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue < yesterday), 'All the rows are modified earlier than yesterday').toBeTruthy();
+
+      //modified by
+      await depositPage.navigateToDepositListingPageWithParams(`modifiedBy=${createdByUserName}`);
+      expect((await depositPage.allRowsLastModifiedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct modified by username').toBeTruthy();
+    });
+
+    //Test can sort by the various fields
+    await test.step('columns are sortable - archival group', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //TODO re-instate once sorting bug fixed
+      //sort by slug desc
+      await depositPage.sortByArchivalGroup.click();
+      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupSlug.allTextContents()), false, (value) => value);
+      //Ascending
+      await depositPage.sortByArchivalGroup.click();
+      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupSlug.allTextContents()), true, (value) => value);
+
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&orderby=archivalGroupName&ascending=true`);
+      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupName.allTextContents()), false, (value) => value);
+
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&orderby=archivalGroupName`);
+      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupName.allTextContents()), true, (value) => value);
+
+    });
+
+    await test.step('columns are sortable - status', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //sort by status descending
+      await depositPage.sortByStatus.click();
+      depositPage.validateSortOrder<String>((await depositPage.allRowsStatus.allTextContents()), false, (value) => value);
+      //Ascending
+      await depositPage.sortByStatus.click();
+      depositPage.validateSortOrder<String>((await depositPage.allRowsStatus.allTextContents()), true, (value) => value);
+    });
+
+    await test.step('columns are sortable - created date', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //sort by created date desc
+      await depositPage.sortByCreatedDate.click();
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsCreatedDate.allTextContents()), false, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
+      //Ascending
+      await depositPage.sortByCreatedDate.click();
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsCreatedDate.allTextContents()), true, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
+    });
+
+    await test.step('columns are sortable - last modified date', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //sort by modified date desc
+      await depositPage.sortByLastModified.click();
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsLastModifiedDate.allTextContents()), false, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
+      //Ascending
+      await depositPage.sortByLastModified.click();
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsLastModifiedDate.allTextContents()), true, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
+    });
+
+    await test.step('TODO ONCE FEATURE BUILT filter by preservation fields', async() => {
+
+      //TODO once preservation functionality in place
+      //Filter the listing by preserved date after
+      //preserved by
+    });
+
+    await test.step('TODO ONCE FEATURE BUILT filter by exported fields', async() => {
+
+      //TODO once exported functionality in place
+      //exportedBefore and after and by
+
+    });
+
+    await test.step('TODO ONCE FEATURE BUILT deposits are paged when the number exceeds 100', async() => {
+      //Test pagination - copy over the Portal code to validate pagination?
+      //TODO not yet implemented
+    });
+
+    await test.step('Tidy up and delete the deposit', async() => {
+      //Navigate back into the first deposit in order to delete it
+      await page.goto(depositURL);
+      //Tidy up
+      await depositPage.deleteDepositButton.click();
+      await depositPage.confirmDeleteDeposit.check();
+      await depositPage.deleteDepositModalButton.click();
+    });
   });
-
-  //TODO await Tom's reply as I am unable to see sorting etc on the page
-  //Create a deposit then visit the listing page
-  // What's mandatory, what's not?
-
-  //Test in date desc order
-
-  // PBI 79215 - Deposits Page
-  //
-  // User can filter and order deposits
-  // - show only - createdBy, lastModifiedBy, preservedBy, exportedBy
-  // - further filter any of these by date range
-  // - filter by status, whether active
-  // - deposits are paged when the number exceeds 100
 
 
 });
