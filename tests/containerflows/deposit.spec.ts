@@ -311,17 +311,13 @@ test.describe('Deposit Tests', () => {
     });
   });
 
-  test(`Deposits listing`, async ({page}) => {
-
-    //Set a 5-minute timeout
-    test.setTimeout(300_000);
+  test(`Deposits listing - check basic page details are correct`, async ({page}) => {
 
     let depositURL: string;
     const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
 
     //Create a recent date to filter by in later steps
     const yesterday : Date = depositPage.generateDateInPast(1);
-    const formattedYesterday = yesterday.toISOString().substring(0, 10);
 
     //Create a deposit to ensure we have one new deposit, then visit the listing page
     await test.step('Create a deposit to ensure something new in the listing', async() => {
@@ -370,6 +366,219 @@ test.describe('Deposit Tests', () => {
       expect((await depositPage.allPreservedRowsPreservedBy.allTextContents()).every((currentValue : string) => currentValue != ''), 'Preserved by is populated on all preserved rows').toBeTruthy();
       expect((await depositPage.allPreservedRowsExportedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported by is blank on preserved rows').toBeTruthy();
 
+    });
+
+    await test.step('Tidy up and delete the deposit', async() => {
+      //Navigate back into the first deposit in order to delete it
+      await page.goto(depositURL);
+      //Tidy up
+      await depositPage.deleteDepositButton.click();
+      await depositPage.confirmDeleteDeposit.check();
+      await depositPage.deleteDepositModalButton.click();
+    });
+  });
+
+  test(`Deposits listing - check columns are sortable`, async ({page}) => {
+
+    let depositURL: string;
+    const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
+
+    //Create a recent date to filter by in later steps
+    const yesterday : Date = depositPage.generateDateInPast(1);
+
+    //Create a deposit to ensure we have one new deposit, then visit the listing page
+    await test.step('Create a deposit to ensure something new in the listing', async() => {
+      await depositPage.getStarted();
+      await depositPage.newDepositButton.click();
+      await depositPage.modalArchivalSlug.click();
+      await depositPage.modalArchivalSlug.fill(validSlug);
+      await depositPage.modalCreateNewDepositButton.click();
+
+      //Validate that we're navigated into the new Deposit
+      await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(depositPage.depositsURL);
+      depositURL = page.url();
+    });
+
+    //Test can sort by the various fields
+    await test.step('columns are sortable - archival group', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //TODO re-instate once sorting bug fixed
+      //sort by slug desc
+      await depositPage.sortByArchivalGroup.click();
+      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupSlug.allTextContents()), false, (value) => value);
+      //Ascending
+      await depositPage.sortByArchivalGroup.click();
+      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupSlug.allTextContents()), true, (value) => value);
+
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&orderby=archivalGroupName&ascending=true`);
+      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupName.allTextContents()), false, (value) => value);
+
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&orderby=archivalGroupName`);
+      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupName.allTextContents()), true, (value) => value);
+
+    });
+
+    await test.step('columns are sortable - status', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //sort by status descending
+      await depositPage.sortByStatus.click();
+      depositPage.validateSortOrder<String>((await depositPage.allRowsStatus.allTextContents()), false, (value) => value);
+      //Ascending
+      await depositPage.sortByStatus.click();
+      depositPage.validateSortOrder<String>((await depositPage.allRowsStatus.allTextContents()), true, (value) => value);
+    });
+
+    await test.step('columns are sortable - created date', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //sort by created date desc
+      await depositPage.sortByCreatedDate.click();
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsCreatedDate.allTextContents()), false, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
+      //Ascending
+      await depositPage.sortByCreatedDate.click();
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsCreatedDate.allTextContents()), true, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
+    });
+
+    await test.step('columns are sortable - last modified date', async() => {
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //sort by modified date desc
+      await depositPage.sortByLastModified.click();
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsLastModifiedDate.allTextContents()), false, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
+      //Ascending
+      await depositPage.sortByLastModified.click();
+      depositPage.validateSortOrder<Date>((await depositPage.allRowsLastModifiedDate.allTextContents()), true, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
+    });
+
+    await test.step('Tidy up and delete the deposit', async() => {
+      //Navigate back into the first deposit in order to delete it
+      await page.goto(depositURL);
+      //Tidy up
+      await depositPage.deleteDepositButton.click();
+      await depositPage.confirmDeleteDeposit.check();
+      await depositPage.deleteDepositModalButton.click();
+    });
+  });
+
+  test(`Deposits listing - check pagination`, async ({page}) => {
+
+    let depositURL: string;
+    const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
+    let requiredPageSize: number;
+    let totalNumberOfItems: number;
+
+    //Create a deposit to ensure we have one new deposit, then visit the listing page
+    await test.step('Create a deposit to ensure something new in the listing', async() => {
+      await depositPage.getStarted();
+      await depositPage.newDepositButton.click();
+      await depositPage.modalArchivalSlug.click();
+      await depositPage.modalArchivalSlug.fill(validSlug);
+      await depositPage.modalCreateNewDepositButton.click();
+
+      //Validate that we're navigated into the new Deposit
+      await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(depositPage.depositsURL);
+      depositURL = page.url();
+    });
+
+    await test.step('there is no pagination element when only one page of deposits', async() => {
+
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
+
+      //If there are numberOfItemsPerPage items or less, then check pagination doesn't show - to do this, need the
+      //total number of items and then set the URL Parameter to be greater than this
+      totalNumberOfItems = Number.parseInt(await depositPage.totalNumberOfItems.textContent());
+
+      //Set up the page size such that we will only have one page of results
+      requiredPageSize = totalNumberOfItems +1;
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&pageSize=${requiredPageSize}`);
+      await expect(depositPage.totalPagesCount).not.toBeVisible();
+      //Should not see the paginator
+      await expect(depositPage.paginator).not.toBeVisible();
+
+    });
+
+    await test.step('there are pagination elements when more than one page of deposits', async() => {
+
+      //Now set it up such that we should get 2 pages of results
+      requiredPageSize = totalNumberOfItems - 1;
+      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&pageSize=${requiredPageSize}`);
+      await expect(depositPage.totalPagesCount).toHaveText('2');
+      //Should have 4 list items, Previous, 1, 2 Next
+      await expect(depositPage.paginatorElements).toHaveCount(4);
+      //Previous is disabled
+      await expect(depositPage.previousButtonText).toBeVisible();
+      expect(await depositPage.previousButton.getAttribute('class')).toContain('disabled');
+      //Next is enabled
+      await expect(depositPage.nextButtonText).toBeVisible();
+      expect(await depositPage.nextButton.getAttribute('class')).not.toContain('disabled');
+
+    });
+
+    await test.step('the pagination elements allow you to move between pages', async() => {
+
+      //paginate to the next page.
+      //First read the value of the first row to ensure we have a new first row after paginating
+      let firstRowId : string = await depositPage.firstRowID.textContent();
+      await depositPage.nextButton.click();
+      //Previous is enabled
+      await expect(depositPage.previousButtonText).toBeVisible();
+      expect(await depositPage.previousButton.getAttribute('class')).not.toContain('disabled');
+      //Next is disabled
+      await expect(depositPage.nextButtonText).toBeVisible();
+      expect(await depositPage.nextButton.getAttribute('class')).toContain('disabled');
+
+      //read first row id and compare to previous to ensure changed
+      let nextPageFirstRowId : string = await depositPage.firstRowID.textContent();
+      expect(nextPageFirstRowId).not.toEqual(firstRowId);
+
+      //Check the previous works
+      await depositPage.previousButton.click();
+      expect(await depositPage.previousButton.getAttribute('class')).toContain('disabled');
+      firstRowId = await depositPage.firstRowID.textContent();
+      expect(nextPageFirstRowId).not.toEqual(firstRowId);
+
+      //Check that we can click on the numbered elements to move pages
+      await depositPage.page2Element.click();
+      expect(await depositPage.previousButton.getAttribute('class')).not.toContain('disabled');
+      nextPageFirstRowId = await depositPage.firstRowID.textContent();
+      expect(nextPageFirstRowId).not.toEqual(firstRowId);
+    });
+
+    await test.step('Tidy up and delete the deposit', async() => {
+      //Navigate back into the first deposit in order to delete it
+      await page.goto(depositURL);
+      //Tidy up
+      await depositPage.deleteDepositButton.click();
+      await depositPage.confirmDeleteDeposit.check();
+      await depositPage.deleteDepositModalButton.click();
+    });
+  });
+
+  test(`Deposits listing - advanced search and filtering`, async ({page}) => {
+
+    //Set a 2-minute timeout
+    test.setTimeout(120_000);
+
+    let depositURL: string;
+    const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
+
+    //Create a recent date to filter by in later steps
+    const yesterday : Date = depositPage.generateDateInPast(1);
+    const formattedYesterday = yesterday.toISOString().substring(0, 10);
+
+    //Create a deposit to ensure we have one new deposit, then visit the listing page
+    await test.step('Create a deposit to ensure something new in the listing', async() => {
+      await depositPage.getStarted();
+      await depositPage.newDepositButton.click();
+      await depositPage.modalArchivalSlug.click();
+      await depositPage.modalArchivalSlug.fill(validSlug);
+      await depositPage.modalCreateNewDepositButton.click();
+
+      //Validate that we're navigated into the new Deposit
+      await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(depositPage.depositsURL);
+      depositURL = page.url();
     });
 
     await test.step('filter by status using URL params', async() => {
@@ -647,75 +856,6 @@ test.describe('Deposit Tests', () => {
       expect(page.url()).toContain(`exportedBy=${createdByUserName}`);
     });
 
-    //Test can sort by the various fields
-    await test.step('columns are sortable - archival group', async() => {
-      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
-
-      //TODO re-instate once sorting bug fixed
-      //sort by slug desc
-      await depositPage.sortByArchivalGroup.click();
-      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupSlug.allTextContents()), false, (value) => value);
-      //Ascending
-      await depositPage.sortByArchivalGroup.click();
-      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupSlug.allTextContents()), true, (value) => value);
-
-      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&orderby=archivalGroupName&ascending=true`);
-      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupName.allTextContents()), false, (value) => value);
-
-      await depositPage.navigateToDepositListingPageWithParams(`showAll=true&orderby=archivalGroupName`);
-      //depositPage.validateSortOrder<String>((await depositPage.allRowsArchivalGroupName.allTextContents()), true, (value) => value);
-
-    });
-
-    await test.step('columns are sortable - status', async() => {
-      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
-
-      //sort by status descending
-      await depositPage.sortByStatus.click();
-      depositPage.validateSortOrder<String>((await depositPage.allRowsStatus.allTextContents()), false, (value) => value);
-      //Ascending
-      await depositPage.sortByStatus.click();
-      depositPage.validateSortOrder<String>((await depositPage.allRowsStatus.allTextContents()), true, (value) => value);
-    });
-
-    await test.step('columns are sortable - created date', async() => {
-      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
-
-      //sort by created date desc
-      await depositPage.sortByCreatedDate.click();
-      depositPage.validateSortOrder<Date>((await depositPage.allRowsCreatedDate.allTextContents()), false, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
-      //Ascending
-      await depositPage.sortByCreatedDate.click();
-      depositPage.validateSortOrder<Date>((await depositPage.allRowsCreatedDate.allTextContents()), true, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
-    });
-
-    await test.step('columns are sortable - last modified date', async() => {
-      await depositPage.navigateToDepositListingPageWithParams(`showAll=true`);
-
-      //sort by modified date desc
-      await depositPage.sortByLastModified.click();
-      depositPage.validateSortOrder<Date>((await depositPage.allRowsLastModifiedDate.allTextContents()), false, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
-      //Ascending
-      await depositPage.sortByLastModified.click();
-      depositPage.validateSortOrder<Date>((await depositPage.allRowsLastModifiedDate.allTextContents()), true, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
-    });
-
-    await test.step('TODO ONCE FEATURE BUILT deposits are paged when the number exceeds 100', async() => {
-      //Test pagination - copy over the Portal code to validate pagination? harder here to know in advance exactly how many
-      //items we will have....
-
-      //If there are numberOfItemsPerPage items or less, then check pagination doesn't show
-
-
-      //If > numberOfItemsPerPage items, then check page count is correct
-
-      //Check Previous disables, and 1,2,next enabled
-
-      //paginate to the next page.
-
-      //TODO not yet implemented
-    });
-
     await test.step('Tidy up and delete the deposit', async() => {
       //Navigate back into the first deposit in order to delete it
       await page.goto(depositURL);
@@ -725,8 +865,6 @@ test.describe('Deposit Tests', () => {
       await depositPage.deleteDepositModalButton.click();
     });
   });
-
-
 });
 
 

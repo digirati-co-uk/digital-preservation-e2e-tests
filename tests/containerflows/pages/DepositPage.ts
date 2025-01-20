@@ -144,9 +144,17 @@ export class DepositPage {
   readonly sortByCreatedDate: Locator;
 
   //Deposit listing page - pagination
+  readonly paginator: Locator;
   readonly previousButton: Locator;
   readonly nextButton: Locator;
-  readonly paginator: Locator;
+  readonly previousButtonText: Locator;
+  readonly nextButtonText: Locator;
+  readonly page1Element: Locator;
+  readonly page2Element: Locator;
+  readonly paginatorElements: Locator;
+  readonly totalNumberOfItems: Locator;
+  readonly totalPagesCount: Locator;
+  readonly firstRowID: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -295,10 +303,17 @@ export class DepositPage {
     this.sortByCreatedDate = page.getByRole('link', {name: 'created'});
 
     //Deposit listing page - pagination
-    this.previousButton  = page.getByLabel('paging').getByRole('listitem').first().getByText('Previous');
-    this.nextButton  = page.getByLabel('paging').getByRole('listitem').last().getByText('Next')
-    this.paginator = page.getByLabel('paging').getByRole('listitem');
-
+    this.paginator = page.getByLabel('Paging');
+    this.previousButton  = this.paginator.getByRole('listitem').first();
+    this.page1Element = this.paginator.getByRole('listitem').getByText('1');
+    this.page2Element = this.paginator.getByRole('listitem').getByText('2');
+    this.nextButton  = this.paginator.getByRole('listitem').last();
+    this.previousButtonText  = this.previousButton.getByText('Previous');
+    this.nextButtonText  = this.nextButton.getByText('Next');
+    this.paginatorElements = this.paginator.getByRole('listitem');
+    this.totalNumberOfItems = page.getByLabel('Total items');
+    this.totalPagesCount = page.getByLabel('Total pages');
+    this.firstRowID = page.getByRole('table', {name: 'table-deposits-index'}).getByRole('row', {name:'row-1', exact: true}).getByRole('cell', {name:'td-id'});
   }
 
   async goto() {
