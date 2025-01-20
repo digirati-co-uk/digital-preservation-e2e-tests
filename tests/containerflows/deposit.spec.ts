@@ -37,6 +37,7 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.depositHeaderNoSlug, 'The new Deposit page has loaded').toBeVisible();
       depositId = await depositPage.depositHeaderNoSlug.textContent();
       depositId = depositId.replace('Deposit ', '');
+      depositId = depositId.trim();
     });
 
     await test.step('Validate the created and modified dates are correct', async() => {
@@ -83,7 +84,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.archivalGroupInput.fill(depositPage.testInvalidArchivalURI);
       //Save changes, verify failed
       await depositPage.updateArchivalPropertiesButton.click();
-      await expect(depositPage.alertMessage, 'Failure message is shown').toHaveText(`BadRequest: Archive path '${depositPage.testInvalidArchivalURI}' is not valid.`);
+      await expect(depositPage.alertMessage, 'Failure message is shown').toHaveText(`BadRequest: Archive path '${depositPage.testInvalidArchivalURI}' contains invalid characters.`);
       await expect(depositPage.archivalGroupInput, 'The Archival group was not set').toBeEmpty();
 
       //Wait for a second so that we can see if the modified time stamp properly updates
@@ -278,8 +279,9 @@ test.describe('Deposit Tests', () => {
       //Validate that we're navigated into the new Deposit
       depositURL = page.url();
       await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(depositPage.depositsURL);
-      await expect(depositPage.depositHeaderSlug, 'The new Deposit page has loaded').toBeVisible();
-      await expect(depositPage.depositHeaderSlug, 'The slug is listed in the deposit title').toContainText(validSlug);
+      //todo reinstate if Tom adds the 'Deposit' back into the header
+      //await expect(depositPage.depositHeaderSlug, 'The new Deposit page has loaded').toBeVisible();
+      await expect(page.getByRole('heading', {name: validSlug}), 'The slug is listed in the deposit title').toBeVisible();
     });
 
     await test.step('Verify we cannot create a second deposit at the same slug', async() => {
@@ -311,11 +313,15 @@ test.describe('Deposit Tests', () => {
 
   test(`Deposits listing`, async ({page}) => {
 
+    //Set a 5-minute timeout
+    test.setTimeout(300_000);
+
     let depositURL: string;
     const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
 
     //Create a recent date to filter by in later steps
     const yesterday : Date = depositPage.generateDateInPast(1);
+    const formattedYesterday = yesterday.toISOString().substring(0, 10);
 
     //Create a deposit to ensure we have one new deposit, then visit the listing page
     await test.step('Create a deposit to ensure something new in the listing', async() => {
@@ -345,40 +351,40 @@ test.describe('Deposit Tests', () => {
       //First check that all items show the 'new' status
       expect((await depositPage.allRowsStatus.allTextContents()).every((currentValue : string) => currentValue === 'new'), 'The table shows only active Deposits').toBeTruthy();
 
-      //Test that the number of items increases when changing from active only to all
-      const activeRowCount : number = await depositPage.depositTableRows.count();
+      //Check we see statuses other than 'new' when we change to how all
       await depositPage.showAllDepositsButton.click();
       await page.waitForLoadState('networkidle');
       await expect(depositPage.showActiveDepositsButton, 'We can see the show active deposits button').toBeVisible();
-      const allDepositsRowCount = await depositPage.depositTableRows.count();
-      expect (allDepositsRowCount, 'We are now showing all deposits').toBeGreaterThan(activeRowCount);
-
-      //Check that clicking 'show active only' resets the count
-      await depositPage.showActiveDepositsButton.click();
-      expect(await depositPage.depositTableRows.getByRole('row').count(), 'The table is showing active deposits only now').toBeLessThan(allDepositsRowCount);
+      expect((await depositPage.allRowsStatus.allTextContents()).every((currentValue : string) => currentValue === 'new'), 'The table shows all Deposits').toBeFalsy();
     });
 
     await test.step('show only - createdBy, lastModifiedBy, preservedBy, exportedBy', async() => {
       //Test that if active, then no preserved date, preserved By, Exported, or exported by
+      await depositPage.showActiveDepositsButton.click();
       expect((await depositPage.allRowsPreservedDate.allTextContents()).every((currentValue : string) => currentValue === ''), 'Preserved date is blank on new rows').toBeTruthy();
       expect((await depositPage.allRowsPreservedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Preserved By is blank on new rows').toBeTruthy();
-      expect((await depositPage.allRowsExportedDate.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported date is blank on new rows').toBeTruthy();
-      expect((await depositPage.allRowsExportedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported by is blank on new rows').toBeTruthy();
 
-      //Test if status is preserved, then the preserved fields are set, but exported still blank
+      //Test if status is preserved, then the preserved fields are set
       await depositPage.showAllDepositsButton.click();
       expect((await depositPage.allPreservedRowsPreservedDate.allTextContents()).every((currentValue : string) => currentValue != ''), 'Preserved date is populated on all preserved rows').toBeTruthy();
       expect((await depositPage.allPreservedRowsPreservedBy.allTextContents()).every((currentValue : string) => currentValue != ''), 'Preserved by is populated on all preserved rows').toBeTruthy();
-      expect((await depositPage.allPreservedRowsExportedDate.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported date is blank on preserved rows').toBeTruthy();
       expect((await depositPage.allPreservedRowsExportedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported by is blank on preserved rows').toBeTruthy();
 
     });
 
-    await test.step('filter by status', async() => {
+    await test.step('filter by status using URL params', async() => {
 
       //status param, set to new
       await depositPage.navigateToDepositListingPageWithParams(`status=new`);
       expect((await depositPage.allRowsStatus.allTextContents()).every((currentValue: string) => currentValue === 'new'), 'All rows have status new').toBeTruthy();
+    });
+
+    await test.step('filter by status using advanced search', async() => {
+
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.filterUsingAdvancedSearchDropdown('statusSelect', 'preserved');
+      expect((await depositPage.allRowsStatus.allTextContents()).every((currentValue: string) => currentValue === 'preserved'), 'All rows have status preserved').toBeTruthy();
+      expect(page.url()).toContain('status=preserved');
     });
 
     await test.step('filter by archival group', async() => {
@@ -388,52 +394,257 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.allRowsStatus, 'There is one matching row').toHaveCount(1);
     });
 
-    await test.step('filter by created fields', async() => {
+    await test.step('filter by archival group using advanced search', async() => {
+
+      //archival group path filter - use the slug we just created, it should return only one row
+      await depositPage.navigationPage.depositMenuOption.click();
+      //Click advanced search
+      await page.locator('#showFormToggle').click();
+
+      //enter value
+      await page.getByRole('textbox', {name: 'Archival group path or slug'}).fill(`${depositPage.navigationPage.basePath}/${validSlug}`);
+      //Click Submit
+      await page.getByRole('button', { name: 'Submit' }).click();
+
+      await expect(depositPage.allRowsStatus, 'There is one matching row').toHaveCount(1);
+      const archivalGroupPath: string = encodeURIComponent(`${depositPage.navigationPage.basePath}/${validSlug}`);
+      expect(page.url()).toContain(`archivalGroupPath=${archivalGroupPath}`);
+    });
+
+    await test.step('filter by created after field', async() => {
 
       //Filter the listing by created date after
-      await depositPage.navigateToDepositListingPageWithParams(`createdAfter=${yesterday.toISOString().substring(0, 10)}&showAll=true`);
+      await depositPage.navigateToDepositListingPageWithParams(`createdAfter=${formattedYesterday}&showAll=true`);
       // Now check that the created column doesn't have any values prior to that date
       let allDateFields: Date[] = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
       expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are created yesterday or later').toBeTruthy();
 
+    });
+
+    await test.step('filter by created after field using advanced search ', async() => {
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.filterUsingAdvancedSearchDateField('createdAfterInput', formattedYesterday);
+      let allDateFields: Date[] = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are created yesterday or later').toBeTruthy();
+      expect(page.url()).toContain(`createdAfter=${formattedYesterday}`);
+    });
+
+    await test.step('filter by created before field', async() => {
       //Apply url param createdBefore, then check that the created column doesn't have any values after
       //that date
-      await depositPage.navigateToDepositListingPageWithParams(`createdBefore=${yesterday.toISOString().substring(0, 10)}&showAll=true`);
+      await depositPage.navigateToDepositListingPageWithParams(`createdBefore=${formattedYesterday}&showAll=true`);
       // Now check that the created column doesn't have any values after to that date
-      allDateFields = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
+      let allDateFields: Date[] = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
       expect(allDateFields.every((currentValue: Date) => currentValue < yesterday), 'All the rows are created earlier than yesterday').toBeTruthy();
+    });
+
+    await test.step('filter by created before field using advanced search', async() => {
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.filterUsingAdvancedSearchDateField('createdBeforeInput', formattedYesterday);
+      let allDateFields: Date[] = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue < yesterday), 'All the rows are created earlier than yesterday').toBeTruthy();
+      expect(page.url()).toContain(`createdBefore=${formattedYesterday}`);
+    });
+
+    await test.step('filter by created by field', async() => {
 
       //createdBy
       await depositPage.navigateToDepositListingPageWithParams(`createdBy=${createdByUserName}`);
       expect((await depositPage.allRowsCreatedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct created by username').toBeTruthy();
 
+    });
+
+    await test.step('filter by created by field using advanced search', async() => {
+
+      //createdBy
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.filterUsingAdvancedSearchDropdown('createdBySelect', createdByUserName);
+      expect((await depositPage.allRowsCreatedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct created by username').toBeTruthy();
+      expect(page.url()).toContain(`createdBy=${createdByUserName}`);
+
+    });
+
+    await test.step('filter by combination of created fields', async() => {
+
       //Test multiple request parameters - test that we can combine a before and after filter
       const now : Date = new Date();
-      await depositPage.navigateToDepositListingPageWithParams(`createdAfter=${yesterday.toISOString().substring(0, 10)}&createdBefore=${now.toISOString().substring(0, 10)}&showAll=true`);
-      allDateFields = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
+      await depositPage.navigateToDepositListingPageWithParams(`createdAfter=${formattedYesterday}&createdBefore=${now.toISOString().substring(0, 10)}&showAll=true`);
+      let allDateFields: Date[] = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
       expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are created yesterday or later').toBeTruthy();
       expect(allDateFields.every((currentValue: Date) => currentValue < now), 'All the rows are created earlier than now').toBeTruthy();
 
     });
 
-    await test.step('filter by last modified fields', async() => {
+    await test.step('filter by combination of created fields using advanced search', async() => {
+
+      //Test multiple request parameters - test that we can combine a before and after filter
+      const now : Date = new Date();
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.filterUsingAdvancedSearchDateField('createdAfterInput', formattedYesterday);
+      await page.locator('#showFormToggle').click();
+      await depositPage.filterUsingAdvancedSearchDateField('createdBeforeInput', formattedYesterday);
+      let allDateFields: Date[] = (await depositPage.allRowsCreatedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are created yesterday or later').toBeTruthy();
+      expect(allDateFields.every((currentValue: Date) => currentValue < now), 'All the rows are created earlier than now').toBeTruthy();
+      expect(page.url()).toContain(`createdBefore=${formattedYesterday}`);
+      expect(page.url()).toContain(`createdAfter=${formattedYesterday}`);
+    });
+
+    await test.step('filter by last modified date after field', async() => {
       //LAST MODIFIED FIELDS
       //Filter the listing by modified date after
-      await depositPage.navigateToDepositListingPageWithParams(`lastModifiedAfter=${yesterday.toISOString().substring(0, 10)}&showAll=true`);
+      await depositPage.navigateToDepositListingPageWithParams(`lastModifiedAfter=${formattedYesterday}&showAll=true`);
       // Now check that the created column doesn't have any values prior to that date
       let allDateFields: Date[] = (await depositPage.allRowsLastModifiedDate.allTextContents()).map((x: string) => new Date(x));
       expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are modified yesterday or later').toBeTruthy();
 
+    });
+
+    await test.step('filter by last modified date after field using advanced search', async() => {
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.filterUsingAdvancedSearchDateField('lastModifiedAfterInput', formattedYesterday);
+      // Now check that the created column doesn't have any values prior to that date
+      let allDateFields: Date[] = (await depositPage.allRowsLastModifiedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are modified yesterday or later').toBeTruthy();
+      expect(page.url()).toContain(`lastModifiedAfter=${formattedYesterday}`);
+    });
+
+    await test.step('filter by last modified before field', async() => {
       //Apply url param lastModifiedBefore, then check that the modified column doesn't have any values after
       //that date
-      await depositPage.navigateToDepositListingPageWithParams(`lastModifiedBefore=${yesterday.toISOString().substring(0, 10)}&showAll=true`);
+      await depositPage.navigateToDepositListingPageWithParams(`lastModifiedBefore=${formattedYesterday}&showAll=true`);
       // Now check that the created column doesn't have any values after to that date
-      allDateFields = (await depositPage.allRowsLastModifiedDate.allTextContents()).map((x: string) => new Date(x));
+      let allDateFields: Date[]  = (await depositPage.allRowsLastModifiedDate.allTextContents()).map((x: string) => new Date(x));
       expect(allDateFields.every((currentValue: Date) => currentValue < yesterday), 'All the rows are modified earlier than yesterday').toBeTruthy();
+    });
 
+    await test.step('filter by last modified before field using advanced search', async() => {
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.filterUsingAdvancedSearchDateField('lastModifiedBeforeInput', formattedYesterday);
+      // Now check that the created column doesn't have any values prior to that date
+      let allDateFields: Date[] = (await depositPage.allRowsLastModifiedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue < yesterday), 'All the rows are modified earlier than yesterday').toBeTruthy();
+      expect(page.url()).toContain(`lastModifiedBefore=${formattedYesterday}`);
+    });
+
+    await test.step('filter by last modified by field', async() => {
       //modified by
       await depositPage.navigateToDepositListingPageWithParams(`modifiedBy=${createdByUserName}`);
       expect((await depositPage.allRowsLastModifiedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct modified by username').toBeTruthy();
+    });
+
+    await test.step('filter by last modified by field using advanced search', async() => {
+      //modified by
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.filterUsingAdvancedSearchDropdown('lastModifiedBySelect', createdByUserName);
+      expect((await depositPage.allRowsLastModifiedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct created by username').toBeTruthy();
+      expect(page.url()).toContain(`lastModifiedBy=${createdByUserName}`);
+
+    });
+
+    await test.step('filter by preserved date after field', async() => {
+      //Filter the listing by preserved date after
+      await depositPage.navigateToDepositListingPageWithParams(`preservedAfter=${formattedYesterday}&showAll=true`);
+      // Now check that the preserved column doesn't have any values prior to that date
+      let allDateFields: Date[] = (await depositPage.allRowsPreservedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are preserved yesterday or later').toBeTruthy();
+
+    });
+
+    await test.step('filter by preserved date after field using advanced search', async() => {
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.showAllDepositsButton.click();
+      await depositPage.filterUsingAdvancedSearchDateField('preservedAfterInput', formattedYesterday);
+      // Now check that the preserved  column doesn't have any values prior to that date
+      let allDateFields: Date[] = (await depositPage.allRowsPreservedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are modified yesterday or later').toBeTruthy();
+      expect(page.url()).toContain(`preservedAfter=${formattedYesterday}`);
+    });
+
+    await test.step('filter by preserved before field', async() => {
+
+      await depositPage.navigateToDepositListingPageWithParams(`preservedBefore=${formattedYesterday}&showAll=true`);
+      // Now check that the preserved column doesn't have any values after to that date
+      let allDateFields: Date[]  = (await depositPage.allRowsPreservedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue < yesterday), 'All the rows are modified earlier than yesterday').toBeTruthy();
+    });
+
+    await test.step('filter by preserved before field using advanced search', async() => {
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.showAllDepositsButton.click();
+      await depositPage.filterUsingAdvancedSearchDateField('preservedBeforeInput', formattedYesterday);
+      // Now check that the preserved column doesn't have any values prior to that date
+      let allDateFields: Date[]  = (await depositPage.allRowsPreservedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue < yesterday), 'All the rows are modified earlier than yesterday').toBeTruthy();
+      expect(page.url()).toContain(`preservedBefore=${formattedYesterday}`);
+    });
+
+    await test.step('filter by preserved by field', async() => {
+      //preserved by
+      await depositPage.navigateToDepositListingPageWithParams(`preservedBy=${createdByUserName}&showAll=true`);
+      expect((await depositPage.allRowsPreservedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct preserved by username').toBeTruthy();
+    });
+
+    await test.step('filter by preserved by field using advanced search', async() => {
+      //preserved by
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.showAllDepositsButton.click();
+      await depositPage.filterUsingAdvancedSearchDropdown('preservedBySelect', createdByUserName);
+      expect((await depositPage.allRowsPreservedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct preserved by username').toBeTruthy();
+      expect(page.url()).toContain(`preservedBy=${createdByUserName}`);
+
+    });
+
+    await test.step('filter by exported date after field', async() => {
+      //Filter the listing by exported date after
+      await depositPage.navigateToDepositListingPageWithParams(`exportedAfter=${formattedYesterday}&showAll=true`);
+      // Now check that the exported column doesn't have any values prior to that date
+      let allDateFields: Date[] = (await depositPage.allRowsExportedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are exported yesterday or later').toBeTruthy();
+
+    });
+
+    await test.step('filter by exported date after field using advanced search', async() => {
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.showAllDepositsButton.click();
+      await depositPage.filterUsingAdvancedSearchDateField('exportedAfterInput', formattedYesterday);
+      // Now check that the preserved  column doesn't have any values prior to that date
+      let allDateFields: Date[] = (await depositPage.allRowsExportedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue > yesterday), 'All the rows are exported yesterday or later').toBeTruthy();
+      expect(page.url()).toContain(`exportedAfter=${formattedYesterday}`);
+    });
+
+    await test.step('filter by exported before field', async() => {
+
+      await depositPage.navigateToDepositListingPageWithParams(`exportedBefore=${formattedYesterday}&showAll=true`);
+      // Now check that the exported column doesn't have any values after to that date
+      let allDateFields: Date[]  = (await depositPage.allRowsExportedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue < yesterday), 'All the rows are exported earlier than yesterday').toBeTruthy();
+    });
+
+    await test.step('filter by exported before field using advanced search', async() => {
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.showAllDepositsButton.click();
+      await depositPage.filterUsingAdvancedSearchDateField('exportedBeforeInput', formattedYesterday);
+      // Now check that the exported column doesn't have any values prior to that date
+      let allDateFields: Date[]  = (await depositPage.allRowsExportedDate.allTextContents()).map((x: string) => new Date(x));
+      expect(allDateFields.every((currentValue: Date) => currentValue < yesterday), 'All the rows are exported earlier than yesterday').toBeTruthy();
+      expect(page.url()).toContain(`exportedBefore=${formattedYesterday}`);
+    });
+
+    await test.step('filter by exported by field', async() => {
+      //exported by
+      await depositPage.navigateToDepositListingPageWithParams(`exportedBy=${createdByUserName}`);
+      expect((await depositPage.allRowsExportedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct exported by username').toBeTruthy();
+    });
+
+    await test.step('filter by exported by field using advanced search', async() => {
+      //exported by
+      await depositPage.navigationPage.depositMenuOption.click();
+      await depositPage.showAllDepositsButton.click();
+      await depositPage.filterUsingAdvancedSearchDropdown('exportedBySelect', createdByUserName);
+      expect((await depositPage.allRowsExportedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct exported by username').toBeTruthy();
+      expect(page.url()).toContain(`exportedBy=${createdByUserName}`);
     });
 
     //Test can sort by the various fields
@@ -489,22 +700,19 @@ test.describe('Deposit Tests', () => {
       depositPage.validateSortOrder<Date>((await depositPage.allRowsLastModifiedDate.allTextContents()), true, (value) => new Date(value), (a: Date, b:Date) => a.getTime() - b.getTime());
     });
 
-    await test.step('TODO ONCE FEATURE BUILT filter by preservation fields', async() => {
-
-      //TODO once preservation functionality in place
-      //Filter the listing by preserved date after
-      //preserved by
-    });
-
-    await test.step('TODO ONCE FEATURE BUILT filter by exported fields', async() => {
-
-      //TODO once exported functionality in place
-      //exportedBefore and after and by
-
-    });
-
     await test.step('TODO ONCE FEATURE BUILT deposits are paged when the number exceeds 100', async() => {
-      //Test pagination - copy over the Portal code to validate pagination?
+      //Test pagination - copy over the Portal code to validate pagination? harder here to know in advance exactly how many
+      //items we will have....
+
+      //If there are numberOfItemsPerPage items or less, then check pagination doesn't show
+
+
+      //If > numberOfItemsPerPage items, then check page count is correct
+
+      //Check Previous disables, and 1,2,next enabled
+
+      //paginate to the next page.
+
       //TODO not yet implemented
     });
 

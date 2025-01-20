@@ -25,6 +25,7 @@ export class DepositPage {
   readonly testWordDocLocation : string;
   readonly testPdfDocLocation : string;
   readonly metsFileName : string;
+  readonly numberOfItemsPerPage: number;
 
   //Locator to initially create the deposit
   readonly newDepositButton: Locator;
@@ -142,6 +143,11 @@ export class DepositPage {
   readonly sortByLastModified: Locator;
   readonly sortByCreatedDate: Locator;
 
+  //Deposit listing page - pagination
+  readonly previousButton: Locator;
+  readonly nextButton: Locator;
+  readonly paginator: Locator;
+
   constructor(page: Page) {
     this.page = page;
     this.navigationPage = new NavigationPage(page);
@@ -169,12 +175,11 @@ export class DepositPage {
     this.testInvalidArchivalURI = 'playwright invalid slug';
     this.invalidURIMadeValid = 'playwrightinvalidslug';
     this.testValidArchivalURI = 'playwright-valid-slug-abc';
+    this.numberOfItemsPerPage = 10;
     this.createDiffImportJobButton = page.getByRole('button', { name: 'Create diff import job' });
     this.noCurrentImportJobsText = page.getByText('There are no submitted import jobs for this Deposit');
     this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.');
     this.depositNoFiles = page.getByText('No jobs can be run as there are no valid files in the Deposit.');
-
-
 
     //Locator to initially create the deposit
     this.newDepositButton = page.getByRole('button', { name: 'New Deposit' });
@@ -193,7 +198,7 @@ export class DepositPage {
     this.depositVersionExported = page.getByLabel('version-exported', {exact:true});
 
     //Header Locators
-    this.depositHeaderNoSlug = page.getByRole('heading', {name: /Deposit \w{8}/});
+    this.depositHeaderNoSlug = page.getByRole('heading', {name: /\w{8}/});
     this.depositHeaderSlug = page.getByRole('heading', {name: /Deposit/});
 
     //Actions on files and folders
@@ -214,7 +219,7 @@ export class DepositPage {
     this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="__METSlike.json"]');
 
     //Locators specific to the test folders / files
-   this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
+    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
     this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
     this.uploadFileToTestFolder = this.newTestFolderInTable.locator(this.uploadFileIcon);
     this.deleteTestFolder = this.newTestFolderInTable.locator(this.deleteFolderIcon);
@@ -282,12 +287,17 @@ export class DepositPage {
     this.allRowsPreservedBy = this.depositTableRows.getByRole('cell', {name: 'td-preserved-by', exact: true});
     this.allRowsExportedDate= this.depositTableRows.getByRole('cell', {name: 'td-exported', exact: true});
     this.allRowsExportedBy= this.depositTableRows.getByRole('cell', {name: 'td-exported-by', exact: true});
-    this.showAllDepositsButton = page.getByRole('link', {name: 'Show all deposits'});
-    this.showActiveDepositsButton = page.getByRole('link', {name: 'Show active only'});
+    this.showAllDepositsButton = page.locator('#activeOrAllDepositsToggle');
+    this.showActiveDepositsButton = page.locator('#activeOrAllDepositsToggle');
     this.sortByArchivalGroup = page.getByRole('link', { name: 'archival group' });
     this.sortByStatus = page.getByRole('link', {name: 'status'});
     this.sortByLastModified = page.getByRole('link', {name: 'last modified'});
     this.sortByCreatedDate = page.getByRole('link', {name: 'created'});
+
+    //Deposit listing page - pagination
+    this.previousButton  = page.getByLabel('paging').getByRole('listitem').first().getByText('Previous');
+    this.nextButton  = page.getByLabel('paging').getByRole('listitem').last().getByText('Next')
+    this.paginator = page.getByLabel('paging').getByRole('listitem');
 
   }
 
@@ -356,6 +366,36 @@ export class DepositPage {
 
     expect(listOfItems, `dataToValidate is in sorted order`).toEqual(listOfItemsSorted);
     return listOfItems;
+  }
+
+  async filterUsingAdvancedSearchDropdown(selectElementId: string, valueToSelect: string){
+
+    //Await the table to display
+    await expect(this.depositsTable).toBeVisible();
+
+    //Click advanced search
+    await this.page.locator('#showFormToggle').click();
+
+    //change dropdown to required value
+    await this.page.selectOption(`#${selectElementId}`, valueToSelect);
+
+    //Click Submit
+    await this.page.getByRole('button', { name: 'Submit' }).click();
+  }
+
+  async filterUsingAdvancedSearchDateField(dateElementId: string, valueToEnter: string){
+
+    //Await the table to display
+    await expect(this.depositsTable).toBeVisible();
+
+    //Click advanced search
+    await this.page.locator('#showFormToggle').click();
+
+    //change dropdown to required value
+    await this.page.locator(`#${dateElementId}`).fill(valueToEnter);
+
+    //Click Submit
+    await this.page.getByRole('button', { name: 'Submit' }).click();
   }
 
 }
