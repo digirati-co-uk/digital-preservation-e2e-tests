@@ -7,6 +7,7 @@ import {
   generateUniqueId
 } from "../helpers/helpers";
 import * as path from 'path';
+import { DOMParser, Document, XMLSerializer } from '@xmldom/xmldom';
 
 test.describe('Deposit Tests', () => {
 
@@ -16,12 +17,22 @@ test.describe('Deposit Tests', () => {
     depositPage = new DepositPage(page);
   });
 
-  test(`can create a Deposit from the Deposits Left Hand Nav item`, async ({page}) => {
+  test(`can create a Deposit from the Deposits Left Hand Nav item and add folders and files`, async ({page}) => {
 
     //Set a 5 minute timeout
     test.setTimeout(300_000);
 
     let depositId : string;
+
+    //Set up the METS file listener to intercept any requests to the METS page
+    let metsXML : Document;
+    await page.route(`**/mets`, async route => {
+      console.log('Retrieving the METS');
+      const response = await route.fetch();
+      const metsAsString = await response.text();
+      metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+      await route.fulfill();
+    });
 
     await test.step('Create a Deposit with no name or note, check URI not available', async () => {
       await depositPage.getStarted();
@@ -97,7 +108,7 @@ test.describe('Deposit Tests', () => {
 
       //Save changes
       await depositPage.updateArchivalPropertiesButton.click();
-      await expect(depositPage.alertMessage, 'Successful update message is shown').toHaveText('Deposit successfully updated');
+      await expect(depositPage.alertMessage, 'Successful update message is shown').toHaveText('View of Deposit files updated.');
 
       //navigate to the main deposits page
       await depositPage.navigationPage.depositMenuOption.click();
@@ -120,13 +131,31 @@ test.describe('Deposit Tests', () => {
 
     });
 
-    await test.step('Validate that we can create a sub folder, and add a variety of files', async() => {
+    await test.step('TODO add METS check here - Validate that we can create a sub folder, and add a variety of files', async() => {
 
       //Create a new sub folder
       await depositPage.createFolderWithinObjectsFolder.click();
       await depositPage.newFolderNameInput.fill(depositPage.newTestFolderTitle);
       await depositPage.newFolderDialogButton.click();
       await expect(depositPage.newTestFolderInTable, 'The new test folder has been created in the correct place in the hierarchy').toBeVisible();
+
+      await depositPage.metsFile.getByRole('link').click();
+
+      //Validate that we have an amdSec with the name newTestFolderTitle
+      await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug);
+
+      //****************TODO Refactor into function*****************
+      //Validate that we have newTestFolderTitle at the 3rd level of the structMap
+      //Will have length 1
+      let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
+      let rootElement = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === '__ROOT');
+      expect(rootElement).toHaveLength(1);
+      let objectsElement = (rootElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.objectsFolderName.trim());
+      expect(objectsElement).toHaveLength(1);
+      let testFolderElement = (objectsElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.newTestFolderTitle.trim());
+      expect(testFolderElement).toHaveLength(1);
+
+      await page.goBack();
 
       //Add some files to the new folder
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false, depositPage.uploadFileToTestFolder);
@@ -135,6 +164,31 @@ test.describe('Deposit Tests', () => {
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testWordDocLocation, false, depositPage.uploadFileToTestFolder);
       await expect(depositPage.newTestWordFileInTable, 'We see the new file in the Deposits table').toBeVisible();
 
+      //Validate that the files appear in the METS
+      await depositPage.metsFile.getByRole('link').click();
+
+      //Validate that we have an amdSec with each new file
+      await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testImageLocation);
+      await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testWordDocLocation);
+
+      //Check for a fileSec entry
+      await depositPage.checkFileSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testImageLocation);
+      await depositPage.checkFileSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testWordDocLocation);
+
+      //TODO refactor into function
+      structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
+      rootElement = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === '__ROOT');
+      expect(rootElement).toHaveLength(1);
+      objectsElement = (rootElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.objectsFolderName.trim());
+      expect(objectsElement).toHaveLength(1);
+      testFolderElement = (objectsElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.newTestFolderTitle.trim());
+      expect(testFolderElement).toHaveLength(1);
+      const testFile1 = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.testImageLocation.trim());
+      expect(testFile1).toHaveLength(1);
+      const testFile2 = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.testWordDocLocation.trim());
+      expect(testFile2).toHaveLength(1);
+
+      await page.goBack();
     });
 
     await test.step('Check that a file upload will be rejected if the checksum is not correct', async() => {
@@ -166,7 +220,7 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.newTestPdfFileInTable, 'We cannot see the new file in the Deposits table').not.toBeVisible();
     });
 
-    await test.step('We can create a file without giving it a name', async() => {
+    await test.step('TODO add METS check here - We can create a file without giving it a name', async() => {
 
       // Override previous await.route so that we longer interfere with the checksum
       await page.route(`**/${depositId}?handler=UploadFile`, async route => {
@@ -182,7 +236,7 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.newTestPdfFileInTable.getByRole('cell', {name: 'name'}), 'There is no name displayed in the table').toBeEmpty();
     });
 
-    await test.step( 'The file path as stored in the deposit uses the reduced character set (0-9a-z._-)', async() => {
+    await test.step('TODO add METS check here?? - The file path as stored in the deposit uses the reduced character set (0-9a-z._-)', async() => {
       //Add a test data file named with disallowed special characters in it
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageWithInvalidCharsLocation, false, depositPage.uploadFileToObjectsFolder);
       await expect(depositPage.newTestImageFileTranslatedCharsInTable, 'We see the new file in the Deposits table').toBeVisible();
@@ -195,7 +249,7 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.alertMessage, 'Failure message is shown').toHaveText('You cannot delete a folder that has files in it; delete the files first.');
     });
 
-    await test.step('user can delete a file from the deposit', async() => {
+    await test.step('TODO add METS check here - user can delete a file from the deposit', async() => {
       //Delete all the files we have created
       await depositPage.deleteFile(depositPage.newTestPdfFileInTable, depositPage.testPdfDocLocation);
       await depositPage.deleteFile(depositPage.newTestWordFileInTable, depositPage.testWordDocLocation);
@@ -203,7 +257,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.deleteFile(depositPage.newTestImageFileTranslatedCharsInTable, depositPage.testImageWithInvalidCharsLocation.replaceAll('&','-'));
     });
 
-    await test.step('user can delete an empty folder from the deposit', async() => {
+    await test.step('TODO add METS check here - user can delete an empty folder from the deposit', async() => {
       await depositPage.deleteTestFolder.click();
       await depositPage.deleteItemModalButton.click();
       await expect(depositPage.alertMessage, 'Success message is shown').toContainText(`Folder ${depositPage.newTestFolderSlug} DELETED.`);
@@ -213,7 +267,7 @@ test.describe('Deposit Tests', () => {
       //Verify no delete button on objects row
       await expect(depositPage.objectsFolder.locator(depositPage.deleteFolderIcon), 'There is no delete on the objects row').not.toBeVisible();
 
-      //Verify no delete button on __METSlike.json file row
+      //Verify no delete button on mets.xml file row
       await expect(depositPage.metsFile.locator(depositPage.deleteFolderIcon), 'There is no delete on the __METSlike.json row').not.toBeVisible();
     });
 
@@ -344,6 +398,9 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step('filter by status, whether active', async() => {
+      //First navigate to the deposit listing page with a large page size
+      await page.goto(depositPage.depositsListingURL);
+
       //First check that all items show the 'new' status
       expect((await depositPage.allRowsStatus.allTextContents()).every((currentValue : string) => currentValue === 'new'), 'The table shows only active Deposits').toBeTruthy();
 
@@ -354,8 +411,8 @@ test.describe('Deposit Tests', () => {
       expect((await depositPage.allRowsStatus.allTextContents()).every((currentValue : string) => currentValue === 'new'), 'The table shows all Deposits').toBeFalsy();
     });
 
-    await test.step('show only - createdBy, lastModifiedBy, preservedBy, exportedBy', async() => {
-      //Test that if active, then no preserved date, preserved By, Exported, or exported by
+    await test.step('correct action dates are shown', async() => {
+      //Test that if active, then no preserved date, preserved By
       await depositPage.showActiveDepositsButton.click();
       expect((await depositPage.allRowsPreservedDate.allTextContents()).every((currentValue : string) => currentValue === ''), 'Preserved date is blank on new rows').toBeTruthy();
       expect((await depositPage.allRowsPreservedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Preserved By is blank on new rows').toBeTruthy();
@@ -364,8 +421,6 @@ test.describe('Deposit Tests', () => {
       await depositPage.showAllDepositsButton.click();
       expect((await depositPage.allPreservedRowsPreservedDate.allTextContents()).every((currentValue : string) => currentValue != ''), 'Preserved date is populated on all preserved rows').toBeTruthy();
       expect((await depositPage.allPreservedRowsPreservedBy.allTextContents()).every((currentValue : string) => currentValue != ''), 'Preserved by is populated on all preserved rows').toBeTruthy();
-      expect((await depositPage.allPreservedRowsExportedBy.allTextContents()).every((currentValue : string) => currentValue === ''), 'Exported by is blank on preserved rows').toBeTruthy();
-
     });
 
     await test.step('Tidy up and delete the deposit', async() => {
@@ -491,7 +546,7 @@ test.describe('Deposit Tests', () => {
       totalNumberOfItems = Number.parseInt(await depositPage.totalNumberOfItems.textContent());
 
       //Set up the page size such that we will only have one page of results
-      requiredPageSize = totalNumberOfItems +1;
+      requiredPageSize = totalNumberOfItems;
       await depositPage.navigateToDepositListingPageWithParams(`showAll=true&pageSize=${requiredPageSize}`);
       await expect(depositPage.totalPagesCount).not.toBeVisible();
       //Should not see the paginator

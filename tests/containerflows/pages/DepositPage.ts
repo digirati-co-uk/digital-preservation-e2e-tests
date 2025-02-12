@@ -2,6 +2,7 @@
 import {expect, Locator, Page} from '@playwright/test';
 import {NavigationPage} from "./NavigationPage";
 import * as path from 'path';
+import { Document } from '@xmldom/xmldom';
 
 export class DepositPage {
   readonly page: Page;
@@ -15,6 +16,7 @@ export class DepositPage {
   readonly newTestFolderTitle : string;
   readonly newTestFolderSlug : string;
   readonly testFolderSlugShouldNotExist: string;
+  readonly depositsListingURL: string;
   readonly depositsURL: RegExp;
   readonly testInvalidArchivalURI : string;
   readonly invalidURIMadeValid: string;
@@ -166,10 +168,11 @@ export class DepositPage {
     //At some point we might acquire identifiers for Deposits (and other things) from a Leeds external
     //identity service, in which case they might no longer be 8-char alphanumeric.
     //They will be for now though.
+    this.depositsListingURL = '/deposits?pageSize=100';
     this.depositsURL = /deposits\/\w{8}/;
     this.testFileLocation = '../../../test-data/deposit/';
     this.objectsFolderName = 'objects';
-    this.metsFileName = '__METSlike.json';
+    this.metsFileName = 'mets.xml';
     this.testImageLocation = 'test_image.png';
     this.testImageWithInvalidCharsLocation = 'test&&image.png';
     this.testWordDocLocation = 'test_word_document.docx';
@@ -182,7 +185,7 @@ export class DepositPage {
     this.testArchivalGroupName = 'Playwright test archival group name';
     this.testInvalidArchivalURI = 'playwright invalid slug';
     this.invalidURIMadeValid = 'playwrightinvalidslug';
-    this.testValidArchivalURI = 'playwright-valid-slug-abc';
+    this.testValidArchivalURI = 'playwright-valid-slug-abcd';
     this.numberOfItemsPerPage = 10;
     this.createDiffImportJobButton = page.getByRole('button', { name: 'Create diff import job' });
     this.noCurrentImportJobsText = page.getByText('There are no submitted import jobs for this Deposit');
@@ -224,7 +227,7 @@ export class DepositPage {
     this.createFolderWithinObjectsFolder = this.objectsFolder.locator(this.createFolderIcon);
 
     //METS file locators
-    this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="__METSlike.json"]');
+    this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="mets.xml"]');
 
     //Locators specific to the test folders / files
     this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
@@ -411,6 +414,19 @@ export class DepositPage {
 
     //Click Submit
     await this.page.getByRole('button', { name: 'Submit' }).click();
+  }
+
+  async checkAmdSecExists(metsXML: Document, itemToFind: string){
+    const amdSecValues = metsXML.getElementsByTagName('mets:amdSec');
+    const itemToFindElement = amdSecValues.filter(item => (item.getElementsByTagName('premis:originalName'))[0].textContent.trim() === itemToFind.trim());
+    expect(itemToFindElement).toHaveLength(1);
+  }
+
+  async checkFileSecExists(metsXML: Document, itemToFind: string){
+    const fileSecValues = metsXML.getElementsByTagName('mets:fileSec')[0];
+    const files = fileSecValues.getElementsByTagName('mets:FLocat');
+    const itemToFindElement = files.filter(item => item.getAttribute('xlink:href').trim() === itemToFind.trim());
+    expect(itemToFindElement).toHaveLength(1);
   }
 
 }

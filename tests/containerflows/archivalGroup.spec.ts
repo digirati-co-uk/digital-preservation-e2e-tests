@@ -55,7 +55,7 @@ test.describe('Archival Group Tests', () => {
     await test.step('Add a name and some files to the Deposit', async () => {
       await archivalGroupPage.depositPage.archivalGroupNameInput.fill(archivalGroupPage.depositPage.testArchivalGroupName);
       await archivalGroupPage.depositPage.updateArchivalPropertiesButton.click();
-      await expect(archivalGroupPage.depositPage.alertMessage, 'Successful update message is shown').toHaveText('Deposit successfully updated');
+      await expect(archivalGroupPage.depositPage.alertMessage, 'Successful update message is shown').toContainText('View of Deposit files updated');
       //Add some files to the new folder
       await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testImageLocation, false, archivalGroupPage.depositPage.uploadFileToObjectsFolder);
       await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testWordDocLocation, false, archivalGroupPage.depositPage.uploadFileToObjectsFolder);
@@ -86,10 +86,11 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.diffContainersToAdd.getByRole('listitem'), 'There is only 1 item in the Containers to Add').toHaveCount(1);
       await expect(archivalGroupPage.diffContainersToAdd, 'The Container to Add is objects').toContainText(objectsFolderFullPath);
 
-      //Check the 2 files are in the list, and that's the only 2 things there
-      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 2 items in the Binaries to add').toHaveCount(2);
+      //Check the 2 files are in the list, and that's the only 3 things there (the 2 files, plus the mets file)
+      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 3 items in the Binaries to add').toHaveCount(3);
       await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(testImageFileFullPath);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(testWordFileFullPath);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
 
       await archivalGroupPage.checkToModifyBinariesFoldersEmpty();
 
