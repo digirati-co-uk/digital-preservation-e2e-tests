@@ -136,7 +136,8 @@ test.describe('Archival Group Tests', () => {
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffDateFinished.textContent(), 10_000);
 
       await expect(archivalGroupPage.diffSourceVersion, 'There is no diffSourceVersion').toHaveText('(none)');
-      await expect(archivalGroupPage.diffNewVersion, 'New version is set to v1').toHaveText('v1');
+      //Soft asserting until we can get to the bottom of whay it's sometimes set to ... instead of v1
+      await expect.soft(archivalGroupPage.diffNewVersion, 'New version is set to v1').toHaveText('v1');
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffCreated.textContent(), 60_000);
       await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
       await expect(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
