@@ -7,7 +7,7 @@ import {
   generateUniqueId
 } from "../helpers/helpers";
 import * as path from 'path';
-import { DOMParser, Document, XMLSerializer } from '@xmldom/xmldom';
+import { DOMParser, Document, Element } from '@xmldom/xmldom';
 
 test.describe('Deposit Tests', () => {
 
@@ -131,7 +131,7 @@ test.describe('Deposit Tests', () => {
 
     });
 
-    await test.step('TODO add METS check here - Validate that we can create a sub folder, and add a variety of files', async() => {
+    await test.step('Validate that we can create a sub folder, and add a variety of files', async() => {
 
       //Create a new sub folder
       await depositPage.createFolderWithinObjectsFolder.click();
@@ -139,28 +139,19 @@ test.describe('Deposit Tests', () => {
       await depositPage.newFolderDialogButton.click();
       await expect(depositPage.newTestFolderInTable, 'The new test folder has been created in the correct place in the hierarchy').toBeVisible();
 
+      //View the METS
       await depositPage.metsFile.getByRole('link').click();
 
       //Validate that we have an amdSec with the name newTestFolderTitle
       await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug);
-
-      //****************TODO Refactor into function*****************
       //Validate that we have newTestFolderTitle at the 3rd level of the structMap
-      //Will have length 1
-      let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
-      let rootElement = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === '__ROOT');
-      expect(rootElement).toHaveLength(1);
-      let objectsElement = (rootElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.objectsFolderName.trim());
-      expect(objectsElement).toHaveLength(1);
-      let testFolderElement = (objectsElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.newTestFolderTitle.trim());
-      expect(testFolderElement).toHaveLength(1);
+      await depositPage.checkFolderStructureCorrect(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim());
 
+      //Go back to the Deposit
       await page.goBack();
-
       //Add some files to the new folder
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false, depositPage.uploadFileToTestFolder);
       await expect(depositPage.newTestImageFileInTable, 'We see the new file in the Deposits table').toBeVisible();
-
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testWordDocLocation, false, depositPage.uploadFileToTestFolder);
       await expect(depositPage.newTestWordFileInTable, 'We see the new file in the Deposits table').toBeVisible();
 
@@ -175,19 +166,10 @@ test.describe('Deposit Tests', () => {
       await depositPage.checkFileSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testImageLocation);
       await depositPage.checkFileSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testWordDocLocation);
 
-      //TODO refactor into function
-      structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
-      rootElement = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === '__ROOT');
-      expect(rootElement).toHaveLength(1);
-      objectsElement = (rootElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.objectsFolderName.trim());
-      expect(objectsElement).toHaveLength(1);
-      testFolderElement = (objectsElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.newTestFolderTitle.trim());
-      expect(testFolderElement).toHaveLength(1);
-      const testFile1 = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.testImageLocation.trim());
-      expect(testFile1).toHaveLength(1);
-      const testFile2 = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === depositPage.testWordDocLocation.trim());
-      expect(testFile2).toHaveLength(1);
+      //Check for the correct folder and file structure
+      await depositPage.checkFilesExistInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), [depositPage.testImageLocation, depositPage.testWordDocLocation]);
 
+      //Go back to the deposit
       await page.goBack();
     });
 

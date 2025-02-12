@@ -2,7 +2,7 @@
 import {expect, Locator, Page} from '@playwright/test';
 import {NavigationPage} from "./NavigationPage";
 import * as path from 'path';
-import { Document } from '@xmldom/xmldom';
+import { Document, Element } from '@xmldom/xmldom';
 
 export class DepositPage {
   readonly page: Page;
@@ -427,6 +427,29 @@ export class DepositPage {
     const files = fileSecValues.getElementsByTagName('mets:FLocat');
     const itemToFindElement = files.filter(item => item.getAttribute('xlink:href').trim() === itemToFind.trim());
     expect(itemToFindElement).toHaveLength(1);
+  }
+
+  async checkFolderStructureCorrect(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string): Promise<Element>{
+    //Will have length 1
+    let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
+    let rootElement = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === firstLevel);
+    expect(rootElement).toHaveLength(1);
+    let objectsElement = (rootElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === secondLevel);
+    expect(objectsElement).toHaveLength(1);
+    let testFolderElement = (objectsElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === thirdLevel);
+    expect(testFolderElement).toHaveLength(1);
+
+    return testFolderElement[0];
+  }
+
+  async checkFilesExistInStructure(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, fileNames: string[]) {
+    const testFolderElement = await this.checkFolderStructureCorrect(metsXML, firstLevel, secondLevel, thirdLevel);
+
+    for (const filename of fileNames) {
+      const testFile1 = (testFolderElement.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === filename.trim());
+      expect(testFile1).toHaveLength(1);
+    }
+
   }
 
 }
