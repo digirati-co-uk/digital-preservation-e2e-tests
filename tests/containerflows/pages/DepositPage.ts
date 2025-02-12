@@ -429,6 +429,8 @@ export class DepositPage {
     expect(itemToFindElement).toHaveLength(1);
   }
 
+  //TODO - I could send the list of levels in a string array, and loop through that array to iterate down the levels
+  //As I progress through further tests I'll see if this is necessary.
   async checkFolderStructureCorrect(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string): Promise<Element>{
     //Will have length 1
     let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
