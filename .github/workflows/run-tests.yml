@@ -34,8 +34,7 @@ jobs:
           CI: 'true'
           FRONTEND_BASE_URL: ${{vars.FRONTEND_BASE_URL}}
           FRONTEND_USERNAME: ${{vars.FRONTEND_USERNAME}}
-          DLCS_CUSTOMER_KEY: ${{secrets.DLCS_CUSTOMER_KEY}}
-          PLAYWRIGHT_ENVIRONMENT: ${{vars.PLAYWRIGHT_ENVIRONMENT}}
+          FRONTEND_PASSWORD: ${{secrets.FRONTEND_PASSWORD}}
           GITHUB_REPORT_OUTPUT: 'https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}'
 
 
