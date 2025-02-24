@@ -29,12 +29,14 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npx playwright test --project=frontendtests
         env:
           CI: 'true'
           FRONTEND_BASE_URL: ${{vars.FRONTEND_BASE_URL}}
           FRONTEND_USERNAME: ${{vars.FRONTEND_USERNAME}}
           FRONTEND_PASSWORD: ${{secrets.FRONTEND_PASSWORD}}
+          SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
+          SLACK_CHANNEL: ${{vars.SLACK_CHANNEL}}
           GITHUB_REPORT_OUTPUT: 'https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}'
 
 

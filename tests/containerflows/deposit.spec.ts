@@ -24,10 +24,9 @@ test.describe('Deposit Tests', () => {
 
     let depositId : string;
 
-    //Set up the METS file listener to intercept any requests to the METS page
+    //Set up the METS file listener to intercept any requests to the METS page to grab the XML
     let metsXML : Document;
     await page.route(`**/mets`, async route => {
-      console.log('Retrieving the METS');
       const response = await route.fetch();
       const metsAsString = await response.text();
       metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
@@ -131,7 +130,7 @@ test.describe('Deposit Tests', () => {
 
     });
 
-    await test.step('Validate that we can create a sub folder, and add a variety of files', async() => {
+    await test.step('Validate that we can create a sub folder and files, and the METS file is updated', async() => {
 
       //Create a new sub folder
       await depositPage.createFolderWithinObjectsFolder.click();
@@ -143,12 +142,13 @@ test.describe('Deposit Tests', () => {
       await depositPage.metsFile.getByRole('link').click();
 
       //Validate that we have an amdSec with the name newTestFolderTitle
-      await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug);
+      let admID = await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug, true);
       //Validate that we have newTestFolderTitle at the 3rd level of the structMap
-      await depositPage.checkFolderStructureCorrect(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim());
+      await depositPage.checkFolderStructureCorrect(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), admID);
 
       //Go back to the Deposit
       await page.goBack();
+
       //Add some files to the new folder
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false, depositPage.uploadFileToTestFolder);
       await expect(depositPage.newTestImageFileInTable, 'We see the new file in the Deposits table').toBeVisible();
@@ -159,15 +159,16 @@ test.describe('Deposit Tests', () => {
       await depositPage.metsFile.getByRole('link').click();
 
       //Validate that we have an amdSec with each new file
-      await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testImageLocation);
-      await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testWordDocLocation);
+      const admIDImage  = await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testImageLocation, true);
+      const admIDWord = await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testWordDocLocation, true);
 
       //Check for a fileSec entry
-      await depositPage.checkFileSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testImageLocation);
-      await depositPage.checkFileSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testWordDocLocation);
+      const fileIDImage = await depositPage.checkFileSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testImageLocation, admIDImage);
+      const fileIDWord = await depositPage.checkFileSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testWordDocLocation, admIDWord);
 
       //Check for the correct folder and file structure
-      await depositPage.checkFilesExistInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), [depositPage.testImageLocation, depositPage.testWordDocLocation]);
+      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testImageLocation, admID, fileIDImage);
+      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testWordDocLocation, admID, fileIDWord);
 
       //Go back to the deposit
       await page.goBack();
@@ -202,7 +203,7 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.newTestPdfFileInTable, 'We cannot see the new file in the Deposits table').not.toBeVisible();
     });
 
-    await test.step('TODO add METS check here - We can create a file without giving it a name', async() => {
+    await test.step('We can create a file without giving it a name, and it appears in the METS file', async() => {
 
       // Override previous await.route so that we longer interfere with the checksum
       await page.route(`**/${depositId}?handler=UploadFile`, async route => {
@@ -216,12 +217,44 @@ test.describe('Deposit Tests', () => {
       //Verify that the file has been uploaded and that the name is blank
       await expect(depositPage.newTestPdfFileInTable, 'We see the new file in the Deposits table').toBeVisible();
       await expect(depositPage.newTestPdfFileInTable.getByRole('cell', {name: 'name'}), 'There is no name displayed in the table').toBeEmpty();
+
+      //Validate that the file appears in the METS
+      await depositPage.metsFile.getByRole('link').click();
+
+      //Validate that we have an amdSec with each new file
+      const admIDPDF  = await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testPdfDocLocation, true);
+
+      //Check for a fileSec entry
+      const fileIDPDF = await depositPage.checkFileSecExists(metsXML, depositPage.newTestFolderSlug+'/'+depositPage.testPdfDocLocation, admIDPDF);
+
+      //Check for the correct folder and file structure - we don't need to pass the admId of the containing folder,
+      //we don't have it here and we checked it already
+      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testPdfDocLocation, null, fileIDPDF);
+
+      //Go back to the deposit
+      await page.goBack();
     });
 
-    await test.step('TODO add METS check here?? - The file path as stored in the deposit uses the reduced character set (0-9a-z._-)', async() => {
+    await test.step('The file path as stored in the deposit uses the reduced character set (0-9a-z._-) and the METS is updated', async() => {
       //Add a test data file named with disallowed special characters in it
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageWithInvalidCharsLocation, false, depositPage.uploadFileToObjectsFolder);
       await expect(depositPage.newTestImageFileTranslatedCharsInTable, 'We see the new file in the Deposits table').toBeVisible();
+
+      //Validate that the file appears in the METS
+      await depositPage.metsFile.getByRole('link').click();
+
+      //Validate that we have an amdSec with each new file
+      const admID  = await depositPage.checkAmdSecExists(metsXML, depositPage.objectsFolderName+'/'+depositPage.testImageWithInvalidCharsLocationTranslated, true);
+
+      //Check for a fileSec entry
+      const fileID = await depositPage.checkFileSecExists(metsXML, depositPage.objectsFolderName+'/'+depositPage.testImageWithInvalidCharsLocationTranslated, admID);
+
+      //Check for the correct folder and file structure - we don't need to pass the admId of the containing folder,
+      //we don't have it here and we checked it already
+      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), null, depositPage.testImageWithInvalidCharsLocation, null, fileID);
+
+      //Go back to the deposit
+      await page.goBack();
     });
 
     await test.step('user cannot delete a folder that has contents', async() => {
@@ -231,18 +264,33 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.alertMessage, 'Failure message is shown').toHaveText('You cannot delete a folder that has files in it; delete the files first.');
     });
 
-    await test.step('TODO add METS check here - user can delete a file from the deposit', async() => {
+    await test.step('User can delete a file from the deposit, and the METS is updated', async() => {
       //Delete all the files we have created
       await depositPage.deleteFile(depositPage.newTestPdfFileInTable, depositPage.testPdfDocLocation);
       await depositPage.deleteFile(depositPage.newTestWordFileInTable, depositPage.testWordDocLocation);
       await depositPage.deleteFile(depositPage.newTestImageFileInTable, depositPage.testImageLocation);
-      await depositPage.deleteFile(depositPage.newTestImageFileTranslatedCharsInTable, depositPage.testImageWithInvalidCharsLocation.replaceAll('&','-'));
+      await depositPage.deleteFile(depositPage.newTestImageFileTranslatedCharsInTable, depositPage.testImageWithInvalidCharsLocationTranslated);
+
+      //Get the metsXML and check files all gone
+      await depositPage.metsFile.getByRole('link').click();
+      await depositPage.checkFileDeletedFromMETS(metsXML, depositPage.testPdfDocLocation, depositPage.newTestFolderSlug+'/'+depositPage.testPdfDocLocation);
+      await depositPage.checkFileDeletedFromMETS(metsXML, depositPage.testWordDocLocation, depositPage.newTestFolderSlug+'/'+depositPage.testWordDocLocation);
+      await depositPage.checkFileDeletedFromMETS(metsXML, depositPage.testImageLocation, depositPage.newTestFolderSlug+'/'+depositPage.testImageLocation);
+      await depositPage.checkFileDeletedFromMETS(metsXML, depositPage.testImageWithInvalidCharsLocation, depositPage.objectsFolderName+'/'+depositPage.testImageWithInvalidCharsLocationTranslated);
+
+      await page.goBack();
     });
 
-    await test.step('TODO add METS check here - user can delete an empty folder from the deposit', async() => {
+    await test.step('User can delete an empty folder from the deposit, and the METS is updated', async() => {
       await depositPage.deleteTestFolder.click();
       await depositPage.deleteItemModalButton.click();
       await expect(depositPage.alertMessage, 'Success message is shown').toContainText(`Folder ${depositPage.newTestFolderSlug} DELETED.`);
+
+      //Get the metsXML and check folder is gone
+      await depositPage.metsFile.getByRole('link').click();
+      await depositPage.checkFolderDeletedFromMETS(metsXML, depositPage.newTestFolderTitle.trim(), depositPage.newTestFolderSlug);
+
+      await page.goBack();
     });
 
     await test.step('user cannot delete any files in the root', async() => {

@@ -227,7 +227,7 @@ test.describe('Archival Group Tests', () => {
 
     });
 
-    await test.step('Check the original Deposit is now inactive and not editable', async () => {
+    await test.step('Check the original Deposit is now inactive and not editable @load', async () => {
       await page.goto(`/deposits/${depositId}`);
       await expect(archivalGroupPage.depositPage.updateArchivalPropertiesButton, 'Button to update properties is disabled').toBeDisabled();
       await expect(archivalGroupPage.depositPage.archivalGroupInput, 'Archival Group is disabled').toBeDisabled();

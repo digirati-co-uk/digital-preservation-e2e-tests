@@ -13,6 +13,7 @@ export class DepositPage {
   readonly objectsFolderName : string;
   readonly testImageLocation : string;
   readonly testImageWithInvalidCharsLocation : string;
+  readonly testImageWithInvalidCharsLocationTranslated : string;
   readonly newTestFolderTitle : string;
   readonly newTestFolderSlug : string;
   readonly testFolderSlugShouldNotExist: string;
@@ -175,6 +176,7 @@ export class DepositPage {
     this.metsFileName = 'mets.xml';
     this.testImageLocation = 'test_image.png';
     this.testImageWithInvalidCharsLocation = 'test&&image.png';
+    this.testImageWithInvalidCharsLocationTranslated = 'test--image.png';
     this.testWordDocLocation = 'test_word_document.docx';
     this.testPdfDocLocation = 'test_pdf_document.pdf';
     //this.cannotUploadTopLevelMessage = 'Uploaded files must go in or below the objects folder.';
@@ -230,7 +232,7 @@ export class DepositPage {
     this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="mets.xml"]');
 
     //Locators specific to the test folders / files
-    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
+    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocationTranslated}"]`);
     this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
     this.uploadFileToTestFolder = this.newTestFolderInTable.locator(this.uploadFileIcon);
     this.deleteTestFolder = this.newTestFolderInTable.locator(this.deleteFolderIcon);
@@ -416,46 +418,85 @@ export class DepositPage {
     await this.page.getByRole('button', { name: 'Submit' }).click();
   }
 
-  async checkAmdSecExists(metsXML: Document, itemToFind: string){
+  async checkAmdSecExists(metsXML: Document, itemToFind: string, shouldBePresent: boolean) :Promise<string>{
     const amdSecValues = metsXML.getElementsByTagName('mets:amdSec');
     const itemToFindElement = amdSecValues.filter(item => (item.getElementsByTagName('premis:originalName'))[0].textContent.trim() === itemToFind.trim());
-    expect(itemToFindElement).toHaveLength(1);
+    if (shouldBePresent) {
+      expect(itemToFindElement).toHaveLength(1);
+      return itemToFindElement[0].getAttribute('ID');
+    }else{
+      expect(itemToFindElement).toHaveLength(0);
+      return '';
+    }
   }
 
-  async checkFileSecExists(metsXML: Document, itemToFind: string){
+  async checkFileSecExists(metsXML: Document, itemToFind: string, admId: string) : Promise<string>{
     const fileSecValues = metsXML.getElementsByTagName('mets:fileSec')[0];
-    const files = fileSecValues.getElementsByTagName('mets:FLocat');
-    const itemToFindElement = files.filter(item => item.getAttribute('xlink:href').trim() === itemToFind.trim());
-    expect(itemToFindElement).toHaveLength(1);
+    const files = fileSecValues.getElementsByTagName('mets:file');
+
+    const itemToFindElement = files.filter(item => item.getAttribute('ADMID').trim() === admId.trim());
+    const fileLocations = itemToFindElement[0].getElementsByTagName('mets:FLocat');
+    const itemToFindFLocatElement = fileLocations.filter(item => item.getAttribute('xlink:href').trim() === itemToFind.trim());
+    expect(itemToFindFLocatElement).toHaveLength(1);
+    return itemToFindElement[0].getAttribute('ID');
   }
 
   //TODO - I could send the list of levels in a string array, and loop through that array to iterate down the levels
   //As I progress through further tests I'll see if this is necessary.
-  async checkFolderStructureCorrect(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string): Promise<Element>{
+  async checkFolderStructureCorrect(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, admId: string): Promise<Element>{
     //Structure Map will always have length 1
     let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
     let rootElement = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === firstLevel);
     expect(rootElement).toHaveLength(1);
-    let objectsElement = (rootElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === secondLevel);
-    expect(objectsElement).toHaveLength(1);
-    let testFolderElement = (objectsElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === thirdLevel);
+    let testFolderElement = (rootElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === secondLevel);
     expect(testFolderElement).toHaveLength(1);
+    if (thirdLevel != null) {
+      testFolderElement = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === thirdLevel);
+      expect(testFolderElement).toHaveLength(1);
+    }
 
+    //Check the ADMID matches
+    if (admId != null) {
+      expect(testFolderElement[0].getAttribute('ADMID')).toEqual(admId);
+    }
     return testFolderElement[0];
   }
 
-  async checkFilesExistInStructure(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, fileNames: string[]) {
-    const testFolderElement = await this.checkFolderStructureCorrect(metsXML, firstLevel, secondLevel, thirdLevel);
+  async checkFileExistsInStructure(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, fileName: string, amdId: string, fileID:string) {
 
-    for (const filename of fileNames) {
-      const testFile1 = (testFolderElement.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === filename.trim());
-      expect(testFile1).toHaveLength(1);
-    }
+    const testFolderElement = await this.checkFolderStructureCorrect(metsXML, firstLevel, secondLevel, thirdLevel, amdId);
 
+    const testFile1 = (testFolderElement.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fileName.trim());
+    expect(testFile1).toHaveLength(1);
+    //Get the <mets:fptr> child
+    //Check that the FILEID attribute on the fptr matches fileID
+    expect((testFile1[0].getElementsByTagName('mets:fptr'))[0].getAttribute('FILEID')).toEqual(fileID);
   }
 
+  async checkFileDeletedFromMETS(metsXML: Document, fileName: string, fullFilePath: string){
+    //check gone form the amd section
+    await this.checkAmdSecExists(metsXML, fullFilePath, false);
+
+    //check gone from the fileSec
+    const fileLocations = metsXML.getElementsByTagName('mets:FLocat');
+    const itemToFindFLocatElement = fileLocations.filter(item => item.getAttribute('xlink:href').trim() === fullFilePath.trim());
+    expect(itemToFindFLocatElement).toHaveLength(0);
+
+    //Check gone from the structMap
+    //Structure Map will always have length 1
+    let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
+    let elementToFind = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fileName);
+    expect(elementToFind).toHaveLength(0);
+  }
+
+  async checkFolderDeletedFromMETS(metsXML: Document, folderName: string, fullFolderPath: string){
+    //check gone form the amd section
+    await this.checkAmdSecExists(metsXML, fullFolderPath, false);
+
+    //Check gone from the structMap
+    //Structure Map will always have length 1
+    let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
+    let elementToFind = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === folderName);
+    expect(elementToFind).toHaveLength(0);
+  }
 }
-
-
-  
-
