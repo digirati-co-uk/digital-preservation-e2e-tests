@@ -53,6 +53,20 @@ export default defineConfig({
         storageState: frontendSessionFile,
       },
     },
+    {
+      name: 'api_tests',
+      testDir: './tests/apiTests',
+      testMatch: /.*\.spec\.ts/,
+      use: {
+        /* Base URL to use in actions like `await page.goto('/')`. */
+        baseURL: 'https://preservation-dev.dlip.digirati.io',
+        extraHTTPHeaders: {
+          'Accept': 'application/json',
+        },
+        ignoreHTTPSErrors: true
+      }
+    },
+
   ],
 
 
