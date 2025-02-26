@@ -16,7 +16,7 @@ export class NavigationPage {
   readonly baseBrowsePath: string = `/browse/${this.basePath}`;
   readonly baseAPIPath: string = `/repository/${this.basePath}/`;
   readonly baseBrowsePathHeading : Locator;
-
+  readonly breadCrumb : Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -33,6 +33,8 @@ export class NavigationPage {
     this.depositsHeading = page.getByRole('heading', {name: 'Deposits'});
     this.startingPathHeading = page.getByRole('heading', {name: 'For Tests'});
     this.connectivityChecksHeading = page.getByRole('heading', {name: 'Connectivity Checks'});
+    this.breadCrumb = page.getByRole('link', {name: 'breadcrumb-item' });
+    
 
   }
 

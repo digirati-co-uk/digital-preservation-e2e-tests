@@ -89,6 +89,10 @@ export class ContainerPage {
     return this.page.getByRole('link', {name: folderSlug, exact:true});
   };
 
+  getBreadCrumbSlug(breadCrumb: string) : Locator {
+    return this.page.getByRole('link', {name: breadCrumb, exact:true});
+  }
+
 }
 
 

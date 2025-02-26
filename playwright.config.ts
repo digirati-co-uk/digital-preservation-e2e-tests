@@ -53,6 +53,17 @@ export default defineConfig({
         storageState: frontendSessionFile,
       },
     },
+    {
+      dependencies: ['frontend-setup'],
+      name: 'loadtests',
+      testDir: './tests/loadtesting',
+      testMatch: /.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.FRONTEND_BASE_URL,
+        storageState: frontendSessionFile,
+      },
+    },
   ],
 
 
