@@ -63,7 +63,6 @@ test.describe('Load Container Tests', () => {
           if (d2 > 1 ){
             await containerPage.getBreadCrumbSlug(folderLevelOneSlug).click();
           }else{
-            //const myContainerLink: Locator = containerPage.getFolderSlug(folderLevelOneSlug.toLowerCase());
             await containerPage.getFolderSlug(folderLevelOneSlug).click();
           }
 
@@ -88,7 +87,6 @@ test.describe('Load Container Tests', () => {
         }
       }
     });
-
 
     await test.step(`delete the created containers/folders`, async () => {
 
@@ -147,7 +145,7 @@ test.describe('Load Container Tests', () => {
         //Delete Level 1
         await deleteTheContainer();
         }
-      
+
       //Delete the parent container
       await deleteTheContainer();
 
