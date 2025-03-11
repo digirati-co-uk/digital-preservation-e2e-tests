@@ -72,8 +72,7 @@ export class DepositPage {
   //Actions on files and folders
   readonly uploadFileIcon : Locator;
   readonly createFolderIcon : Locator;
-  readonly deleteFileIcon : Locator;
-  readonly deleteFolderIcon : Locator;
+  readonly fileFolderCheckbox: Locator;
 
   //Archival Group input fields
   readonly archivalGroupInput : Locator;
@@ -82,6 +81,9 @@ export class DepositPage {
 
   //buttons,alerts
   readonly alertMessage : Locator;
+  readonly actionsMenu : Locator;
+  readonly deleteSelectedButton: Locator;
+  readonly deleteFromMetsAndDeposit: Locator;
   readonly deleteDepositButton : Locator;
   readonly updateArchivalPropertiesButton : Locator;
 
@@ -217,8 +219,7 @@ export class DepositPage {
     //Actions on files and folders
     this.uploadFileIcon = page.getByLabel('upload file', { exact: true });
     this.createFolderIcon = page.getByLabel('new folder', { exact: true });
-    this.deleteFileIcon = page.getByLabel('delete file', { exact: true });
-    this.deleteFolderIcon = page.getByLabel('delete folder', { exact: true });
+    this.fileFolderCheckbox = page.getByRole('checkbox');
 
     //Deposit file structure table locators
     this.depositFilesTable = page.getByRole('table', {name: 'table-deposit-files'});
@@ -235,7 +236,7 @@ export class DepositPage {
     this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocationTranslated}"]`);
     this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
     this.uploadFileToTestFolder = this.newTestFolderInTable.locator(this.uploadFileIcon);
-    this.deleteTestFolder = this.newTestFolderInTable.locator(this.deleteFolderIcon);
+    this.deleteTestFolder = this.newTestFolderInTable.locator(this.fileFolderCheckbox);
 
     //Locators for test files within the new test folder
     this.newTestImageFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
@@ -250,6 +251,9 @@ export class DepositPage {
     //buttons,alerts
     this.updateArchivalPropertiesButton = this.page.getByRole('button', { name: 'Update properties' });
     this.alertMessage = page.getByRole('alert');
+    this.actionsMenu = page.getByRole('button', {name: 'Actions'});
+    this.deleteSelectedButton = page.getByRole('button', {name: 'Delete selected...'});
+    this.deleteFromMetsAndDeposit = page.locator('#deleteFromMetsAndDeposit');
     this.deleteDepositButton = page.getByRole('button', { name: 'Delete Deposit' });
 
     //New Deposit Dialog used in 'Browse - create deposit ' journey
@@ -264,7 +268,7 @@ export class DepositPage {
 
     //Delete Deposit Modal
     this.deleteDepositModalButton = page.locator('#deleteDepositButton');
-    this.confirmDeleteDeposit = page.getByRole('checkbox');
+    this.confirmDeleteDeposit = page.getByRole('dialog').getByRole('checkbox');
 
     //Delete item modal
     this.deleteItemModalButton = page.getByRole('button', {name: 'Delete', exact: true});
@@ -348,10 +352,13 @@ export class DepositPage {
   }
 
   async deleteFile (fileToDelete : Locator, fileName: string){
-    await fileToDelete.locator(this.deleteFileIcon).click();
+    await fileToDelete.locator(this.fileFolderCheckbox).click();
+    await this.actionsMenu.click();
+    await this.deleteSelectedButton.click();
+    await this.deleteFromMetsAndDeposit.click();
     await this.deleteItemModalButton.click();
     await expect(fileToDelete).toBeHidden();
-    await expect(this.alertMessage, 'Success message is shown').toContainText(`${fileName} DELETED`);
+    await expect(this.alertMessage, 'Success message is shown').toContainText(`1 item(s) DELETED.`);
   }
 
   async navigateToDepositListingPageWithParams(urlParams : string){
@@ -416,6 +423,15 @@ export class DepositPage {
 
     //Click Submit
     await this.page.getByRole('button', { name: 'Submit' }).click();
+  }
+
+  async openMetsFileInTab(context, locatorToClick: Locator){
+    const pagePromise = context.waitForEvent('page');
+    //View the METS
+    await locatorToClick.click();
+    const metsFileTab = await pagePromise;
+    await metsFileTab.waitForLoadState();
+    await metsFileTab.close();
   }
 
   async checkAmdSecExists(metsXML: Document, itemToFind: string, shouldBePresent: boolean) :Promise<string>{

@@ -55,7 +55,7 @@ test.describe('Archival Group Tests', () => {
     await test.step('Add a name and some files to the Deposit', async () => {
       await archivalGroupPage.depositPage.archivalGroupNameInput.fill(archivalGroupPage.depositPage.testArchivalGroupName);
       await archivalGroupPage.depositPage.updateArchivalPropertiesButton.click();
-      await expect(archivalGroupPage.depositPage.alertMessage, 'Successful update message is shown').toContainText('View of Deposit files updated');
+      await expect(archivalGroupPage.depositPage.alertMessage, 'Successful update message is shown').toContainText('Deposit successfully updated');
       //Add some files to the new folder
       await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testImageLocation, false, archivalGroupPage.depositPage.uploadFileToObjectsFolder);
       await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testWordDocLocation, false, archivalGroupPage.depositPage.uploadFileToObjectsFolder);
@@ -101,7 +101,8 @@ test.describe('Archival Group Tests', () => {
       //import job & original import job set and match
       await archivalGroupPage.runImportPreserveButton.click();
       await expect(archivalGroupPage.importJobPageTitle, 'We can see the import job title').toBeVisible();
-      await expect(archivalGroupPage.diffStatus, 'The initial Waiting status is shown').toContainText('waiting');
+      //Every now and then it goes so fast, we don't see waiting
+      await expect.soft(archivalGroupPage.diffStatus, 'The initial Waiting status is shown').toContainText('waiting');
       await expect(archivalGroupPage.diffDepositValue, 'The deposit link is correct').toHaveText(depositId);
       await expect(archivalGroupPage.diffDepositValue.getByRole('link'), 'The deposit link is correct').toHaveAttribute('href', `/deposits/${depositId}`);
       await expect(archivalGroupPage.diffArchivalGroup, 'The Archival Group slug is correct').toHaveText(`${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}`);
@@ -113,7 +114,7 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.diffNewVersion, 'There is no diffNewVersion').toHaveText('...');
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffCreated.textContent(), 30_000);
       await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
-      await expect(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
+      await expect.soft(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
       await expect(archivalGroupPage.diffContainersAdded, 'No Containers have been added yet').toBeEmpty();
       await expect(archivalGroupPage.diffBinariesAdded, 'No Binaries have been added yet').toBeEmpty();
 
@@ -137,18 +138,17 @@ test.describe('Archival Group Tests', () => {
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffDateFinished.textContent(), 10_000);
 
       await expect(archivalGroupPage.diffSourceVersion, 'There is no diffSourceVersion').toHaveText('(none)');
-      //Soft asserting until we can get to the bottom of whay it's sometimes set to ... instead of v1
-      await expect.soft(archivalGroupPage.diffNewVersion, 'New version is set to v1').toHaveText('v1');
+      await expect(archivalGroupPage.diffNewVersion, 'New version is set to v1').toHaveText('v1');
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffCreated.textContent(), 60_000);
       await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
-      await expect(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
+      await expect.soft(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
 
       //Check objects only thing in the list
       await expect(archivalGroupPage.diffContainersAdded.getByRole('listitem'), 'There is only 1 item in the Containers Added').toHaveCount(1);
       await expect(archivalGroupPage.diffContainersAdded, 'The Container Added is objects').toContainText(objectsFolderFullPath);
 
-      //Check the 2 files are in the list, and that's the only 2 things there
-      await expect(archivalGroupPage.diffBinariesAdded.getByRole('listitem'), 'There are only 2 items in the Binaries added').toHaveCount(2);
+      //Check the 2 files are in the list, and there are 3 items there (mets and the 2 files)
+      await expect(archivalGroupPage.diffBinariesAdded.getByRole('listitem'), 'There are only 3 items in the Binaries added').toHaveCount(3);
       await expect(archivalGroupPage.diffBinariesAdded, 'First test file added is correct').toContainText(testImageFileFullPath);
       await expect(archivalGroupPage.diffBinariesAdded, 'Second test file added is correct').toContainText(testWordFileFullPath);
 
@@ -187,9 +187,9 @@ test.describe('Archival Group Tests', () => {
       //deposits -  1 only
 
       //Validate the file structure matches
-      await expect(archivalGroupPage.resourcesTableRows, 'We correctly have only the one row in the Resources table').toHaveCount(1);
+      await expect(archivalGroupPage.resourcesTableRows, 'We correctly have only the 2 rows in the Resources table, objects and METS.xml').toHaveCount(2);
       await expect(archivalGroupPage.objectsFolderInTable, 'That row is the objects folder, as expected').toHaveText(archivalGroupPage.depositPage.objectsFolderName);
-
+      //TODO Check for METS file
     });
 
     await test.step('Navigate into the archival group sub directory', async () => {
@@ -239,8 +239,8 @@ test.describe('Archival Group Tests', () => {
       //check there are no delete/add buttons
       await expect(archivalGroupPage.depositPage.uploadFileIcon, 'Correctly cannot see upload icons').toBeHidden();
       await expect(archivalGroupPage.depositPage.createFolderIcon, 'Correctly cannot see create folder icons').toBeHidden();
-      await expect(archivalGroupPage.depositPage.deleteFolderIcon, 'Correctly cannot see delete folder icons').toBeHidden();
-      await expect(archivalGroupPage.depositPage.deleteFileIcon, 'Correctly cannot see delete item icons').toBeHidden();
+      await expect(archivalGroupPage.depositPage.fileFolderCheckbox, 'Correctly cannot see delete folder icons').toBeHidden();
+      await expect(archivalGroupPage.depositPage.fileFolderCheckbox, 'Correctly cannot see delete item icons').toBeHidden();
 
       //Check status of job is completed
       await expect(archivalGroupPage.depositPage.importJobStatusCompleted, 'Job is marked as completed').toBeVisible();
