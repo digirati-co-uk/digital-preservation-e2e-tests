@@ -1,4 +1,4 @@
-import {BrowserContext, expect} from "@playwright/test";
+import { expect} from "@playwright/test";
 import { DepositPage } from './pages/DepositPage';
 import { test} from '../../fixture';
 import {
@@ -417,15 +417,15 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step('Verify the files are Deposit only, and are not present in the METS file', async() => {
-      await expect.soft(depositPage.testImageSelectArea, 'Listed as Deposit only').toHaveText(depositPage.inDepositOnlyText);
-      await expect.soft(depositPage.testPdfSelectArea, 'Listed as Deposit only').toHaveText(depositPage.inDepositOnlyText);
-      await expect.soft(depositPage.testWordDocSelectArea, 'Listed as Deposit only').toHaveText(depositPage.inDepositOnlyText);
+      await expect(depositPage.testImageSelectArea, 'Listed as Deposit only').toHaveText(depositPage.inDepositOnlyText);
+      await expect(depositPage.testPdfSelectArea, 'Listed as Deposit only').toHaveText(depositPage.inDepositOnlyText);
+      await expect(depositPage.testWordDocSelectArea, 'Listed as Deposit only').toHaveText(depositPage.inDepositOnlyText);
 
       //Open the METS file
       await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
 
       //Validate that we have an amdSec with the name newTestFolderTitle
-      let admID = await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug, true);
+      await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug, true);
 
       //Check files are not in the METS
       await depositPage.checkFileNotPresentInMETS(metsXML, depositPage.testImageLocation, depositPage.testImageLocationFullPath);
@@ -441,16 +441,64 @@ test.describe('Deposit Tests', () => {
       await page.goBack();
     });
 
-    await test.step('Select the files and add to mets, verify existence in the METS file', async() => {
+    await test.step('Select one file and add to mets, verify existence in the METS file', async() => {
       await depositPage.testImageCheckbox.check();
-      await depositPage.testWordDocCheckbox.check();
-      await depositPage.testPdfCheckbox.check();
-
       await depositPage.actionsMenu.click();
       await depositPage.addToMetsButton.click();
 
-      //verify we can see the 3 files listed in the dialog box
+      //verify we can see only the 1 file listed in the dialog box
       await expect(depositPage.testImageFileInDialog).toBeVisible();
+      await expect(depositPage.testPdfDocFileInDialog).not.toBeVisible();
+      await expect(depositPage.testWordDocFileInDialog).not.toBeVisible();
+
+      //Cancel and verify nothing changed
+      await depositPage.addToMetsCloseDialogButton.click();
+      await expect(depositPage.testImageSelectArea, 'Listed as Deposit only').toHaveText(depositPage.inDepositOnlyText);
+      //Open the METS file
+      await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
+
+      //Validate that we have an amdSec with the name newTestFolderTitle
+      await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug, true);
+
+      //Check files are not in the METS
+      await depositPage.checkFileNotPresentInMETS(metsXML, depositPage.testImageLocation, depositPage.testImageLocationFullPath);
+
+      //This time do it for real
+      await depositPage.actionsMenu.click();
+      await depositPage.addToMetsButton.click();
+      await depositPage.addToMetsDialogButton.click();
+
+      //Open the METS file
+      await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
+
+      //Validate that we have an amdSec with the name newTestFolderTitle
+      let admID: string = await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug, true);
+
+      //Passing TRUE to the methods below, as we DO now expect to find them in the METS
+      await depositPage.validateFilePresentInMETS(context,metsXML, admID, depositPage.testImageLocationFullPath, depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testImageLocation, true);
+
+      //Check that items are correctly listed as Both or Deposit
+      await expect(depositPage.testImageSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
+      await expect(depositPage.testPdfSelectArea, 'Still Listed as Deposit').toHaveText(depositPage.inDepositOnlyText);
+      await expect(depositPage.testWordDocSelectArea, 'Still Listed as deposit').toHaveText(depositPage.inDepositOnlyText);
+    });
+
+    await test.step('Select all non-Mets, verify existence in the METS file', async() => {
+
+      //Select all Non Mets, check it's selected the right things
+      await depositPage.actionsMenu.click();
+      await depositPage.selectAllNonMetsButton.click();
+
+      await expect(depositPage.testImageCheckbox).not.toBeChecked();
+      await expect(depositPage.testWordDocCheckbox).toBeChecked();
+      await expect(depositPage.testPdfCheckbox).toBeChecked();
+
+      //Now add them to Mets
+      await depositPage.actionsMenu.click();
+      await depositPage.addToMetsButton.click();
+
+      //verify we can see only the 2 files listed in the dialog box
+      await expect(depositPage.testImageFileInDialog).not.toBeVisible();
       await expect(depositPage.testPdfDocFileInDialog).toBeVisible();
       await expect(depositPage.testWordDocFileInDialog).toBeVisible();
 
@@ -463,14 +511,13 @@ test.describe('Deposit Tests', () => {
       let admID = await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug, true);
 
       //Passing TRUE to the methods below, as we DO now expect to find them in the METS
-      await depositPage.validateFilePresentInMETS(context,metsXML, admID, depositPage.testImageLocationFullPath, depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testImageLocation, true);
       await depositPage.validateFilePresentInMETS(context,metsXML, admID, depositPage.testWordDocLocationFullPath, depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testWordDocLocation, true);
       await depositPage.validateFilePresentInMETS(context,metsXML, admID, depositPage.testPdfDocLocationFullPath, depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testPdfDocLocation, true);
 
       //Check that the 3 items are now listed as 'Both'
-      await expect.soft(depositPage.testImageSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
-      await expect.soft(depositPage.testPdfSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
-      await expect.soft(depositPage.testWordDocSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
+      await expect(depositPage.testImageSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
+      await expect(depositPage.testPdfSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
+      await expect(depositPage.testWordDocSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
 
     });
 
@@ -484,6 +531,26 @@ test.describe('Deposit Tests', () => {
       await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
       await expect(depositPage.runImportButton, 'We can now see the button to run the Import').toBeVisible();
       await page.goBack();
+    });
+
+    await test.step(`Delete file from the Deposit only`, async() => {
+      await depositPage.testImageCheckbox.check();
+      await depositPage.actionsMenu.click();
+      await depositPage.deleteSelectedButton.click();
+      await depositPage.deleteFromDepositOnly.click();
+      await depositPage.deleteItemModalButton.click();
+      await expect(depositPage.testImageSelectArea, 'Listed as Mets only').toHaveText(depositPage.inMETSOnlyText);
+      await depositPage.createDiffImportJobButton.click();
+
+      //Check that there are 3 files in the list, plus the METS file
+      //TODO currently fails due to bug 90783
+      await expect.soft(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 4 items in the Binaries to add').toHaveCount(4);
+      await expect.soft(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.testWordDocLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.testPdfDocLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
+
+
     });
 
     await test.step('Tidy up and delete the Deposit', async() => {

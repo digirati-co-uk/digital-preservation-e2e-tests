@@ -98,8 +98,10 @@ export class DepositPage {
   //buttons,alerts
   readonly alertMessage : Locator;
   readonly actionsMenu : Locator;
+  readonly selectAllNonMetsButton : Locator;
   readonly deleteSelectedButton: Locator;
   readonly deleteFromMetsAndDeposit: Locator;
+  readonly deleteFromDepositOnly : Locator;
   readonly deleteDepositButton : Locator;
   readonly updateArchivalPropertiesButton : Locator;
 
@@ -184,6 +186,7 @@ export class DepositPage {
   readonly testWordDocFileInDialog : Locator;
   readonly testPdfDocFileInDialog : Locator;
   readonly addToMetsDialogButton : Locator;
+  readonly addToMetsCloseDialogButton : Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -291,8 +294,10 @@ export class DepositPage {
     this.updateArchivalPropertiesButton = this.page.getByRole('button', { name: 'Update properties' });
     this.alertMessage = page.getByRole('alert');
     this.actionsMenu = page.getByRole('button', {name: 'Actions'});
+    this.selectAllNonMetsButton = page.getByRole('button', {name: 'Select all non-METS'});
     this.deleteSelectedButton = page.getByRole('button', {name: 'Delete selected...'});
     this.deleteFromMetsAndDeposit = page.locator('#deleteFromMetsAndDeposit');
+    this.deleteFromDepositOnly = page.locator('#deleteFromDeposit');
     this.deleteDepositButton = page.getByRole('button', { name: 'Delete Deposit' });
 
     //New Deposit Dialog used in 'Browse - create deposit ' journey
@@ -370,6 +375,7 @@ export class DepositPage {
     this.testWordDocFileInDialog = this.page.getByRole('dialog').getByRole('cell').getByText(this.testWordDocLocation);
     this.testPdfDocFileInDialog = this.page.getByRole('dialog').getByRole('cell').getByText(this.testPdfDocLocation);
     this.addToMetsDialogButton = this.page.getByRole('button', {name: 'Add to METS'});
+    this.addToMetsCloseDialogButton = this.page.getByRole('button', {name: 'Close'}).first();
   }
 
   async goto() {
