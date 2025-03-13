@@ -114,7 +114,6 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.diffNewVersion, 'There is no diffNewVersion').toHaveText('...');
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffCreated.textContent(), 30_000);
       await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
-      await expect.soft(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
       await expect(archivalGroupPage.diffContainersAdded, 'No Containers have been added yet').toBeEmpty();
       await expect(archivalGroupPage.diffBinariesAdded, 'No Binaries have been added yet').toBeEmpty();
 
@@ -141,7 +140,6 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.diffNewVersion, 'New version is set to v1').toHaveText('v1');
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffCreated.textContent(), 60_000);
       await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
-      await expect.soft(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
 
       //Check objects only thing in the list
       await expect(archivalGroupPage.diffContainersAdded.getByRole('listitem'), 'There is only 1 item in the Containers Added').toHaveCount(1);

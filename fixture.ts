@@ -8,9 +8,7 @@ export const test = base.extend<{}, { forEachWorker: void }>({
 
     apiContext = await playwright.request.newContext({
         // All requests we send go to this API endpoint.
-        //baseURL: `${process.env.DLCS_API_ENDPOINT!}`,
-        baseURL: 'https://preservation-dev.dlip.digirati.io/',
-
+        baseURL: `${process.env.PRESERVATION_API_ENDPOINT!}`,
     });
 
     await use();
