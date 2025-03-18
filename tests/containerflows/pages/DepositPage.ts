@@ -611,6 +611,13 @@ export class DepositPage {
     await this.newFolderNameInput.fill(this.newTestFolderTitle);
     await this.newFolderDialogButton.click();
     await expect(this.newTestFolderInTable, 'The new test folder has been created in the correct place in the hierarchy').toBeVisible();
+  }
 
+  async deleteTheCurrentDeposit(){
+    await this.actionsMenu.click();
+    await this.deleteDepositButton.click();
+    await expect(this.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
+    await this.confirmDeleteDeposit.check();
+    await this.deleteDepositModalButton.click();
   }
 }

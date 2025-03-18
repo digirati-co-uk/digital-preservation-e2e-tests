@@ -309,11 +309,7 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.newFolderCloseDialogButton, 'The dialog has closed').not.toBeVisible();
 
       //Open the dialog again, this time click the delete button
-      await depositPage.actionsMenu.click();
-      await depositPage.deleteDepositButton.click();
-      await expect(depositPage.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
-      await depositPage.confirmDeleteDeposit.check();
-      await depositPage.deleteDepositModalButton.click();
+      await depositPage.deleteTheCurrentDeposit();
 
       //Check back at the main deposits page and the deposit we created is not on the page
       await expect(page.getByText(`Deposit ${depositId} successfully deleted`), 'We see successful message telling us the deposit has been deleted').toBeVisible();
@@ -564,10 +560,7 @@ test.describe('Deposit Tests', () => {
       //Navigate back into the first deposit in order to delete it
       await page.goto(depositURL);
       //Tidy up
-      await depositPage.actionsMenu.click();
-      await depositPage.deleteDepositButton.click();
-      await depositPage.confirmDeleteDeposit.check();
-      await depositPage.deleteDepositModalButton.click();
+      await depositPage.deleteTheCurrentDeposit();
     });
   });
 
@@ -630,10 +623,7 @@ test.describe('Deposit Tests', () => {
       //Navigate back into the first deposit in order to delete it
       await page.goto(depositURL);
       //Tidy up
-      await depositPage.actionsMenu.click();
-      await depositPage.deleteDepositButton.click();
-      await depositPage.confirmDeleteDeposit.check();
-      await depositPage.deleteDepositModalButton.click();
+      await depositPage.deleteTheCurrentDeposit();
     });
   });
 
@@ -712,10 +702,7 @@ test.describe('Deposit Tests', () => {
       //Navigate back into the first deposit in order to delete it
       await page.goto(depositURL);
       //Tidy up
-      await depositPage.actionsMenu.click();
-      await depositPage.deleteDepositButton.click();
-      await depositPage.confirmDeleteDeposit.check();
-      await depositPage.deleteDepositModalButton.click();
+      await depositPage.deleteTheCurrentDeposit();
     });
   });
 
@@ -807,10 +794,7 @@ test.describe('Deposit Tests', () => {
       //Navigate back into the first deposit in order to delete it
       await page.goto(depositURL);
       //Tidy up
-      await depositPage.actionsMenu.click();
-      await depositPage.deleteDepositButton.click();
-      await depositPage.confirmDeleteDeposit.check();
-      await depositPage.deleteDepositModalButton.click();
+      await depositPage.deleteTheCurrentDeposit();
     });
   });
 
@@ -1118,10 +1102,7 @@ test.describe('Deposit Tests', () => {
       //Navigate back into the first deposit in order to delete it
       await page.goto(depositURL);
       //Tidy up
-      await depositPage.actionsMenu.click();
-      await depositPage.deleteDepositButton.click();
-      await depositPage.confirmDeleteDeposit.check();
-      await depositPage.deleteDepositModalButton.click();
+      await depositPage.deleteTheCurrentDeposit();
     });
   });
 

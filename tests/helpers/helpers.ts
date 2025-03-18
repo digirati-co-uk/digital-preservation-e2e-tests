@@ -5,7 +5,7 @@ import {fromIni} from '@aws-sdk/credential-providers';
 import {parseS3Url} from 'amazon-s3-url'
 import {readFileSync} from "fs";
 
-export const createdByUserName :string = 'dlipdev';
+export const createdByUserName :string = process.env.FRONTEND_USERNAME;
 export const frontendBaseUrl : string = process.env.FRONTEND_BASE_URL;
 
 // This utility appends a randomly generated suffix onto the input string - used for creating unique IDs

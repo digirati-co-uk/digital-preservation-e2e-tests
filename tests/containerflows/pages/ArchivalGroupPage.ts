@@ -28,7 +28,7 @@ export class ArchivalGroupPage {
   readonly diffContainersToDelete : Locator;
   readonly diffBinariesToDelete : Locator;
   readonly diffContainersToRename : Locator;
-  readonly diffBinariesToRemove : Locator;
+  readonly diffBinariesToRename : Locator;
   readonly diffContainersAdded : Locator;
   readonly diffBinariesAdded : Locator;
   readonly diffBinariesPatched : Locator;
@@ -69,7 +69,7 @@ export class ArchivalGroupPage {
     this.diffContainersToDelete = page.getByLabel('containers to delete');
     this.diffBinariesToDelete = page.getByLabel('binaries to delete');
     this.diffContainersToRename = page.getByLabel('containers to rename');
-    this.diffBinariesToRemove = page.getByLabel('binaries to rename');
+    this.diffBinariesToRename = page.getByLabel('binaries to rename');
 
     //Run Import Result Page
     this.importJobPageTitle = page.getByRole('heading', {name: `Import Job Result`});
@@ -113,7 +113,7 @@ export class ArchivalGroupPage {
     await expect(this.diffContainersToDelete, 'Containers to Delete is empty').toBeEmpty();
     await expect(this.diffBinariesToDelete, 'Binaries to Delete is empty').toBeEmpty();
     await expect(this.diffContainersToRename, 'Containers to Rename is empty').toBeEmpty();
-    await expect(this.diffBinariesToRemove, 'Binaries to Remove is empty').toBeEmpty();
+    await expect(this.diffBinariesToRename, 'Binaries to Rename is empty').toBeEmpty();
   }
 
   //TODO may need to rethink this, if the environment takes some time to process jobs to completion

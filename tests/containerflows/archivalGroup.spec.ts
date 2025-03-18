@@ -22,7 +22,6 @@ test.describe('Archival Group Tests', () => {
     await context.route(`**/mets`, async route => {
       const response = await route.fetch();
       const metsAsString = await response.text();
-      console.log(metsAsString);
       metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
       await route.fulfill();
     });
@@ -261,15 +260,14 @@ test.describe('Archival Group Tests', () => {
       const imageLocation = `objects/${archivalGroupPage.depositPage.testImageLocation}`;
       const wordLocation = `objects/${archivalGroupPage.depositPage.testWordDocLocation}`;
 
+      //Create a New Deposit within an existing Archival Group
       await page.goto(archivalGroupURL);
       await expect(archivalGroupPage.depositPage.newDepositButton, 'Can see the New Deposit button').toBeVisible();
       await archivalGroupPage.depositPage.newDepositButton.click();
       await archivalGroupPage.createNewDepositModalButton.click();
 
-      //TODO Verify the files are METS only
-
-      console.log(imageLocation +' '+wordLocation);
-      //Verify the METS file has the files in it
+      //Verify the METS file has the files in it, and rows are marked Mets only
+      await expect(page.getByLabel('select-row').filter({ hasText: archivalGroupPage.depositPage.inMETSOnlyText })).toHaveCount(2);
       await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
 
       //Validate that we have an amdSec with each new file
@@ -294,18 +292,37 @@ test.describe('Archival Group Tests', () => {
 
       //Verify create diff import job has nothing in it
       await archivalGroupPage.depositPage.createDiffImportJobButton.click();
+      await expect(archivalGroupPage.diffBinariesToAdd, 'There are no binaries to add').toBeEmpty();
+      await expect(archivalGroupPage.diffBinariesToDelete, 'There are no binaries to delete').toBeEmpty();
+      await page.goBack();
 
       //Delete the 2 files from deposit and mets
+      for (const currentCheckBox of allCheckBoxes){
+        await currentCheckBox.click();
+      }
+      await archivalGroupPage.depositPage.actionsMenu.click();
+      await archivalGroupPage.depositPage.deleteSelectedButton.click();
+      await archivalGroupPage.depositPage.deleteFromMetsAndDeposit.click();
+      await archivalGroupPage.depositPage.deleteItemModalButton.click();
+      await expect(archivalGroupPage.depositPage.alertMessage, 'Success message is shown').toContainText(`2 item(s) DELETED.`);
 
       //Check the mets file has been updated
+      await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
 
-      //Check diff import job deleted 2 files and patches the mets
+      //Validate that we DO NOT have an amdSec with each new file
+      await archivalGroupPage.depositPage.checkAmdSecExists(metsXML, imageLocation, false);
+      await archivalGroupPage.depositPage.checkAmdSecExists(metsXML, wordLocation, false);
 
+      //Check diff import job deleted 2 files and patches the
+      await archivalGroupPage.depositPage.createDiffImportJobButton.click();
+      await expect(archivalGroupPage.diffBinariesToDelete).not.toBeEmpty();
+      await expect(archivalGroupPage.diffBinariesToDelete, 'First test file to remove is correct').toContainText(imageLocation);
+      await expect(archivalGroupPage.diffBinariesToDelete, 'Second test file to remove is correct').toContainText(wordLocation);
 
+      //Now go back and delete the deposit to tidy up
+      await page.goBack();
+      await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
     });
-
-
-
   });
 });
 
