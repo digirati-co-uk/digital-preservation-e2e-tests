@@ -980,7 +980,7 @@ test.describe('Deposit Tests', () => {
 
     await test.step('filter by last modified by field', async() => {
       //modified by
-      await depositPage.navigateToDepositListingPageWithParams(`modifiedBy=${createdByUserName}`);
+      await depositPage.navigateToDepositListingPageWithParams(`lastModifiedBy=${createdByUserName}`);
       expect((await depositPage.allRowsLastModifiedBy.allTextContents()).every((currentValue: string) => currentValue === createdByUserName), 'All rows have correct modified by username').toBeTruthy();
     });
 
