@@ -13,6 +13,10 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     environment: development
+    permissions:
+      id-token: write
+      contents: read
+      checks: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -37,7 +41,7 @@ jobs:
           FRONTEND_PASSWORD: ${{secrets.FRONTEND_PASSWORD}}
           SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
           SLACK_CHANNEL: ${{vars.SLACK_CHANNEL}}
-          GITHUB_REPORT_OUTPUT: 'https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}'
+          GITHUB_REPORT_OUTPUT: 'https://d1o8q7gs2alph4.cloudfront.net/${{github.repository}}/${{ github.head_ref || github.ref_name }}/index.html'
 
 
       - uses: actions/upload-artifact@v4
@@ -46,3 +50,7 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+      - name: Archive arifacts
+        if: always()
+        uses: digirati-co-uk/digirati-ops-actions/.github/actions/archive-artifacts@main

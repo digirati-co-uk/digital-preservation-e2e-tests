@@ -521,6 +521,13 @@ test.describe('Deposit Tests', () => {
 
     });
 
+    await test.step('Try to add files to METS without selecting any files', async() => {
+      await depositPage.actionsMenu.click();
+      await depositPage.addToMetsButton.click();
+      await expect.soft(depositPage.addToMetsHelpText).toHaveText('Tom to complete this as part of bug fix 90777')
+      await depositPage.addToMetsCloseDialogButton.click();
+    });
+
     await test.step('Check that we can now run an import job', async() => {
       await depositPage.createDiffImportJobButton.click();
       //Check the 3 files are in the list, plus the METS file

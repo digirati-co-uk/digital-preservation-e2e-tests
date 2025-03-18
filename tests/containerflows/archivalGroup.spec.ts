@@ -1,6 +1,7 @@
 import {expect} from "@playwright/test";
 import { test } from '../../fixture';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
+import { DOMParser, Document } from '@xmldom/xmldom';
 import {checkDateIsWithinNumberOfSeconds, createdByUserName, generateUniqueId} from "../helpers/helpers";
 
 test.describe('Archival Group Tests', () => {
@@ -11,16 +12,27 @@ test.describe('Archival Group Tests', () => {
     archivalGroupPage = new ArchivalGroupPage(page);
   });
 
-  test(`can create an Archival Group from a Deposit`, async ({page}) => {
+  test(`can create an Archival Group from a Deposit`, async ({page, context}) => {
 
     //Set a 5-minute timeout
     test.setTimeout(300_000);
+
+    //Set up the METS file listener to intercept any requests to the METS page to grab the XML
+    let metsXML : Document;
+    await context.route(`**/mets`, async route => {
+      const response = await route.fetch();
+      const metsAsString = await response.text();
+      console.log(metsAsString);
+      metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+      await route.fulfill();
+    });
 
     let archivalGroupString : string = archivalGroupPage.depositPage.testValidArchivalURI + generateUniqueId();
     let depositId : string;
     let objectsFolderFullPath : string = archivalGroupPage.navigationPage.basePath +'/';
     let testImageFileFullPath : string = archivalGroupPage.navigationPage.basePath +'/';
     let testWordFileFullPath : string = archivalGroupPage.navigationPage.basePath +'/';
+    let archivalGroupURL : string;
 
     await test.step('Create a Deposit from within the structure to ensure archival group already set', async () => {
       await archivalGroupPage.depositPage.getStarted();
@@ -157,7 +169,8 @@ test.describe('Archival Group Tests', () => {
     await test.step('Navigate to the archival group top level folder', async () => {
       //Follow the archival group link
       await archivalGroupPage.diffArchivalGroup.click();
-      await expect(page, 'The URL is correct').toHaveURL(`${archivalGroupPage.navigationPage.baseBrowsePath}/${archivalGroupString}`);
+      archivalGroupURL = `${archivalGroupPage.navigationPage.baseBrowsePath}/${archivalGroupString}`;
+      await expect(page, 'The URL is correct').toHaveURL(archivalGroupURL);
 
       //Check correct header and buttons visible
       await expect(archivalGroupPage.archivalGroupPageHeading, 'The correct page title is displayed').toBeVisible();
@@ -243,6 +256,56 @@ test.describe('Archival Group Tests', () => {
       //Check status of job is completed
       await expect(archivalGroupPage.depositPage.importJobStatusCompleted, 'Job is marked as completed').toBeVisible();
     });
+
+    await test.step('Create a further Deposit from the archival group', async () => {
+      const imageLocation = `objects/${archivalGroupPage.depositPage.testImageLocation}`;
+      const wordLocation = `objects/${archivalGroupPage.depositPage.testWordDocLocation}`;
+
+      await page.goto(archivalGroupURL);
+      await expect(archivalGroupPage.depositPage.newDepositButton, 'Can see the New Deposit button').toBeVisible();
+      await archivalGroupPage.depositPage.newDepositButton.click();
+      await archivalGroupPage.createNewDepositModalButton.click();
+
+      //TODO Verify the files are METS only
+
+      console.log(imageLocation +' '+wordLocation);
+      //Verify the METS file has the files in it
+      await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
+
+      //Validate that we have an amdSec with each new file
+      await archivalGroupPage.depositPage.checkAmdSecExists(metsXML, imageLocation, true);
+      await archivalGroupPage.depositPage.checkAmdSecExists(metsXML, wordLocation, true);
+
+      //Verify delete from deposit only doesn't change anything (Tom, should we disable this for mets only files?)
+      const allCheckBoxes = await page.getByLabel('select-row').getByRole('checkbox').all();
+      for (const currentCheckBox of allCheckBoxes){
+        await currentCheckBox.click();
+      }
+      await archivalGroupPage.depositPage.actionsMenu.click();
+      await archivalGroupPage.depositPage.deleteSelectedButton.click();
+      await archivalGroupPage.depositPage.deleteFromDepositOnly.click();
+      await archivalGroupPage.depositPage.deleteItemModalButton.click();
+      //Verify the METS file still has the files in it
+      await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
+
+      //Validate that we have an amdSec with each new file
+      await archivalGroupPage.depositPage.checkAmdSecExists(metsXML, imageLocation, true);
+      await archivalGroupPage.depositPage.checkAmdSecExists(metsXML, wordLocation, true);
+
+      //Verify create diff import job has nothing in it
+      await archivalGroupPage.depositPage.createDiffImportJobButton.click();
+
+      //Delete the 2 files from deposit and mets
+
+      //Check the mets file has been updated
+
+      //Check diff import job deleted 2 files and patches the mets
+
+
+    });
+
+
+
   });
 });
 

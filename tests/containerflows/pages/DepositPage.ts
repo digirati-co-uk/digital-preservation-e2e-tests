@@ -187,6 +187,7 @@ export class DepositPage {
   readonly testPdfDocFileInDialog : Locator;
   readonly addToMetsDialogButton : Locator;
   readonly addToMetsCloseDialogButton : Locator;
+  readonly addToMetsHelpText: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -376,6 +377,7 @@ export class DepositPage {
     this.testPdfDocFileInDialog = this.page.getByRole('dialog').getByRole('cell').getByText(this.testPdfDocLocation);
     this.addToMetsDialogButton = this.page.getByRole('button', {name: 'Add to METS'});
     this.addToMetsCloseDialogButton = this.page.getByRole('button', {name: 'Close'}).first();
+    this.addToMetsHelpText = this.page.locator('#addToMetsHelpText');
   }
 
   async goto() {

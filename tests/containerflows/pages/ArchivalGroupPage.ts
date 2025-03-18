@@ -49,6 +49,7 @@ export class ArchivalGroupPage {
   readonly objectsFolderInTable : Locator;
   readonly goToArchivalGroupButton : Locator;
   readonly objectsPageTitle : Locator;
+  readonly createNewDepositModalButton : Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -96,7 +97,7 @@ export class ArchivalGroupPage {
     this.objectsFolderInTable = this.resourcesTableRows.first().getByLabel('td-path');
     this.goToArchivalGroupButton = page.getByRole('link', {name: 'Go to Archival Group'});
     this.objectsPageTitle = page.getByRole('heading', {name: this.depositPage.objectsFolderName});
-
+    this.createNewDepositModalButton = page.getByRole('button', {name: 'Create New Deposit'});
   }
 
   async checkModifiedBinariesFoldersEmpty(){
