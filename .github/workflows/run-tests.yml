@@ -41,6 +41,9 @@ jobs:
           FRONTEND_PASSWORD: ${{secrets.FRONTEND_PASSWORD}}
           SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
           SLACK_CHANNEL: ${{vars.SLACK_CHANNEL}}
+          API_CLIENT_ID: ${{secrets.API_CLIENT_ID}}
+          API_CLIENT_SECRET: ${{secrets.API_CLIENT_SECRET}}
+          API_TENANT_ID: ${{secrets.API_TENANT_ID}}
           GITHUB_REPORT_OUTPUT: 'https://d1o8q7gs2alph4.cloudfront.net/${{github.repository}}/${{ github.head_ref || github.ref_name }}/index.html'
 
 
