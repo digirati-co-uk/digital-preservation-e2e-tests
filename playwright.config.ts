@@ -25,7 +25,6 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
 
-
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-all-retries',
     screenshot: 'only-on-failure',
@@ -58,12 +57,7 @@ export default defineConfig({
       testDir: './tests/apiTests',
       testMatch: /.*\.spec\.ts/,
       use: {
-        /* Base URL to use in actions like `await page.goto('/')`. */
-        baseURL: 'https://preservation-dev.dlip.digirati.io',
-        extraHTTPHeaders: {
-          'Accept': 'application/json',
-        },
-        ignoreHTTPSErrors: true
+
       }
     },
 

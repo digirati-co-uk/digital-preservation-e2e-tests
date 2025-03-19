@@ -1,7 +1,10 @@
-import {test, expect} from '@playwright/test';
+import { expect} from '@playwright/test';
+import { apiContext, test } from '../../fixture';
 
-test('view-repository-root', async ({request}) => {
-  const rootReq = await request.get('/repository');
+test('view-repository-root', async ({page}) => {
+
+  test.setTimeout(120_000);
+  let rootReq = await apiContext.get('/repository');
   expect(rootReq.ok()).toBeTruthy();
 
   const root = await rootReq.json();
@@ -9,4 +12,6 @@ test('view-repository-root', async ({request}) => {
     "id": expect.stringContaining('/repository/'), //Why not @id anymore?
     type: expect.stringMatching('RepositoryRoot') //Why not Container any more?
   }));
+
 });
+
