@@ -46,7 +46,7 @@ export async function uploadFile(
     const s3Url = parseS3Url(depositUri);
 
     // be forgiving of joining paths...
-    const key = s3Url.key.endsWith('/') ? s3Url.key.slice(0,-1) : s3Url.key;
+    const key = s3Url.key.endsWith('/') ? s3Url.key.slice(0, -1) : s3Url.key;
     const path = relativePathInDigitalObject.startsWith('/') ? relativePathInDigitalObject.slice(1) : relativePathInDigitalObject;
     const pathInDeposit = key + '/' + path;
 
@@ -61,7 +61,4 @@ export async function uploadFile(
     });
 
     await s3.send(putCmd);
-
-export function generateBearerToken(){
-    
-}
+  }
