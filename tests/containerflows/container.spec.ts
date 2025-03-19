@@ -78,7 +78,6 @@ test.describe('Container Tests', () => {
       expect(containerItem.lastModified, 'Created and Modified dates match').toEqual(containerItem.created);
 
       //createdBy and modifiedBy match containerPage.createdBy
-      // TODO this might fail soon given login implemented? Will it always be dlipdev that it's created by?
       expect(containerItem.createdBy, 'Correct value in createdBy').toEqual(expect.stringContaining(containerPage.createdBy));
       expect(containerItem.lastModifiedBy, 'Correct value in modifiedBy').toEqual(expect.stringContaining(containerPage.createdBy));
     });
