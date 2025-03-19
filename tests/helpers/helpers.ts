@@ -61,4 +61,7 @@ export async function uploadFile(
     });
 
     await s3.send(putCmd);
+
+export function generateBearerToken(){
+    
 }

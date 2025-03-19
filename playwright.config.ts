@@ -67,6 +67,15 @@ export default defineConfig({
         storageState: frontendSessionFile,
       },
     },
+    {
+      name: 'api_tests',
+      testDir: './tests/apiTests',
+      testMatch: /.*\.spec\.ts/,
+      use: {
+
+      }
+    },
+
   ],
 
 
