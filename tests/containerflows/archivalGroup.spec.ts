@@ -1,5 +1,5 @@
 import {BrowserContext, expect, Locator, Page} from "@playwright/test";
-import { test } from '../../fixture';
+import {apiContext, test} from '../../fixture';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 import { DOMParser, Document } from '@xmldom/xmldom';
 import {checkDateIsWithinNumberOfSeconds, createdByUserName, generateUniqueId} from "../helpers/helpers";
@@ -33,6 +33,8 @@ test.describe('Archival Group Tests', () => {
     let testImageFileFullPath : string = archivalGroupPage.navigationPage.basePath +'/';
     let testWordFileFullPath : string = archivalGroupPage.navigationPage.basePath +'/';
     let archivalGroupURL : string;
+    const imageLocation = `objects/${archivalGroupPage.depositPage.testImageLocation}`;
+    const wordLocation = `objects/${archivalGroupPage.depositPage.testWordDocLocation}`;
 
     await test.step('Create a Deposit from within the structure to ensure archival group already set', async () => {
       await archivalGroupPage.depositPage.getStarted();
@@ -204,7 +206,19 @@ test.describe('Archival Group Tests', () => {
 
     });
 
-    await test.step('Navigate into the archival group sub directory', async () => {
+    await test.step('Check we can access the METS for this archival group via the API', async () => {
+      //Call the METS endpoint on the API, verify we get the METS file back
+      const archivalGroupAPILocation : string = `repository/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}?view=mets`;
+      const metsResponse = await apiContext.get(archivalGroupAPILocation);
+      const metsAsString = await metsResponse.text();
+      metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+
+      //Verfiy the 2 test files are in the METS i.e. the right METS was returned
+      await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
+
+    });
+
+      await test.step('Navigate into the archival group sub directory', async () => {
 
       await archivalGroupPage.objectsFolderInTable.getByRole('link').click();
 
@@ -257,9 +271,6 @@ test.describe('Archival Group Tests', () => {
       //Check status of job is completed
       await expect(archivalGroupPage.depositPage.importJobStatusCompleted, 'Job is marked as completed').toBeVisible();
     });
-
-    const imageLocation = `objects/${archivalGroupPage.depositPage.testImageLocation}`;
-    const wordLocation = `objects/${archivalGroupPage.depositPage.testWordDocLocation}`;
 
     await test.step('Create a further Deposit from the archival group', async () => {
 
