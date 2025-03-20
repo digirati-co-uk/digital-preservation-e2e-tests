@@ -19,3 +19,7 @@ export function checkDateIsWithinNumberOfSeconds(dateToValidate: string, seconds
     const dateToValidateAsDatePlus = new Date(dateToValidateAsDate.getTime() + seconds);
     expect(dateToValidateAsDatePlus < now , `Created date is in the last ${seconds} seconds`).toBeFalsy();
 }
+
+export function generateBearerToken(){
+    
+}
