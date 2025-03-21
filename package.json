@@ -17,7 +17,11 @@
     "http-status-codes": "^2.3.0",
     "path": "^0.12.7",
     "randomized-string": "^2.0.1",
-    "status": "^0.0.13"
+    "status": "^0.0.13",
+    "@aws-sdk/client-s3": "^3.633.0",
+    "@aws-sdk/credential-providers": "^3.632.0",
+    "s3-url-parser": "^1.0.3",
+    "amazon-s3-url": "^1.0.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.1",
