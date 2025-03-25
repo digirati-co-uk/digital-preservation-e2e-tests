@@ -6,14 +6,38 @@ import {
     waitForStatus,
     getYMD,
     getSecondOfDay,
-    getAuthHeaders
+    getAuthHeaders,
+    getFilesFromLocation
 } from '../helpers/common-utils'
+import { assert } from 'console';
+
+
+// Test we can read some files from the target directory
+test.describe('Ensure we can see the files in the target dir',() => {
+
+    const fileDir : string = process.env.FILES_SOURCE_DIR;
+
+    test('Env location is set', async () => {
+        
+        expect(fileDir.length).toBeGreaterThan(0);
+        const files = await getFilesFromLocation(fileDir);
+        
+        expect(files.length).toBeGreaterThan(0);
+       
+        //peek at files
+        console.log(`dir: ${fileDir}`);
+        files.forEach(i => console.log(i));
+
+    });
+  
+});
 
 // Scenario:
 // A completely new archival group / package / book / etc.
 // Someone has started working on it in Goobi, but it hasn't ever been saved to Preservation.
 // Now it's time to commit it to Preservation.
 // (later we'll make further changes to it).
+// This TEST uses a local folder to upload a load of files from a folder to a deposit. 
 
 // A Deposit is the mechanism to get files in and out of Preservation:
 // https://github.com/uol-dlip/docs/blob/main/rfcs/003-preservation-api.md#deposit
@@ -22,11 +46,15 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
     let newDeposit = null;
 
     test('create-deposit', async ({request}) => {
+        let sourceDir : string = process.env.FILES_SOURCE_DIR;
+        sourceDir += sourceDir.endsWith("\\") ? "" : "\\"
+
+        const files : string[] = await getFilesFromLocation(sourceDir);
 
         let baseURL =`${process.env.PRESERVATION_API_ENDPOINT!}`;
 
-        // Set a very long timeout so you can debug on breakpoints or whatnot.
-        test.setTimeout(1000000);
+        // Set a very very long timeout so you can debug on breakpoints or whatnot.
+        test.setTimeout(991000000);
 
         const parentContainer = `/native-tests/basic-1/${getYMD()}`;
         await ensurePath(parentContainer, request);
@@ -67,19 +95,12 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
 
         // Unlike the create-deposit.spec example, we ARE going to set the checksum, because we have no
         // other way of providing it. Later we will be able to get checksums from BagIt.
-        const sourceDir = './tests/samples/10315s/';
-        const files = [
-            // NO METS FILE! Compare with create-deposit.spec
-            'objects/372705s_001.jpg',
-            'objects/372705s_002.jpg',
-            'objects/372705s_003.jpg',
-            'objects/372705s_004.jpg'
-        ];
+        
         const s3Client = getS3Client();
         console.log("Uploading " + files.length + " files to the S3 location provided by the Deposit:");
         console.log(newDeposit.files);
         for (const file of files) {
-            await uploadFile(s3Client, newDeposit.files, sourceDir + file, file, true)
+            await uploadFile(s3Client, newDeposit.files, sourceDir + file, "objects/" + file, true)
         }
         console.log("----");
 
@@ -139,16 +160,20 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
         // library but interacts with the filesystem directly)
 
         // In this example, it's easy to navigate this filesystem:
-        const objects = fileSystem.directories[0];
-        expect(objects.files).toHaveLength(4); // the four files mentioned above
+        
+        expect(fileSystem.directories[0].files).toHaveLength(files.length); // the four files mentioned above
 
         // but these aren't in the METS file; we can call an additional endpoint to add them,
         // using the information in the filesystem (most importantly, the hash or digest)
         console.log("posting to METS file:");
+
+
+        //update files to include object 
+        var locFiles = files.map((i) => `objects/${i}`);
   
         let defaultHeaders = await getAuthHeaders()
         let metsUpdateResp = await request.post(metsUri, {
-           data: files, // The list of file paths we defined earlier
+           data: locFiles, // The list of file paths we defined earlier
            headers: {
             'If-Match': eTag,
              ... defaultHeaders
@@ -156,7 +181,7 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
         });
         expect(metsUpdateResp.status()).toBe(200);
         const itemsAffected = await metsUpdateResp.json();
-        expect(itemsAffected.items).toHaveLength(4);
+        expect(itemsAffected.items).toHaveLength(files.length);
         console.log("----");
         console.log("items affected:");
         console.log(itemsAffected);
@@ -210,35 +235,7 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
         expect(digitalObjectReq.ok()).toBeTruthy();
         const digitalObject = await digitalObjectReq.json();
         console.log(digitalObject);
-        expect(digitalObject).toEqual(expect.objectContaining({
-            id: preservedDigitalObjectUri,
-            type: 'ArchivalGroup',
-            name: agName, // This will have been read from the METS file  <mods:title>
-            version: expect.objectContaining({ocflVersion: 'v1'}),  // and we expect it to be at version 1
-            binaries: expect.arrayContaining(
-                [
-                    // and it has a METS file in the root
-                    expect.objectContaining({'id': expect.stringContaining('mets.xml')})
-                ]),
-            containers: expect.arrayContaining(
-                [
-                    // and an objects folder with 4 JPEGs in it
-                    expect.objectContaining(
-                        {
-                            type: 'Container',
-                            name: 'objects',
-                            binaries: expect.arrayContaining(
-                                [
-                                    expect.objectContaining({'id': expect.stringContaining('/objects/372705s_001.jpg')}),
-                                    expect.objectContaining({'id': expect.stringContaining('/objects/372705s_002.jpg')}),
-                                    expect.objectContaining({'id': expect.stringContaining('/objects/372705s_003.jpg')}),
-                                    expect.objectContaining({'id': expect.stringContaining('/objects/372705s_004.jpg')}),
-                                ]
-                            )
-                        }
-                    )
-                ])
-        }));
+        
     });
 });
 

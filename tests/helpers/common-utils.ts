@@ -2,7 +2,7 @@ import {APIRequestContext, expect} from '@playwright/test';
 import {ListObjectsV2Command, paginateListObjectsV2, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {fromIni} from '@aws-sdk/credential-providers';
 import {parseS3Url} from 'amazon-s3-url'
-import {readFileSync} from "fs";
+import {readFileSync, readdirSync} from "fs";
 import {
     AuthenticationResult,
     AuthorizationCodeRequest,
@@ -36,6 +36,11 @@ export async function uploadFile(
     const key = s3Url.key.endsWith('/') ? s3Url.key.slice(0,-1) : s3Url.key;
     const path = relativePathInDigitalObject.startsWith('/') ? relativePathInDigitalObject.slice(1) : relativePathInDigitalObject;
     const pathInDeposit = key + '/' + path;
+ 
+
+
+    console.log(`#s3: ${s3} #depositUri: ${depositUri}  #localFilePath: ${localFilePath} `);
+    console.log(`#path: ${path}`);
 
     const putCmd = new PutObjectCommand({
         Bucket: s3Url.bucket,
@@ -152,5 +157,12 @@ export async function getAuthHeaders()
             'xMachineName': 'Playwright-tests',
             'Accept': 'application/json',
         };
+       
         return headers;
+}
+
+export async function getFilesFromLocation(fileDir: string)
+{
+    const fileNames = await readdirSync(fileDir);
+    return fileNames;
 }

@@ -61,15 +61,24 @@ export default defineConfig({
       }
     },
     {
-      //dependencies: ['frontend-setup'],
-      name: 'loadtests',
-      testDir: './tests/loadtesting',
+      dependencies: ['frontend-setup'],
+      name: 'loadtests_ui',
+      testDir: './tests/loadtesting_ui',
       testMatch: /.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
-        baseURL: process.env.PRESERVATION_API_ENDPOINT,
         storageState: frontendSessionFile,
-      },
+      }
+    },
+      {
+        name: 'loadtests_api',
+        testDir: './tests/loadtesting_api',
+        testMatch: /.*\.spec\.ts/,
+        use: {
+          ...devices['Desktop Chrome'],
+          baseURL: process.env.PRESERVATION_API_ENDPOINT,
+          storageState: frontendSessionFile,
+        },
     },
   ],
 });
