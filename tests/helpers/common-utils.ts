@@ -154,7 +154,7 @@ export async function getAuthHeaders()
  
         let headers = {
             'Authorization': `Bearer ${response.accessToken}`,
-            'xMachineName': 'Playwright-tests',
+            'X-Client-Identity': 'Playwright-tests',
             'Accept': 'application/json',
         };
        
