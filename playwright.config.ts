@@ -81,6 +81,7 @@ export default defineConfig({
       testMatch: /.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
+        baseURL: process.env.FRONTEND_BASE_URL,
         storageState: frontendSessionFile,
       }
     },
