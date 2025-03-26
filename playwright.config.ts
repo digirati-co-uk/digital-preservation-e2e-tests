@@ -72,7 +72,6 @@ export default defineConfig({
       testDir: './tests/apiTests',
       testMatch: /.*\.spec\.ts/,
       use: {
-
       }
     },
     {

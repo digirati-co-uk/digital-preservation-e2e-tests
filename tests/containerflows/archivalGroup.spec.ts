@@ -279,7 +279,7 @@ test.describe('Archival Group Tests', () => {
 
       //Verify the METS file has the files in it, and rows are marked Mets only
       await expect(page.getByLabel('select-row').filter({ hasText: archivalGroupPage.depositPage.inMETSOnlyText })).toHaveCount(2);
-      //Check the mets file has been updated
+      //Check the mets file has been copied over correctly
       await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
       await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
 
