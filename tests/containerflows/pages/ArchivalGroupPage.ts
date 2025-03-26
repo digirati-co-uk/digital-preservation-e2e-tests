@@ -1,5 +1,5 @@
 
-import {expect, Locator, Page} from '@playwright/test';
+import {BrowserContext, expect, Locator, Page} from '@playwright/test';
 import {NavigationPage} from "./NavigationPage";
 import {DepositPage} from "./DepositPage";
 
@@ -28,7 +28,7 @@ export class ArchivalGroupPage {
   readonly diffContainersToDelete : Locator;
   readonly diffBinariesToDelete : Locator;
   readonly diffContainersToRename : Locator;
-  readonly diffBinariesToRemove : Locator;
+  readonly diffBinariesToRename : Locator;
   readonly diffContainersAdded : Locator;
   readonly diffBinariesAdded : Locator;
   readonly diffBinariesPatched : Locator;
@@ -47,8 +47,11 @@ export class ArchivalGroupPage {
   readonly iiifButton : Locator;
   readonly resourcesTableRows : Locator;
   readonly objectsFolderInTable : Locator;
+  readonly metsRowInTable : Locator;
   readonly goToArchivalGroupButton : Locator;
   readonly objectsPageTitle : Locator;
+  readonly createNewDepositModalButton : Locator;
+  readonly copyFilesFromS3Checkbox : Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -68,7 +71,7 @@ export class ArchivalGroupPage {
     this.diffContainersToDelete = page.getByLabel('containers to delete');
     this.diffBinariesToDelete = page.getByLabel('binaries to delete');
     this.diffContainersToRename = page.getByLabel('containers to rename');
-    this.diffBinariesToRemove = page.getByLabel('binaries to rename');
+    this.diffBinariesToRename = page.getByLabel('binaries to rename');
 
     //Run Import Result Page
     this.importJobPageTitle = page.getByRole('heading', {name: `Import Job Result`});
@@ -94,9 +97,11 @@ export class ArchivalGroupPage {
     this.iiifButton = page.getByRole('link', { name: 'IIIF' });
     this.resourcesTableRows = page.getByRole('table', {name: 'table-resources'}).locator('tbody tr');
     this.objectsFolderInTable = this.resourcesTableRows.first().getByLabel('td-path');
+    this.metsRowInTable = this.resourcesTableRows.nth(1).getByLabel('td-path');
     this.goToArchivalGroupButton = page.getByRole('link', {name: 'Go to Archival Group'});
     this.objectsPageTitle = page.getByRole('heading', {name: this.depositPage.objectsFolderName});
-
+    this.createNewDepositModalButton = page.getByRole('button', {name: 'Create New Deposit'});
+    this.copyFilesFromS3Checkbox = page.getByRole('dialog').getByRole('checkbox');
   }
 
   async checkModifiedBinariesFoldersEmpty(){
@@ -112,7 +117,7 @@ export class ArchivalGroupPage {
     await expect(this.diffContainersToDelete, 'Containers to Delete is empty').toBeEmpty();
     await expect(this.diffBinariesToDelete, 'Binaries to Delete is empty').toBeEmpty();
     await expect(this.diffContainersToRename, 'Containers to Rename is empty').toBeEmpty();
-    await expect(this.diffBinariesToRemove, 'Binaries to Remove is empty').toBeEmpty();
+    await expect(this.diffBinariesToRename, 'Binaries to Rename is empty').toBeEmpty();
   }
 
   //TODO may need to rethink this, if the environment takes some time to process jobs to completion
@@ -138,6 +143,20 @@ export class ArchivalGroupPage {
   async getArchivalGroupHistoryItem(nameOfItem: string) : Promise<string> {
     return await this.page.getByRole('row').filter({has: this.page.getByRole('rowheader').getByText(nameOfItem, {exact:true})}).getByRole('cell').textContent();
   }
+
+  async createDepositFromArchivalGroup(archivalGroupURL: string, copyFromS3: boolean){
+    await this.page.goto(archivalGroupURL);
+    await expect(this.depositPage.newDepositButton, 'Can see the New Deposit button').toBeVisible();
+    await this.depositPage.newDepositButton.click();
+    if(copyFromS3){
+      //Copy the s3 contents
+      await this.copyFilesFromS3Checkbox.check();
+    }
+    await this.createNewDepositModalButton.click();
+
+
+  }
+
 }
 
 

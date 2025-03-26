@@ -3,7 +3,7 @@ import { apiContext, test } from '../../fixture';
 
 test('view-repository-root', async ({page}) => {
 
-  test.setTimeout(120_000);
+  test.setTimeout(4000_000);
   let rootReq = await apiContext.get('/repository');
   expect(rootReq.ok()).toBeTruthy();
 
@@ -13,5 +13,8 @@ test('view-repository-root', async ({page}) => {
     type: expect.stringMatching('RepositoryRoot') //Why not Container any more?
   }));
 
+  await page.waitForTimeout(3_800_000);
+  rootReq = await apiContext.get('/repository');
+  expect(rootReq.ok()).toBeTruthy();
 });
 

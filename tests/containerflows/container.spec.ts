@@ -50,7 +50,7 @@ test.describe('Container Tests', () => {
 
     await test.step(`API contains all the expected fields`, async () => {
 
-      const containerResponse = await apiContext.get(`${containerPage.navigationPage.baseAPIPath}${folderSlug.toLowerCase()}`);
+      const containerResponse = await apiContext.get(`${containerPage.navigationPage.baseBrowseAPIPath}${folderSlug.toLowerCase()}`);
       const body = await containerResponse.body();
       containerItem = JSON.parse(body.toString('utf-8'));
 
@@ -58,7 +58,7 @@ test.describe('Container Tests', () => {
       expect(containerItem.type, 'Type is set to Container').toEqual('Container');
 
       //id matches what we sent in the get
-      expect(containerItem.id, 'ID matches').toEqual(expect.stringContaining(`${containerPage.navigationPage.baseAPIPath}${folderSlug.toLowerCase()}`));
+      expect(containerItem.id, 'ID matches').toEqual(expect.stringContaining(`${containerPage.navigationPage.baseBrowseAPIPath}${folderSlug.toLowerCase()}`));
       //name matches the title
       expect(containerItem.name, 'Name is set to the correct Title').toEqual(folderTitle);
 
@@ -78,7 +78,6 @@ test.describe('Container Tests', () => {
       expect(containerItem.lastModified, 'Created and Modified dates match').toEqual(containerItem.created);
 
       //createdBy and modifiedBy match containerPage.createdBy
-      // TODO this might fail soon given login implemented? Will it always be dlipdev that it's created by?
       expect(containerItem.createdBy, 'Correct value in createdBy').toEqual(expect.stringContaining(containerPage.createdBy));
       expect(containerItem.lastModifiedBy, 'Correct value in modifiedBy').toEqual(expect.stringContaining(containerPage.createdBy));
     });

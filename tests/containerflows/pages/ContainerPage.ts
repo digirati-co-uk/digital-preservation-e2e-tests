@@ -1,6 +1,7 @@
-
 import { expect, type Locator, type Page } from '@playwright/test';
 import {NavigationPage} from "./NavigationPage";
+import {createdByUserName} from "../../helpers/helpers";
+
 export class ContainerPage {
   readonly page: Page;
   readonly navigationPage : NavigationPage;
@@ -41,7 +42,7 @@ export class ContainerPage {
     this.playwrightContainerSlug = 'playwright-container-testing';
     this.titleStrippedOfUpperCaseSpaces= 'laywrightontaineresting';
     this.duplicateContainerMessage = 'Failed to create Container: Conflict';
-    this.createdBy = '/agents/dlipdev';
+    this.createdBy = `/agents/${createdByUserName}`;
     this.maxTableRowsShowingAllColumns = 19;
 
     //Locators

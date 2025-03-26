@@ -13,7 +13,7 @@ import 'dotenv/config';
 export default defineConfig({
   testDir: './tests',
   /* Run tests in files in parallel */
-  fullyParallel: true,
+  fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
@@ -21,10 +21,25 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter:
+    process.env.CI ?
+      [
+        [
+          './support/SlackReporter.ts',
+          {
+            channel: process.env.SLACK_CHANNEL,
+            token: process.env.SLACK_TOKEN,
+          },
+        ],
+        ['html'],
+        ['list']
+      ]:
+      [
+        ['html'],
+        ['list']
+      ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-all-retries',
     screenshot: 'only-on-failure',
