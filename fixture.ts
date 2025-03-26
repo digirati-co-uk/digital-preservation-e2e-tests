@@ -40,7 +40,7 @@ export const test = base.extend<{}, { forEachWorker: void }>({
       extraHTTPHeaders: {
         // Add authorization token to all requests.
         'Authorization': `Bearer ${response.accessToken}`,
-        'xMachineName': 'Playwright-tests',
+        'X-Client-Identity': 'Playwright-tests',
       } ,
 
     });
