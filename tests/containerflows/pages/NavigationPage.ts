@@ -14,7 +14,7 @@ export class NavigationPage {
   readonly depositsHeading : Locator;
   readonly basePath: string = '_for_testing/playwright-testing';
   readonly baseBrowsePath: string = `/browse/${this.basePath}`;
-  readonly baseAPIPath: string = `/repository/${this.basePath}/`;
+  readonly baseBrowseAPIPath: string = `/repository/${this.basePath}/`;
   readonly baseBrowsePathHeading : Locator;
   readonly breadCrumb : Locator;
 

@@ -1,7 +1,10 @@
 
-import {expect, Locator, Page} from '@playwright/test';
+import {BrowserContext, expect, Locator, Page} from '@playwright/test';
 import {NavigationPage} from "./NavigationPage";
 import * as path from 'path';
+import { Document, Element } from '@xmldom/xmldom';
+import {apiContext} from "../../../fixture";
+import {getS3Client, uploadFile} from "../../helpers/helpers";
 
 export class DepositPage {
   readonly page: Page;
@@ -11,10 +14,15 @@ export class DepositPage {
   readonly notYetPopulated:string;
   readonly objectsFolderName : string;
   readonly testImageLocation : string;
+  readonly testImageLocationFullPath: string;
+  readonly testWordDocLocationFullPath: string;
+  readonly testPdfDocLocationFullPath: string;
   readonly testImageWithInvalidCharsLocation : string;
+  readonly testImageWithInvalidCharsLocationTranslated : string;
   readonly newTestFolderTitle : string;
   readonly newTestFolderSlug : string;
   readonly testFolderSlugShouldNotExist: string;
+  readonly depositsListingURL: string;
   readonly depositsURL: RegExp;
   readonly testInvalidArchivalURI : string;
   readonly invalidURIMadeValid: string;
@@ -26,12 +34,17 @@ export class DepositPage {
   readonly testPdfDocLocation : string;
   readonly metsFileName : string;
   readonly numberOfItemsPerPage: number;
+  readonly inDepositOnlyText: string;
+  readonly inBothText: string;
+  readonly inMETSOnlyText: string;
 
   //Locator to initially create the deposit
   readonly newDepositButton: Locator;
 
   //Deposit page
-  readonly createDiffImportJobButton :Locator ;
+  readonly createDiffImportJobButton : Locator ;
+  readonly runImportButton : Locator;
+  readonly filesNotInMetsError : Locator;
   readonly noCurrentImportJobsText : Locator;
   readonly depositNotActiveText : Locator;
   readonly depositNoFiles: Locator;
@@ -69,8 +82,13 @@ export class DepositPage {
   //Actions on files and folders
   readonly uploadFileIcon : Locator;
   readonly createFolderIcon : Locator;
-  readonly deleteFileIcon : Locator;
-  readonly deleteFolderIcon : Locator;
+  readonly fileFolderCheckbox: Locator;
+  readonly testImageSelectArea: Locator;
+  readonly testWordDocSelectArea: Locator;
+  readonly testPdfSelectArea: Locator;
+  readonly testImageCheckbox: Locator;
+  readonly testWordDocCheckbox: Locator;
+  readonly testPdfCheckbox: Locator;
 
   //Archival Group input fields
   readonly archivalGroupInput : Locator;
@@ -79,11 +97,17 @@ export class DepositPage {
 
   //buttons,alerts
   readonly alertMessage : Locator;
+  readonly actionsMenu : Locator;
+  readonly selectAllNonMetsButton : Locator;
+  readonly deleteSelectedButton: Locator;
+  readonly deleteFromMetsAndDeposit: Locator;
+  readonly deleteFromDepositOnly : Locator;
   readonly deleteDepositButton : Locator;
   readonly updateArchivalPropertiesButton : Locator;
 
   //New Deposit Dialog used in 'Browse - create deposit ' journey
   readonly modalArchivalSlug : Locator;
+  readonly modalArchivalName : Locator;
   readonly modalCreateNewDepositButton : Locator;
   readonly slugDisplayOnModal: Locator;
 
@@ -156,6 +180,15 @@ export class DepositPage {
   readonly totalPagesCount: Locator;
   readonly firstRowID: Locator;
 
+  //Add to METS dialog box
+  readonly addToMetsButton : Locator;
+  readonly testImageFileInDialog : Locator;
+  readonly testWordDocFileInDialog : Locator;
+  readonly testPdfDocFileInDialog : Locator;
+  readonly addToMetsDialogButton : Locator;
+  readonly addToMetsCloseDialogButton : Locator;
+  readonly addToMetsHelpText: Locator;
+
   constructor(page: Page) {
     this.page = page;
     this.navigationPage = new NavigationPage(page);
@@ -166,28 +199,39 @@ export class DepositPage {
     //At some point we might acquire identifiers for Deposits (and other things) from a Leeds external
     //identity service, in which case they might no longer be 8-char alphanumeric.
     //They will be for now though.
+    this.depositsListingURL = '/deposits?pageSize=100';
     this.depositsURL = /deposits\/\w{8}/;
-    this.testFileLocation = '../../../test-data/deposit/';
+    this.testFileLocation = '../../../test-data/deposit/objects/New-test-folder-inside-objects/';
     this.objectsFolderName = 'objects';
-    this.metsFileName = '__METSlike.json';
+    this.metsFileName = 'mets.xml';
     this.testImageLocation = 'test_image.png';
     this.testImageWithInvalidCharsLocation = 'test&&image.png';
+    this.testImageWithInvalidCharsLocationTranslated = 'test--image.png';
     this.testWordDocLocation = 'test_word_document.docx';
     this.testPdfDocLocation = 'test_pdf_document.pdf';
     //this.cannotUploadTopLevelMessage = 'Uploaded files must go in or below the objects folder.';
     this.newTestFolderTitle = 'New test folder inside objects';
     this.newTestFolderSlug = this.objectsFolderName + '/new-test-folder-inside-objects';
+    this.testImageLocationFullPath = this.newTestFolderSlug+'/'+this.testImageLocation;
+    this.testWordDocLocationFullPath = this.newTestFolderSlug+'/'+this.testWordDocLocation;
+    this.testPdfDocLocationFullPath = this.newTestFolderSlug+'/'+this.testPdfDocLocation;
+
     this.testFolderSlugShouldNotExist = 'new-test-folder-inside-objects';
     this.testDepositNote = 'Playwright test archival group note';
     this.testArchivalGroupName = 'Playwright test archival group name';
     this.testInvalidArchivalURI = 'playwright invalid slug';
     this.invalidURIMadeValid = 'playwrightinvalidslug';
-    this.testValidArchivalURI = 'playwright-valid-slug-abc';
+    this.testValidArchivalURI = 'playwright-valid-slug-abcd';
     this.numberOfItemsPerPage = 10;
     this.createDiffImportJobButton = page.getByRole('button', { name: 'Create diff import job' });
+    this.runImportButton = page.getByRole('button', {name: 'Run Import (Preserve)'});
+    this.filesNotInMetsError = page.getByText('Unprocessable: Could not find file ');
     this.noCurrentImportJobsText = page.getByText('There are no submitted import jobs for this Deposit');
     this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.');
     this.depositNoFiles = page.getByText('No jobs can be run as there are no valid files in the Deposit.');
+    this.inDepositOnlyText = 'Deposit';
+    this.inBothText = 'Both';
+    this.inMETSOnlyText = 'Mets';
 
     //Locator to initially create the deposit
     this.newDepositButton = page.getByRole('button', { name: 'New Deposit' });
@@ -212,8 +256,7 @@ export class DepositPage {
     //Actions on files and folders
     this.uploadFileIcon = page.getByLabel('upload file', { exact: true });
     this.createFolderIcon = page.getByLabel('new folder', { exact: true });
-    this.deleteFileIcon = page.getByLabel('delete file', { exact: true });
-    this.deleteFolderIcon = page.getByLabel('delete folder', { exact: true });
+    this.fileFolderCheckbox = page.getByLabel('select-row').getByRole('checkbox');
 
     //Deposit file structure table locators
     this.depositFilesTable = page.getByRole('table', {name: 'table-deposit-files'});
@@ -224,18 +267,24 @@ export class DepositPage {
     this.createFolderWithinObjectsFolder = this.objectsFolder.locator(this.createFolderIcon);
 
     //METS file locators
-    this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="__METSlike.json"]');
+    this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="mets.xml"]');
 
     //Locators specific to the test folders / files
-    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocation.replaceAll('&','-')}"]`);
+    this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocationTranslated}"]`);
     this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
     this.uploadFileToTestFolder = this.newTestFolderInTable.locator(this.uploadFileIcon);
-    this.deleteTestFolder = this.newTestFolderInTable.locator(this.deleteFolderIcon);
+    this.deleteTestFolder = this.newTestFolderInTable.locator(this.fileFolderCheckbox);
 
     //Locators for test files within the new test folder
     this.newTestImageFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
     this.newTestWordFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testWordDocLocation}"]`);
     this.newTestPdfFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testPdfDocLocation}"]`);
+    this.testImageSelectArea =  this.newTestImageFileInTable.getByLabel('select-row');
+    this.testWordDocSelectArea = this.newTestWordFileInTable.getByLabel('select-row');
+    this.testPdfSelectArea =  this.newTestPdfFileInTable.getByLabel('select-row')
+    this.testImageCheckbox = this.testImageSelectArea.getByRole('checkbox');
+    this.testWordDocCheckbox = this.testWordDocSelectArea.getByRole('checkbox');
+    this.testPdfCheckbox = this.testPdfSelectArea.getByRole('checkbox');
 
     //Archival Group input fields
     this.archivalGroupInput = this.page.locator('#agPathUnderRoot');
@@ -245,11 +294,17 @@ export class DepositPage {
     //buttons,alerts
     this.updateArchivalPropertiesButton = this.page.getByRole('button', { name: 'Update properties' });
     this.alertMessage = page.getByRole('alert');
+    this.actionsMenu = page.getByRole('button', {name: 'Actions'});
+    this.selectAllNonMetsButton = page.getByRole('button', {name: 'Select all non-METS'});
+    this.deleteSelectedButton = page.getByRole('button', {name: 'Delete selected...'});
+    this.deleteFromMetsAndDeposit = page.locator('#deleteFromMetsAndDeposit');
+    this.deleteFromDepositOnly = page.locator('#deleteFromDeposit');
     this.deleteDepositButton = page.getByRole('button', { name: 'Delete Deposit' });
 
     //New Deposit Dialog used in 'Browse - create deposit ' journey
     this.modalCreateNewDepositButton = page.getByRole('button', { name: 'Create New Deposit' });
     this.modalArchivalSlug = page.locator('#archivalGroupSlug');
+    this.modalArchivalName = page.locator('#archivalGroupProposedName');
     this.slugDisplayOnModal = page.locator('#slugDisplay');
 
     //New folder dialog
@@ -259,7 +314,7 @@ export class DepositPage {
 
     //Delete Deposit Modal
     this.deleteDepositModalButton = page.locator('#deleteDepositButton');
-    this.confirmDeleteDeposit = page.getByRole('checkbox');
+    this.confirmDeleteDeposit = page.getByRole('dialog').getByRole('checkbox');
 
     //Delete item modal
     this.deleteItemModalButton = page.getByRole('button', {name: 'Delete', exact: true});
@@ -314,6 +369,15 @@ export class DepositPage {
     this.totalNumberOfItems = page.getByLabel('Total items');
     this.totalPagesCount = page.getByLabel('Total pages');
     this.firstRowID = page.getByRole('table', {name: 'table-deposits-index'}).getByRole('row', {name:'row-1', exact: true}).getByRole('cell', {name:'td-id'});
+
+    //Add to METS dialog box
+    this.addToMetsButton = page.getByRole('button', {name: 'Add selected to METS'});
+    this.testImageFileInDialog = this.page.getByRole('dialog').getByRole('cell').getByText(this.testImageLocation);
+    this.testWordDocFileInDialog = this.page.getByRole('dialog').getByRole('cell').getByText(this.testWordDocLocation);
+    this.testPdfDocFileInDialog = this.page.getByRole('dialog').getByRole('cell').getByText(this.testPdfDocLocation);
+    this.addToMetsDialogButton = this.page.getByRole('button', {name: 'Add to METS'});
+    this.addToMetsCloseDialogButton = this.page.getByRole('button', {name: 'Close'}).first();
+    this.addToMetsHelpText = this.page.locator('#addToMetsHelpText');
   }
 
   async goto() {
@@ -326,8 +390,6 @@ export class DepositPage {
   }
 
   async uploadFile(fileName:string, removeName: boolean, uploadButton: Locator){
-
-    //await this.uploadFileToDepositButton.click();
     await uploadButton.click();
 
     //Select a file to upload
@@ -343,10 +405,13 @@ export class DepositPage {
   }
 
   async deleteFile (fileToDelete : Locator, fileName: string){
-    await fileToDelete.locator(this.deleteFileIcon).click();
+    await fileToDelete.locator(this.fileFolderCheckbox).click();
+    await this.actionsMenu.click();
+    await this.deleteSelectedButton.click();
+    await this.deleteFromMetsAndDeposit.click();
     await this.deleteItemModalButton.click();
     await expect(fileToDelete).toBeHidden();
-    await expect(this.alertMessage, 'Success message is shown').toContainText(`${fileName} DELETED`);
+    await expect(this.alertMessage, 'Success message is shown').toContainText(`1 item(s) DELETED.`);
   }
 
   async navigateToDepositListingPageWithParams(urlParams : string){
@@ -413,8 +478,146 @@ export class DepositPage {
     await this.page.getByRole('button', { name: 'Submit' }).click();
   }
 
+  async openMetsFileInTab(context: BrowserContext, locatorToClick: Locator){
+    const pagePromise = context.waitForEvent('page');
+    //View the METS
+    await locatorToClick.click();
+    const metsFileTab = await pagePromise;
+    await metsFileTab.waitForLoadState();
+    await metsFileTab.close();
+  }
+
+  async checkAmdSecExists(metsXML: Document, itemToFind: string, shouldBePresent: boolean) :Promise<string>{
+    const amdSecValues = metsXML.getElementsByTagName('mets:amdSec');
+    const itemToFindElement = amdSecValues.filter(item => (item.getElementsByTagName('premis:originalName'))[0].textContent.trim() === itemToFind.trim());
+    if (shouldBePresent) {
+      expect(itemToFindElement).toHaveLength(1);
+      return itemToFindElement[0].getAttribute('ID');
+    }else{
+      expect(itemToFindElement).toHaveLength(0);
+      return '';
+    }
+  }
+
+  async checkFileSecExists(metsXML: Document, itemToFind: string, admId: string) : Promise<string>{
+    const fileSecValues = metsXML.getElementsByTagName('mets:fileSec')[0];
+    const files = fileSecValues.getElementsByTagName('mets:file');
+
+    const itemToFindElement = files.filter(item => item.getAttribute('ADMID').trim() === admId.trim());
+    const fileLocations = itemToFindElement[0].getElementsByTagName('mets:FLocat');
+    const itemToFindFLocatElement = fileLocations.filter(item => item.getAttribute('xlink:href').trim() === itemToFind.trim());
+    expect(itemToFindFLocatElement).toHaveLength(1);
+    return itemToFindElement[0].getAttribute('ID');
+  }
+
+  //TODO - I could send the list of levels in a string array, and loop through that array to iterate down the levels
+  //As I progress through further tests I'll see if this is necessary.
+  async checkFolderStructureCorrect(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, admId: string): Promise<Element>{
+    //Structure Map will always have length 1
+    let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
+    let rootElement = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === firstLevel);
+    expect(rootElement).toHaveLength(1);
+    let testFolderElement = (rootElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === secondLevel);
+    expect(testFolderElement).toHaveLength(1);
+    if (thirdLevel != null) {
+      testFolderElement = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === thirdLevel);
+      expect(testFolderElement).toHaveLength(1);
+    }
+
+    //Check the ADMID matches
+    if (admId != null) {
+      expect(testFolderElement[0].getAttribute('ADMID')).toEqual(admId);
+    }
+    return testFolderElement[0];
+  }
+
+  async checkFileExistsInStructure(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, fileName: string, amdId: string, fileID:string) {
+
+    const testFolderElement = await this.checkFolderStructureCorrect(metsXML, firstLevel, secondLevel, thirdLevel, amdId);
+
+    const testFile1 = (testFolderElement.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fileName.trim());
+    expect(testFile1).toHaveLength(1);
+    //Get the <mets:fptr> child
+    //Check that the FILEID attribute on the fptr matches fileID
+    expect((testFile1[0].getElementsByTagName('mets:fptr'))[0].getAttribute('FILEID')).toEqual(fileID);
+  }
+
+  async checkFileNotPresentInMETS(metsXML: Document, fileName: string, fullFilePath: string){
+    //check gone form the amd section
+    await this.checkAmdSecExists(metsXML, fullFilePath, false);
+
+    //check gone from the fileSec
+    const fileLocations = metsXML.getElementsByTagName('mets:FLocat');
+    const itemToFindFLocatElement = fileLocations.filter(item => item.getAttribute('xlink:href').trim() === fullFilePath.trim());
+    expect(itemToFindFLocatElement).toHaveLength(0);
+
+    //Check gone from the structMap
+    //Structure Map will always have length 1
+    let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
+    let elementToFind = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fileName);
+    expect(elementToFind).toHaveLength(0);
+  }
+
+  async checkFolderDeletedFromMETS(metsXML: Document, folderName: string, fullFolderPath: string){
+    //check gone form the amd section
+    await this.checkAmdSecExists(metsXML, fullFolderPath, false);
+
+    //Check gone from the structMap
+    //Structure Map will always have length 1
+    let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
+    let elementToFind = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === folderName);
+    expect(elementToFind).toHaveLength(0);
+  }
+
+  async uploadFilesToDepositS3Bucket(depositURL: string){
+    let depositId: string = depositURL.substring(depositURL.length-8);
+
+    const depositResponse = await apiContext.get(`deposits/${depositId}`);
+    const body = await depositResponse.body();
+    const depositItem = JSON.parse(body.toString('utf-8'));
+    //Get the s3 files location
+    const filesLocation = depositItem.files;
+
+    // we are going to set the checksum, because we have no
+    // other way of providing it. Later we will be able to get checksums from BagIt.
+    const sourceDir : string = 'test-data/deposit/';
+    const files = [
+      `${this.newTestFolderSlug}/${this.testImageLocation}`,
+      `${this.newTestFolderSlug}/${this.testWordDocLocation}`,
+      `${this.newTestFolderSlug}/${this.testPdfDocLocation}`,
+    ];
+    const s3Client = getS3Client();
+    for (const file of files) {
+      await uploadFile(s3Client, filesLocation, sourceDir + file, file, true);
+    }
+  }
+
+  async validateFilePresentInMETS(context: BrowserContext ,metsXML: Document, admID: string, filename: string, firstLevel: string, secondLevel: string, thirdLevel: string, expectToFind: boolean){
+    //Validate that we have an amdSec with each new file
+    const admIDImage  = await this.checkAmdSecExists(metsXML, filename, expectToFind);
+
+    if (expectToFind) {
+      //Check for a fileSec entry
+      const fileIDImage = await this.checkFileSecExists(metsXML, filename, admIDImage);
+
+      //Check for the correct folder and file structure
+      await this.checkFileExistsInStructure(metsXML, '__ROOT', firstLevel, secondLevel, thirdLevel, admID, fileIDImage);
+    }
+  }
+
+  async createTheSubFolder(){
+    //Create a new sub folder
+    await this.createFolderWithinObjectsFolder.click();
+    await this.newFolderNameInput.fill(this.newTestFolderTitle);
+    await this.newFolderDialogButton.click();
+    await expect(this.newTestFolderInTable, 'The new test folder has been created in the correct place in the hierarchy').toBeVisible();
+  }
+
+  async deleteTheCurrentDeposit(){
+    await this.actionsMenu.click();
+    await this.deleteDepositButton.click();
+    await expect(this.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
+    await this.confirmDeleteDeposit.check();
+    await this.deleteDepositModalButton.click();
+  }
 }
-
-
-  
-

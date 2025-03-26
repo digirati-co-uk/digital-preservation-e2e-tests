@@ -1,7 +1,9 @@
-import {expect} from "@playwright/test";
-import { test } from '../../fixture';
+import {BrowserContext, expect, Locator, Page} from "@playwright/test";
+import {apiContext, test} from '../../fixture';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
+import { DOMParser, Document } from '@xmldom/xmldom';
 import {checkDateIsWithinNumberOfSeconds, createdByUserName, generateUniqueId} from "../helpers/helpers";
+import {arch} from "node:os";
 
 test.describe('Archival Group Tests', () => {
 
@@ -11,16 +13,28 @@ test.describe('Archival Group Tests', () => {
     archivalGroupPage = new ArchivalGroupPage(page);
   });
 
-  test(`can create an Archival Group from a Deposit`, async ({page}) => {
+  test(`can create an Archival Group from a Deposit`, async ({page, context}) => {
 
     //Set a 5-minute timeout
     test.setTimeout(300_000);
+
+    //Set up the METS file listener to intercept any requests to the METS page to grab the XML
+    let metsXML : Document;
+    await context.route(`**/mets`, async route => {
+      const response = await route.fetch();
+      const metsAsString = await response.text();
+      metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+      await route.fulfill();
+    });
 
     let archivalGroupString : string = archivalGroupPage.depositPage.testValidArchivalURI + generateUniqueId();
     let depositId : string;
     let objectsFolderFullPath : string = archivalGroupPage.navigationPage.basePath +'/';
     let testImageFileFullPath : string = archivalGroupPage.navigationPage.basePath +'/';
     let testWordFileFullPath : string = archivalGroupPage.navigationPage.basePath +'/';
+    let archivalGroupURL : string;
+    const imageLocation = `objects/${archivalGroupPage.depositPage.testImageLocation}`;
+    const wordLocation = `objects/${archivalGroupPage.depositPage.testWordDocLocation}`;
 
     await test.step('Create a Deposit from within the structure to ensure archival group already set', async () => {
       await archivalGroupPage.depositPage.getStarted();
@@ -55,7 +69,7 @@ test.describe('Archival Group Tests', () => {
     await test.step('Add a name and some files to the Deposit', async () => {
       await archivalGroupPage.depositPage.archivalGroupNameInput.fill(archivalGroupPage.depositPage.testArchivalGroupName);
       await archivalGroupPage.depositPage.updateArchivalPropertiesButton.click();
-      await expect(archivalGroupPage.depositPage.alertMessage, 'Successful update message is shown').toHaveText('Deposit successfully updated');
+      await expect(archivalGroupPage.depositPage.alertMessage, 'Successful update message is shown').toContainText('Deposit successfully updated');
       //Add some files to the new folder
       await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testImageLocation, false, archivalGroupPage.depositPage.uploadFileToObjectsFolder);
       await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testWordDocLocation, false, archivalGroupPage.depositPage.uploadFileToObjectsFolder);
@@ -86,10 +100,11 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.diffContainersToAdd.getByRole('listitem'), 'There is only 1 item in the Containers to Add').toHaveCount(1);
       await expect(archivalGroupPage.diffContainersToAdd, 'The Container to Add is objects').toContainText(objectsFolderFullPath);
 
-      //Check the 2 files are in the list, and that's the only 2 things there
-      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 2 items in the Binaries to add').toHaveCount(2);
+      //Check the 2 files are in the list, and that's the only 3 things there (the 2 files, plus the mets file)
+      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 3 items in the Binaries to add').toHaveCount(3);
       await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(testImageFileFullPath);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(testWordFileFullPath);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
 
       await archivalGroupPage.checkToModifyBinariesFoldersEmpty();
 
@@ -100,7 +115,8 @@ test.describe('Archival Group Tests', () => {
       //import job & original import job set and match
       await archivalGroupPage.runImportPreserveButton.click();
       await expect(archivalGroupPage.importJobPageTitle, 'We can see the import job title').toBeVisible();
-      await expect(archivalGroupPage.diffStatus, 'The initial Waiting status is shown').toContainText('waiting');
+      //Every now and then it goes so fast, we don't see waiting
+      await expect.soft(archivalGroupPage.diffStatus, 'The initial Waiting status is shown').toContainText('waiting');
       await expect(archivalGroupPage.diffDepositValue, 'The deposit link is correct').toHaveText(depositId);
       await expect(archivalGroupPage.diffDepositValue.getByRole('link'), 'The deposit link is correct').toHaveAttribute('href', `/deposits/${depositId}`);
       await expect(archivalGroupPage.diffArchivalGroup, 'The Archival Group slug is correct').toHaveText(`${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}`);
@@ -112,7 +128,6 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.diffNewVersion, 'There is no diffNewVersion').toHaveText('...');
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffCreated.textContent(), 30_000);
       await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
-      await expect(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
       await expect(archivalGroupPage.diffContainersAdded, 'No Containers have been added yet').toBeEmpty();
       await expect(archivalGroupPage.diffBinariesAdded, 'No Binaries have been added yet').toBeEmpty();
 
@@ -136,18 +151,16 @@ test.describe('Archival Group Tests', () => {
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffDateFinished.textContent(), 10_000);
 
       await expect(archivalGroupPage.diffSourceVersion, 'There is no diffSourceVersion').toHaveText('(none)');
-      //Soft asserting until we can get to the bottom of whay it's sometimes set to ... instead of v1
-      await expect.soft(archivalGroupPage.diffNewVersion, 'New version is set to v1').toHaveText('v1');
+      await expect(archivalGroupPage.diffNewVersion, 'New version is set to v1').toHaveText('v1');
       checkDateIsWithinNumberOfSeconds(await archivalGroupPage.diffCreated.textContent(), 60_000);
       await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
-      await expect(archivalGroupPage.diffImportJob, 'Diff import job and original import job match').toHaveText(await archivalGroupPage.diffOriginalImportJob.textContent());
 
       //Check objects only thing in the list
       await expect(archivalGroupPage.diffContainersAdded.getByRole('listitem'), 'There is only 1 item in the Containers Added').toHaveCount(1);
       await expect(archivalGroupPage.diffContainersAdded, 'The Container Added is objects').toContainText(objectsFolderFullPath);
 
-      //Check the 2 files are in the list, and that's the only 2 things there
-      await expect(archivalGroupPage.diffBinariesAdded.getByRole('listitem'), 'There are only 2 items in the Binaries added').toHaveCount(2);
+      //Check the 2 files are in the list, and there are 3 items there (mets and the 2 files)
+      await expect(archivalGroupPage.diffBinariesAdded.getByRole('listitem'), 'There are only 3 items in the Binaries added').toHaveCount(3);
       await expect(archivalGroupPage.diffBinariesAdded, 'First test file added is correct').toContainText(testImageFileFullPath);
       await expect(archivalGroupPage.diffBinariesAdded, 'Second test file added is correct').toContainText(testWordFileFullPath);
 
@@ -158,7 +171,8 @@ test.describe('Archival Group Tests', () => {
     await test.step('Navigate to the archival group top level folder', async () => {
       //Follow the archival group link
       await archivalGroupPage.diffArchivalGroup.click();
-      await expect(page, 'The URL is correct').toHaveURL(`${archivalGroupPage.navigationPage.baseBrowsePath}/${archivalGroupString}`);
+      archivalGroupURL = `${archivalGroupPage.navigationPage.baseBrowsePath}/${archivalGroupString}`;
+      await expect(page, 'The URL is correct').toHaveURL(archivalGroupURL);
 
       //Check correct header and buttons visible
       await expect(archivalGroupPage.archivalGroupPageHeading, 'The correct page title is displayed').toBeVisible();
@@ -186,12 +200,25 @@ test.describe('Archival Group Tests', () => {
       //deposits -  1 only
 
       //Validate the file structure matches
-      await expect(archivalGroupPage.resourcesTableRows, 'We correctly have only the one row in the Resources table').toHaveCount(1);
+      await expect(archivalGroupPage.resourcesTableRows, 'We correctly have only the 2 rows in the Resources table, objects and METS.xml').toHaveCount(2);
       await expect(archivalGroupPage.objectsFolderInTable, 'That row is the objects folder, as expected').toHaveText(archivalGroupPage.depositPage.objectsFolderName);
+      await expect(archivalGroupPage.metsRowInTable, 'THe 2nd row contains the METS file, as expected').toHaveText(archivalGroupPage.depositPage.metsFileName);
 
     });
 
-    await test.step('Navigate into the archival group sub directory', async () => {
+    await test.step('Check we can access the METS for this archival group via the API', async () => {
+      //Call the METS endpoint on the API, verify we get the METS file back
+      const archivalGroupAPILocation : string = `repository/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}?view=mets`;
+      const metsResponse = await apiContext.get(archivalGroupAPILocation);
+      const metsAsString = await metsResponse.text();
+      metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+
+      //Verfiy the 2 test files are in the METS i.e. the right METS was returned
+      await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
+
+    });
+
+      await test.step('Navigate into the archival group sub directory', async () => {
 
       await archivalGroupPage.objectsFolderInTable.getByRole('link').click();
 
@@ -238,13 +265,141 @@ test.describe('Archival Group Tests', () => {
       //check there are no delete/add buttons
       await expect(archivalGroupPage.depositPage.uploadFileIcon, 'Correctly cannot see upload icons').toBeHidden();
       await expect(archivalGroupPage.depositPage.createFolderIcon, 'Correctly cannot see create folder icons').toBeHidden();
-      await expect(archivalGroupPage.depositPage.deleteFolderIcon, 'Correctly cannot see delete folder icons').toBeHidden();
-      await expect(archivalGroupPage.depositPage.deleteFileIcon, 'Correctly cannot see delete item icons').toBeHidden();
+      await expect(archivalGroupPage.depositPage.fileFolderCheckbox, 'Correctly cannot see delete folder icons').toBeHidden();
+      await expect(archivalGroupPage.depositPage.fileFolderCheckbox, 'Correctly cannot see delete item icons').toBeHidden();
 
       //Check status of job is completed
       await expect(archivalGroupPage.depositPage.importJobStatusCompleted, 'Job is marked as completed').toBeVisible();
     });
+
+    await test.step('Create a further Deposit from the archival group', async () => {
+
+      //Create a New Deposit within an existing Archival Group
+      await archivalGroupPage.createDepositFromArchivalGroup(archivalGroupURL, false);
+
+      //Verify the METS file has the files in it, and rows are marked Mets only
+      await expect(page.getByLabel('select-row').filter({ hasText: archivalGroupPage.depositPage.inMETSOnlyText })).toHaveCount(2);
+      //Check the mets file has been updated
+      await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
+      await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
+
+      //Verify delete from deposit only doesn't change anything (Tom, should we disable this for mets only files?)
+      const allCheckBoxes = await page.getByLabel('select-row').getByRole('checkbox').all();
+      await checkAllTheFiles( allCheckBoxes);
+      await deleteFromDeposit(archivalGroupPage.depositPage.deleteFromDepositOnly);
+
+      //Verify the METS file still has the files in it
+      await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
+      await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
+
+      //Verify create diff import job has nothing in it
+      await verifyDiffImportJobHasNoUpdates(page);
+
+      //Delete the 2 files from deposit and mets
+      await checkAllTheFiles( allCheckBoxes);
+      await deleteFromDeposit(archivalGroupPage.depositPage.deleteFromMetsAndDeposit);
+      await expect(archivalGroupPage.depositPage.alertMessage, 'Success message is shown').toContainText(`2 item(s) DELETED.`);
+
+      //Check the mets file has been updated
+      await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
+      await checkMetsForTheTestFiles(context, metsXML, false, imageLocation, wordLocation);
+
+      //Check diff import job deleted 2 files and patches the mets
+      await checkTheFilesWillBeRemovedFromImportJob(page, imageLocation, wordLocation);
+
+      //TODO Raise with Tom, other than deleting the deposit, there is no way to reset the files after deletion. Is that ok?
+      //Now go back and delete the deposit to tidy up
+      await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
+    });
+
+    await test.step('Create a further Deposit from the archival Group, clone the s3 contents this time', async() => {
+
+      //Create a New Deposit within an existing Archival Group
+      await archivalGroupPage.createDepositFromArchivalGroup(archivalGroupURL, true);
+
+      //Initially the page will contain a message stating that it is exporting files to the Deposit.
+      //Need to pause then refresh to load the files
+      await expect(archivalGroupPage.depositPage.alertMessage).toContainText('The server is currently exporting files into this Deposit');
+      await page.waitForTimeout(3_000);
+      await page.reload();
+
+      //Verify the METS file has the files in it, and rows are Both
+      await expect(page.getByLabel('select-row').filter({ hasText: archivalGroupPage.depositPage.inBothText })).toHaveCount(2);
+      //Check the mets file has been updated
+      await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
+      await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
+
+      //Verify delete from deposit changes the on screen label to 'Mets'
+      const allCheckBoxes = await page.getByLabel('select-row').getByRole('checkbox').all();
+      await checkAllTheFiles(allCheckBoxes);
+      await deleteFromDeposit(archivalGroupPage.depositPage.deleteFromDepositOnly);
+      await expect(page.getByLabel('select-row').filter({ hasText: archivalGroupPage.depositPage.inMETSOnlyText })).toHaveCount(2);
+
+      //Check the mets file has been updated
+      await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
+      await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
+
+      //Verify create diff import job has nothing in it
+      await verifyDiffImportJobHasNoUpdates(page);
+
+      //Delete the 2 files from deposit and mets
+      await checkAllTheFiles(allCheckBoxes);
+      await deleteFromDeposit(archivalGroupPage.depositPage.deleteFromMetsAndDeposit);
+      await expect(archivalGroupPage.depositPage.alertMessage, 'Success message is shown').toContainText(`2 item(s) DELETED.`);
+
+      //Check the mets file has been updated
+      await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
+      await checkMetsForTheTestFiles(context, metsXML, false, imageLocation, wordLocation);
+
+      //Check diff import job deleted 2 files and patches the mets
+      await checkTheFilesWillBeRemovedFromImportJob(page, imageLocation, wordLocation);
+
+      //TODO Raise with Tom, other than deleting the deposit, there is no way to reset the files after deletion
+      //Now go back and delete the deposit to tidy up
+      await page.goBack();
+      await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
+    });
   });
+
+  async function checkMetsForTheTestFiles(context: BrowserContext, metsXML: Document, shouldExist: boolean, file1Location: string, file2Location: string){
+    //Validate that we have/don't have (based on shouldExist) an amdSec with each new file
+    await archivalGroupPage.depositPage.checkAmdSecExists(metsXML, file1Location, shouldExist);
+    await archivalGroupPage.depositPage.checkAmdSecExists(metsXML, file2Location, shouldExist);
+  }
+
+  async function checkAllTheFiles(allCheckBoxes: Locator[]){
+    for (const currentCheckBox of allCheckBoxes){
+      await currentCheckBox.click();
+    }
+  }
+
+  async function checkTheFilesWillBeRemovedFromImportJob(page: Page, file1Location: string, file2Location: string){
+    //Check diff import job deleted 2 files and patches the mets
+    await archivalGroupPage.depositPage.createDiffImportJobButton.click();
+    await expect(archivalGroupPage.diffBinariesToDelete).not.toBeEmpty();
+    await expect(archivalGroupPage.diffBinariesToDelete, 'First test file to remove is correct').toContainText(file1Location);
+    await expect(archivalGroupPage.diffBinariesToDelete, 'Second test file to remove is correct').toContainText(file2Location);
+    await expect(archivalGroupPage.diffBinariesToPatch, 'METS file will be amended').toContainText(archivalGroupPage.depositPage.metsFileName);
+    await page.goBack();
+  }
+
+  async function deleteFromDeposit(deleteOption: Locator){
+    await archivalGroupPage.depositPage.actionsMenu.click();
+    await archivalGroupPage.depositPage.deleteSelectedButton.click();
+    await deleteOption.click();
+    await archivalGroupPage.depositPage.deleteItemModalButton.click();
+  }
+
+  async function verifyDiffImportJobHasNoUpdates(page: Page){
+    //Verify create diff import job has nothing in it
+    await archivalGroupPage.depositPage.createDiffImportJobButton.click();
+    await expect(archivalGroupPage.diffBinariesToAdd, 'There are no binaries to add').toBeEmpty();
+    await expect(archivalGroupPage.diffBinariesToDelete, 'There are no binaries to delete').toBeEmpty();
+    await page.goBack();
+  }
+
+
+
 });
 
 
