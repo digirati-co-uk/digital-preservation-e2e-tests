@@ -9,6 +9,7 @@ import {
     ClientCredentialRequest,
     ConfidentialClientApplication
   } from "@azure/msal-node";
+import { Document, Element } from '@xmldom/xmldom';
 
 
 export function getS3Client() {
@@ -166,3 +167,27 @@ export async function getFilesFromLocation(fileDir: string)
     const fileNames = await readdirSync(fileDir);
     return fileNames;
 }
+
+
+export  async function checkAmdSecExists(metsXML: Document, itemToFind: string, shouldBePresent: boolean) :Promise<string>{
+    const amdSecValues = metsXML.getElementsByTagName('mets:amdSec');
+    const itemToFindElement = amdSecValues.filter(item => (item.getElementsByTagName('premis:originalName'))[0].textContent.trim() === itemToFind.trim());
+    if (shouldBePresent) {
+      expect(itemToFindElement).toHaveLength(1);
+      return itemToFindElement[0].getAttribute('ID');
+    }else{
+      expect(itemToFindElement).toHaveLength(0);
+      return '';
+    }
+  }
+
+ export async function checkFileSecExists(metsXML: Document, itemToFind: string, admId: string) : Promise<string>{
+    const fileSecValues = metsXML.getElementsByTagName('mets:fileSec')[0];
+    const files = fileSecValues.getElementsByTagName('mets:file');
+
+    const itemToFindElement = files.filter(item => item.getAttribute('ADMID').trim() === admId.trim());
+    const fileLocations = itemToFindElement[0].getElementsByTagName('mets:FLocat');
+    const itemToFindFLocatElement = fileLocations.filter(item => item.getAttribute('xlink:href').trim() === itemToFind.trim());
+    expect(itemToFindFLocatElement).toHaveLength(1);
+    return itemToFindElement[0].getAttribute('ID');
+  }

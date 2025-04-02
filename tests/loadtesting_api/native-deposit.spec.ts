@@ -7,10 +7,14 @@ import {
     getYMD,
     getSecondOfDay,
     getAuthHeaders,
-    getFilesFromLocation
-} from '../helpers/common-utils'
+    getFilesFromLocation,
+    checkAmdSecExists,
+    checkFileSecExists
+} from '../helpers/common-utils';
 import { assert } from 'console';
-
+import { binary } from 'randomized-string/lib/types';
+import { commonParams } from '@aws-sdk/client-s3/dist-types/endpoint/EndpointParameters';
+import { Document, DOMParser } from '@xmldom/xmldom';
 
 // Test we can read some files from the target directory
 test.describe('Ensure we can see the files in the target dir',() => {
@@ -132,7 +136,7 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
         // POST /deposits/aabbccdd/mets  ... body is an array of strings, e.g., objects/my-file
 
         const metsUri = newDeposit.id + '/mets';
-        const metsResp = await request.get(metsUri,
+        const metsResp  = await request.get(metsUri,
             {
                 headers: await getAuthHeaders()
             }
@@ -234,8 +238,45 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
 
         expect(digitalObjectReq.ok()).toBeTruthy();
         const digitalObject = await digitalObjectReq.json();
-        console.log(digitalObject);
         
+        console.log(digitalObject);
+
+        console.log(`################ Mets Checks ####################`);
+       
+        //get storage api url for mets file
+        let metsXmlUri = digitalObject.binaries.find(x => x.name == "mets.xml").content;
+        console.log(`mets origin ${metsXmlUri}`);
+
+        //get file
+        const metsReq = await request.get(metsXmlUri,
+            {
+                headers: await getAuthHeaders()
+            });
+        const metsAsString = await metsReq.text();
+
+        console.log(metsAsString);
+
+        //Parse as xml
+        let metsXML : Document;
+        metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+       
+        files.forEach(async file => {
+           var loc = `objects/${file}`
+           console.log(`checking file: ${loc}`);
+
+           const AmdCheck = await checkAmdSecExists(metsXML, loc, true  );
+           let SecCheck = await checkFileSecExists(metsXML, loc, AmdCheck);
+
+           await expect(AmdCheck.length).not.toBe(0);
+           await expect(SecCheck.length).not.toBe(0);
+           console.log(`seems good : ${file},  AmdCheck: ${AmdCheck}, SecCheck: ${SecCheck}`);          
+    });
+
+
+
+
+
+
     });
 });
 
