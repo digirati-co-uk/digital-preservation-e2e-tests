@@ -36,6 +36,7 @@ test.describe('Deposit Tests', () => {
       await route.fulfill();
     });
 
+
     await test.step('Create a Deposit with no name or note, check URI not available', async () => {
       await depositPage.getStarted();
       await depositPage.navigationPage.depositMenuOption.click();
@@ -390,7 +391,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.modalCreateNewDepositButton.click();
 
       //Cannot create message is displayed to the user
-      await expect(depositPage.alertMessage).toContainText('There is already an ACTIVE deposit for the archival group.');
+      await expect.soft(depositPage.alertMessage).toContainText('There is already an ACTIVE deposit for the archival group.');
     });
 
     await test.step('Create a sub folder', async() => {
@@ -520,7 +521,7 @@ test.describe('Deposit Tests', () => {
     await test.step('Try to add files to METS without selecting any files', async() => {
       await depositPage.actionsMenu.click();
       await depositPage.addToMetsButton.click();
-      await expect.soft(depositPage.addToMetsHelpText).toHaveText('Tom to complete this as part of bug fix 90777')
+      await expect.soft(depositPage.addToMetsHelpText).toHaveText('There are no items selected.')
       await depositPage.addToMetsCloseDialogButton.click();
     });
 
@@ -536,13 +537,12 @@ test.describe('Deposit Tests', () => {
       await page.goBack();
     });
 
-    await test.step(`Delete file from the Deposit only`, async() => {
+    await test.step(`Check cannot delete file from the Deposit only`, async() => {
       await depositPage.testImageCheckbox.check();
       await depositPage.actionsMenu.click();
       await depositPage.deleteSelectedButton.click();
-      await depositPage.deleteFromDepositOnly.click();
-      await depositPage.deleteItemModalButton.click();
-      await expect(depositPage.testImageSelectArea, 'Listed as Mets only').toHaveText(depositPage.inMETSOnlyText);
+      await expect(depositPage.deleteFromDepositOnly).toBeDisabled();
+      await depositPage.addToMetsCloseDialogButton.click();
       await depositPage.createDiffImportJobButton.click();
 
       //Check that there are 3 files in the list, plus the METS file

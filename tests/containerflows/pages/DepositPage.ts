@@ -197,10 +197,10 @@ export class DepositPage {
     this.notYetPopulated = '-';
     //Note - format of deposits might change in the future
     //At some point we might acquire identifiers for Deposits (and other things) from a Leeds external
-    //identity service, in which case they might no longer be 8-char alphanumeric.
+    //identity service, in which case they might no longer be 12-char alphanumeric.
     //They will be for now though.
     this.depositsListingURL = '/deposits?pageSize=100';
-    this.depositsURL = /deposits\/\w{8}/;
+    this.depositsURL = /deposits\/\w{12}/;
     this.testFileLocation = '../../../test-data/deposit/objects/New-test-folder-inside-objects/';
     this.objectsFolderName = 'objects';
     this.metsFileName = 'mets.xml';
@@ -250,7 +250,7 @@ export class DepositPage {
     this.depositVersionExported = page.getByLabel('version-exported', {exact:true});
 
     //Header Locators
-    this.depositHeaderNoSlug = page.getByRole('heading', {name: /\w{8}/});
+    this.depositHeaderNoSlug = page.getByRole('heading', {name: /\w{12}/});
     this.depositHeaderSlug = page.getByRole('heading', {name: /Deposit/});
 
     //Actions on files and folders
@@ -377,7 +377,7 @@ export class DepositPage {
     this.testPdfDocFileInDialog = this.page.getByRole('dialog').getByRole('cell').getByText(this.testPdfDocLocation);
     this.addToMetsDialogButton = this.page.getByRole('button', {name: 'Add to METS'});
     this.addToMetsCloseDialogButton = this.page.getByRole('button', {name: 'Close'}).first();
-    this.addToMetsHelpText = this.page.locator('#addToMetsHelpText');
+    this.addToMetsHelpText = this.page.locator('#addToMetsHelp');
   }
 
   async goto() {
@@ -570,7 +570,7 @@ export class DepositPage {
   }
 
   async uploadFilesToDepositS3Bucket(depositURL: string){
-    let depositId: string = depositURL.substring(depositURL.length-8);
+    let depositId: string = depositURL.substring(depositURL.length-12);
 
     const depositResponse = await apiContext.get(`deposits/${depositId}`);
     const body = await depositResponse.body();
