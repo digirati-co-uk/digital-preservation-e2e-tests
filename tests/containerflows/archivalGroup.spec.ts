@@ -27,6 +27,13 @@ test.describe('Archival Group Tests', () => {
       await route.fulfill();
     });
 
+    await page.route('**/*view=mets', async route => {
+      const response = await route.fetch();
+      const metsAsString = await response.text();
+      metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+      await route.fulfill();
+    });
+
     let archivalGroupString : string = archivalGroupPage.depositPage.testValidArchivalURI + generateUniqueId();
     let depositId : string;
     let objectsFolderFullPath : string = archivalGroupPage.navigationPage.basePath +'/';
@@ -110,7 +117,7 @@ test.describe('Archival Group Tests', () => {
 
     });
 
-    await test.step('Run the import job, ', async () => {
+    await test.step('Run the import job', async () => {
       //Check that initially we have status of waiting, deposit link, archival group link, created, created by,
       //import job & original import job set and match
       await archivalGroupPage.runImportPreserveButton.click();
@@ -206,6 +213,16 @@ test.describe('Archival Group Tests', () => {
 
     });
 
+    await test.step('Check we can access the METS for this archival group via the UI', async () => {
+
+      await page.goto(page.url()+`?view=mets`);
+
+      //The METS interceptor should have populated metsXML
+      //Verify the 2 test files are in the METS i.e. the right METS was returned
+      await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
+      await page.goBack();
+    });
+
     await test.step('Check we can access the METS for this archival group via the API', async () => {
       //Call the METS endpoint on the API, verify we get the METS file back
       const archivalGroupAPILocation : string = `repository/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}?view=mets`;
@@ -213,12 +230,12 @@ test.describe('Archival Group Tests', () => {
       const metsAsString = await metsResponse.text();
       metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
 
-      //Verfiy the 2 test files are in the METS i.e. the right METS was returned
+      //Verify the 2 test files are in the METS i.e. the right METS was returned
       await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
 
     });
 
-      await test.step('Navigate into the archival group sub directory', async () => {
+    await test.step('Navigate into the archival group sub directory', async () => {
 
       await archivalGroupPage.objectsFolderInTable.getByRole('link').click();
 
