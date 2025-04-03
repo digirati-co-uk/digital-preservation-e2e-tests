@@ -276,6 +276,38 @@ test.describe('Create a deposit and put some files in it', () => {
         expect(digitalObjectReq.ok()).toBeTruthy();
         const digitalObject = await digitalObjectReq.json();
         console.log(digitalObject);
+
+
+        console.log(`################ Mets Checks ####################`);
+       
+        //get storage api url for mets file
+        let metsXmlUri = digitalObject.binaries.find(x => x.name == "mets.xml").content;
+        console.log(`mets origin ${metsXmlUri}`);
+
+        //get file
+        const metsReq = await request.get(metsXmlUri,
+            {
+                headers: await getAuthHeaders()
+            });
+        const metsAsString = await metsReq.text();
+
+        console.log(metsAsString);
+
+        //Parse as xml
+        let metsXML : Document;
+        metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+       
+        files.forEach(async file => {
+           var loc = `objects/${file}`
+           console.log(`checking file: ${loc}`);
+
+           const AmdCheck = await checkAmdSecExists(metsXML, loc, true  );
+           let SecCheck = await checkFileSecExists(metsXML, loc, AmdCheck);
+
+           await expect(AmdCheck.length).not.toBe(0);
+           await expect(SecCheck.length).not.toBe(0);
+           console.log(`seems good : ${file},  AmdCheck: ${AmdCheck}, SecCheck: ${SecCheck}`);          
+    });
      
     });
 });
