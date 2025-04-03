@@ -307,7 +307,24 @@ test.describe('Create a deposit and put some files in it', () => {
            await expect(AmdCheck.length).not.toBe(0);
            await expect(SecCheck.length).not.toBe(0);
            console.log(`seems good : ${file},  AmdCheck: ${AmdCheck}, SecCheck: ${SecCheck}`);          
-    });
+        });
+
+       console.log(`################ Archival Group Checks ####################`);
+
+
+       const archival_files =  digitalObject.storageMap.files;
+
+       console.log(archival_files);
+
+       //check mets file exists
+       await expect(archival_files[metsFile]).not.toBeUndefined();
+
+
+       files.forEach(async file => {
+         const loc = `objects/${file}`
+         console.log(`Looking for ${loc} : ${archival_files[loc]}`)
+         await expect(loc).not.toBeUndefined();
+       });
      
     });
 });

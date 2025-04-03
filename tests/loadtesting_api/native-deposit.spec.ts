@@ -256,6 +256,7 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
 
         console.log(metsAsString);
 
+        console.log(`################ Mets Checks ####################`);
         //Parse as xml
         let metsXML : Document;
         metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
@@ -272,13 +273,26 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
            console.log(`seems good : ${file},  AmdCheck: ${AmdCheck}, SecCheck: ${SecCheck}`);          
     });
 
+    console.log(`################ Archival Group Checks ####################`);
 
 
+       const archival_files =  digitalObject.storageMap.files;
+
+       console.log(archival_files);
+
+       //check mets file exists
+       await expect(archival_files["mets.xml"]).not.toBeUndefined();
 
 
+       files.forEach(async file => {
+         const loc = `objects/${file}`
+         console.log(`Looking for ${loc} : ${archival_files[loc]}`)
+         await expect(loc).not.toBeUndefined();
+       });
+     
+    });
 
     });
-});
 
 
 
