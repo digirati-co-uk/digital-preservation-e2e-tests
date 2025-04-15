@@ -33,7 +33,6 @@ test.describe('Deposit Tests', () => {
       const response = await route.fetch();
       const metsAsString = await response.text();
       metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
-      console.log(metsAsString);
       await route.fulfill();
     });
 

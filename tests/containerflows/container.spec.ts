@@ -1,6 +1,6 @@
 import { ContainerPage } from './pages/ContainerPage';
 import { checkDateIsWithinNumberOfSeconds, generateUniqueId} from '../helpers/helpers';
-import { apiContext, test } from '../../fixture';
+import { presentationApiContext, test } from '../../fixture';
 import {expect, Locator} from '@playwright/test';
 
 test.describe('Container Tests', () => {
@@ -50,7 +50,7 @@ test.describe('Container Tests', () => {
 
     await test.step(`API contains all the expected fields`, async () => {
 
-      const containerResponse = await apiContext.get(`${containerPage.navigationPage.baseBrowseAPIPath}${folderSlug.toLowerCase()}`);
+      const containerResponse = await presentationApiContext.get(`${containerPage.navigationPage.baseBrowseAPIPath}${folderSlug.toLowerCase()}`);
       const body = await containerResponse.body();
       containerItem = JSON.parse(body.toString('utf-8'));
 

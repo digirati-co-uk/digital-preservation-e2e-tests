@@ -94,7 +94,7 @@ export class ArchivalGroupPage {
     this.archivalGroupPageHeading = page.getByRole('heading', { name: this.depositPage.testArchivalGroupName });
     this.breadcrumbs = page.getByRole('navigation');
     this.versionsButton = page.getByRole('link', { name: 'Versions' });
-    this.iiifButton = page.getByRole('link', { name: 'IIIF' });
+    this.iiifButton = page.getByRole('link', { name: 'IIIF'});
     this.resourcesTableRows = page.getByRole('table', {name: 'table-resources'}).locator('tbody tr');
     this.objectsFolderInTable = this.resourcesTableRows.first().getByLabel('td-path');
     this.metsRowInTable = this.resourcesTableRows.nth(1).getByLabel('td-path');

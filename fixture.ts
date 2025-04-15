@@ -1,11 +1,12 @@
-import { test as base } from '@playwright/test';
+import {APIRequestContext, test as base} from '@playwright/test';
 import {
   AuthenticationResult,
   AuthorizationCodeRequest,
   ClientCredentialRequest,
   ConfidentialClientApplication
 } from "@azure/msal-node";
-export let apiContext;
+export let presentationApiContext : APIRequestContext;
+export let storageApiContext : APIRequestContext;
 
 export const test = base.extend<{}, { forEachWorker: void }>({
   forEachWorker: [async ({playwright}, use) => {
@@ -33,8 +34,7 @@ export const test = base.extend<{}, { forEachWorker: void }>({
 
     //Note the access token has an expiry of 60 minutes We may need to come back to this to
     //Refresh the token if tests ever take longer than 1 hour to run
-    apiContext = await playwright.request.newContext({
-      
+    presentationApiContext = await playwright.request.newContext({
       // All requests we send go to this API endpoint.
       baseURL: `${process.env.PRESERVATION_API_ENDPOINT!}`,
       extraHTTPHeaders: {
@@ -42,12 +42,23 @@ export const test = base.extend<{}, { forEachWorker: void }>({
         'Authorization': `Bearer ${response.accessToken}`,
         'X-Client-Identity': 'Playwright-tests',
       } ,
+    });
 
+    storageApiContext = await playwright.request.newContext({
+
+      // All requests we send go to this API endpoint.
+      baseURL: `${process.env.STORAGE_API_ENDPOINT!}`,
+      extraHTTPHeaders: {
+        // Add authorization token to all requests.
+        'Authorization': `Bearer ${response.accessToken}`,
+        'X-Client-Identity': 'Playwright-tests',
+      } ,
     });
 
     await use();
 
-    await apiContext.dispose();
+    await presentationApiContext.dispose();
+    await storageApiContext.dispose();
   }, { scope: 'worker', auto: true }],  // automatically starts for every worker.
 });
 

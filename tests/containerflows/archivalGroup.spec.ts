@@ -1,9 +1,9 @@
-import {BrowserContext, expect, Locator, Page} from "@playwright/test";
-import {apiContext, test} from '../../fixture';
+import {APIResponse, BrowserContext, expect, Locator, Page} from "@playwright/test";
+import {presentationApiContext, storageApiContext, test} from '../../fixture';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 import { DOMParser, Document } from '@xmldom/xmldom';
 import {checkDateIsWithinNumberOfSeconds, createdByUserName, generateUniqueId} from "../helpers/helpers";
-import {arch} from "node:os";
+import {StatusCodes} from "http-status-codes";
 
 test.describe('Archival Group Tests', () => {
 
@@ -18,8 +18,9 @@ test.describe('Archival Group Tests', () => {
     //Set a 5-minute timeout
     test.setTimeout(300_000);
 
-    //Set up the METS file listener to intercept any requests to the METS page to grab the XML
+    //Set up the METS file listeners to intercept any requests to the METS page to grab the XML
     let metsXML : Document;
+
     await context.route(`**/mets`, async route => {
       const response = await route.fetch();
       const metsAsString = await response.text();
@@ -187,7 +188,7 @@ test.describe('Archival Group Tests', () => {
 
       //Versions and IIIF should be disabled for now, and therefore aren't 'active' links
       await expect(archivalGroupPage.versionsButton, 'The Versions button is shown').not.toBeVisible();
-      await expect(archivalGroupPage.iiifButton, 'The IIIF button is shown').not.toBeVisible();
+      await expect(archivalGroupPage.iiifButton, 'The IIIF button is shown').toHaveAttribute('class', /disabled/);
 
       // breadcrumbs
       const breadcrumbElements: string[] = archivalGroupPage.navigationPage.basePath.split('/');
@@ -226,7 +227,7 @@ test.describe('Archival Group Tests', () => {
     await test.step('Check we can access the METS for this archival group via the API', async () => {
       //Call the METS endpoint on the API, verify we get the METS file back
       const archivalGroupAPILocation : string = `repository/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}?view=mets`;
-      const metsResponse = await apiContext.get(archivalGroupAPILocation);
+      const metsResponse = await presentationApiContext.get(archivalGroupAPILocation);
       const metsAsString = await metsResponse.text();
       metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
 
@@ -266,7 +267,25 @@ test.describe('Archival Group Tests', () => {
       await archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testImageLocation).click();
 
       //TODO this will be removed and redone when the file page is built.
-      await expect(page.getByText('A binary woah')).toBeVisible();
+      await expect.soft(page.getByText('A binary woah')).toBeVisible();
+
+    });
+
+    await test.step('Check that we can access the binary via the Storage API', async () => {
+      //87701
+      //In the storage API, the path /content/blah/archivalgroup/{path/to/resource/in/ag} will return a binary response
+      // the actual file content, with the correct content type. E.g., a tiff or jpeg or Word doc.
+      const archivalGroupFileLocation : string = `/content/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}/${imageLocation}`;
+      let response : APIResponse = await storageApiContext.get(archivalGroupFileLocation);
+      expect(response.ok()).toBeTruthy();
+      console.log(response.headers());
+      expect(response.headers()['content-type']).toEqual('image/png');
+
+      //Check you cannot access via Presentation
+      response = await presentationApiContext.get(archivalGroupFileLocation);
+      expect(response.status()).toBe(StatusCodes.NOT_FOUND);
+
+      //TODO Do we need to do any more than this?
 
     });
 

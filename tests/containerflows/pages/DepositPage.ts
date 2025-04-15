@@ -3,7 +3,7 @@ import {BrowserContext, expect, Locator, Page} from '@playwright/test';
 import {NavigationPage} from "./NavigationPage";
 import * as path from 'path';
 import { Document, Element } from '@xmldom/xmldom';
-import {apiContext} from "../../../fixture";
+import {presentationApiContext} from "../../../fixture";
 import {getS3Client, uploadFile} from "../../helpers/helpers";
 
 export class DepositPage {
@@ -598,7 +598,7 @@ export class DepositPage {
   async uploadFilesToDepositS3Bucket(depositURL: string){
     let depositId: string = depositURL.substring(depositURL.length-12);
 
-    const depositResponse = await apiContext.get(`deposits/${depositId}`);
+    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
     const body = await depositResponse.body();
     const depositItem = JSON.parse(body.toString('utf-8'));
     //Get the s3 files location
