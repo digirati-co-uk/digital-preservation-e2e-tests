@@ -43,6 +43,7 @@ test.describe('Archival Group Tests', () => {
     let archivalGroupURL : string;
     const imageLocation = `objects/${archivalGroupPage.depositPage.testImageLocation}`;
     const wordLocation = `objects/${archivalGroupPage.depositPage.testWordDocLocation}`;
+    const archivalGroupFileLocation : string = `/content/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}/${imageLocation}`;
 
     await test.step('Create a Deposit from within the structure to ensure archival group already set', async () => {
       await archivalGroupPage.depositPage.getStarted();
@@ -266,27 +267,35 @@ test.describe('Archival Group Tests', () => {
       //Click and verify we see the file
       await archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testImageLocation).click();
 
-      //TODO this will be removed and redone when the file page is built.
-      await expect.soft(page.getByText('A binary woah')).toBeVisible();
-
+      //TODO
+      //Name, path, content type, file format, virus scan, size, digest, content
+      //Created by and last modified by
+      await expect(archivalGroupPage.nameField, 'Name field is correct').toHaveText(archivalGroupPage.depositPage.testImageLocation);
+      await expect(archivalGroupPage.pathField, 'Path field is correct').toHaveText(imageLocation);
+      await expect(archivalGroupPage.contentTypeField, 'Content type field is correct').toHaveText('image/png');
+      await expect(archivalGroupPage.fileFormatField, 'File format field is correct').toContainText('TODO');
+      //TODO is this dubious?
+      await expect(archivalGroupPage.virusScanField, 'Virus scan field is correct').toContainText('✅');
+      await expect(archivalGroupPage.sizeField, 'Size field is correct').toContainText('MB');
+      //TODO anything more can be done here?
+      await expect(archivalGroupPage.digestField, 'Digest field is populated').not.toBeEmpty();
+      await expect(archivalGroupPage.contentField, 'Content field is correct').toContainText('Binary content (Storage API)');
+      //Validate it links to the right place
+      await expect(archivalGroupPage.contentField.getByRole('link'), 'The link is correct').toHaveAttribute('href', `${process.env.STORAGE_API_ENDPOINT}${archivalGroupFileLocation}`);
     });
 
     await test.step('Check that we can access the binary via the Storage API', async () => {
       //87701
       //In the storage API, the path /content/blah/archivalgroup/{path/to/resource/in/ag} will return a binary response
       // the actual file content, with the correct content type. E.g., a tiff or jpeg or Word doc.
-      const archivalGroupFileLocation : string = `/content/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}/${imageLocation}`;
       let response : APIResponse = await storageApiContext.get(archivalGroupFileLocation);
       expect(response.ok()).toBeTruthy();
-      console.log(response.headers());
-      expect(response.headers()['content-type']).toEqual('image/png');
+      expect(response.headers()['content-type']).toEqual('image/png')
+      //TODO Do we need to do any more than this?
 
       //Check you cannot access via Presentation
       response = await presentationApiContext.get(archivalGroupFileLocation);
       expect(response.status()).toBe(StatusCodes.NOT_FOUND);
-
-      //TODO Do we need to do any more than this?
-
     });
 
     await test.step('Check the original Deposit is now inactive and not editable', async () => {
