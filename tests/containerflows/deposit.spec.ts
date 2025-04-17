@@ -169,6 +169,19 @@ test.describe('Deposit Tests', () => {
 
     });
 
+    await test.step('Validate that the table structure is correct', async() => {
+
+      //Get the row containing the image test file,
+      //and check the various fields are correct
+      //Name (and path)	Hash	Size	Type	Pronom	Virus
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'name'}), 'The correct name is displayed for the image file').toHaveText(depositPage.testImageLocation);
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'hash'}), 'The hash is displayed for the image file').toHaveText(/[0-9a-z]{8}/);
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'file-size'}), 'The correct file size is displayed for the image file').toContainText(depositPage.testImageFileSize);
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'content-type'}), 'The correct content type is displayed for the image file').toHaveText(depositPage.testImageFileType);
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'pronom'}), 'The pronom is displayed for the image file').toHaveText('TODO');
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'virus'}), 'The virus scan is displayed for the image file').toHaveText(depositPage.virusScanCheckMark);
+    });
+
     await test.step('Validate that we can add nested subfolders, and they appear in the METS', async() => {
 
       //Create some nested subfolders

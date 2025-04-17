@@ -14,6 +14,9 @@ export class DepositPage {
   readonly notYetPopulated:string;
   readonly objectsFolderName : string;
   readonly testImageLocation : string;
+  readonly testImageFileType : string;
+  readonly testImageFileSize : string;
+  readonly virusScanCheckMark : string;
   readonly nestedTestImageLocation : string;
   readonly testImageLocationFullPath: string;
   readonly testWordDocLocationFullPath: string;
@@ -213,6 +216,9 @@ export class DepositPage {
     this.metsFileName = 'mets.xml';
     this.testImageLocation = 'test_image.png';
     this.nestedTestImageLocation = 'test_image.jpg';
+    this.testImageFileType = 'image/png';
+    this.testImageFileSize = '1.4 MB';
+    this.virusScanCheckMark = '✅';
     this.testImageWithInvalidCharsLocation = 'test&&image.png';
     this.testImageWithInvalidCharsLocationTranslated = 'test--image.png';
     this.testWordDocLocation = 'test_word_document.docx';
@@ -422,7 +428,7 @@ export class DepositPage {
     await this.deleteSelectedButton.click();
     await this.deleteFromMetsAndDeposit.click();
     await this.deleteItemModalButton.click();
-    await expect(fileToDelete).toBeHidden();
+    await expect(fileToDelete, 'The delete icon for the file is no longer visible').toBeHidden();
     await expect(this.alertMessage, 'Success message is shown').toContainText(`1 item(s) DELETED.`);
   }
 
@@ -463,7 +469,7 @@ export class DepositPage {
   async filterUsingAdvancedSearchDropdown(selectElementId: string, valueToSelect: string){
 
     //Await the table to display
-    await expect(this.depositsTable).toBeVisible();
+    await expect(this.depositsTable, 'We can see the deposits table').toBeVisible();
 
     //Click advanced search
     await this.page.locator('#showFormToggle').click();
@@ -478,7 +484,7 @@ export class DepositPage {
   async filterUsingAdvancedSearchDateField(dateElementId: string, valueToEnter: string){
 
     //Await the table to display
-    await expect(this.depositsTable).toBeVisible();
+    await expect(this.depositsTable, 'We can see the deposits table').toBeVisible();
 
     //Click advanced search
     await this.page.locator('#showFormToggle').click();
@@ -503,10 +509,10 @@ export class DepositPage {
     const amdSecValues = metsXML.getElementsByTagName('mets:amdSec');
     const itemToFindElement = amdSecValues.filter(item => (item.getElementsByTagName('premis:originalName'))[0].textContent.trim() === itemToFind.trim());
     if (shouldBePresent) {
-      expect(itemToFindElement).toHaveLength(1);
+      expect(itemToFindElement, `We found ${itemToFind} in the amdSec`).toHaveLength(1);
       return itemToFindElement[0].getAttribute('ID');
     }else{
-      expect(itemToFindElement).toHaveLength(0);
+      expect(itemToFindElement, `We did not find ${itemToFind} in the amdSec`).toHaveLength(0);
       return '';
     }
   }
@@ -518,7 +524,7 @@ export class DepositPage {
     const itemToFindElement = files.filter(item => item.getAttribute('ADMID').trim() === admId.trim());
     const fileLocations = itemToFindElement[0].getElementsByTagName('mets:FLocat');
     const itemToFindFLocatElement = fileLocations.filter(item => item.getAttribute('xlink:href').trim() === itemToFind.trim());
-    expect(itemToFindFLocatElement).toHaveLength(1);
+    expect(itemToFindFLocatElement, `We found ${itemToFind} in the fileSec`).toHaveLength(1);
     return itemToFindElement[0].getAttribute('ID');
   }
 
@@ -528,44 +534,38 @@ export class DepositPage {
     //Structure Map will always have length 1
     let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
     let rootElement = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === firstLevel);
-    expect(rootElement).toHaveLength(1);
+    expect(rootElement, `We found ${firstLevel} at the correct location in the structMap`).toHaveLength(1);
     let testFolderElement = (rootElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === secondLevel);
-    expect(testFolderElement).toHaveLength(1);
+    expect(testFolderElement, `We found ${secondLevel} at the correct location in the structMap`).toHaveLength(1);
     if (thirdLevel != null) {
       testFolderElement = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === thirdLevel);
-      expect(testFolderElement).toHaveLength(1);
+      expect(testFolderElement, `We found ${thirdLevel} at the correct location in the structMap`).toHaveLength(1);
     }
     if (fourthLevel != null) {
       testFolderElement = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fourthLevel);
-      expect(testFolderElement).toHaveLength(1);
+      expect(testFolderElement, `We found ${fourthLevel} at the correct location in the structMap`).toHaveLength(1);
     }
     if (fifthLevel != null) {
       testFolderElement = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fifthLevel);
-      expect(testFolderElement).toHaveLength(1);
+      expect(testFolderElement, `We found ${fifthLevel} at the correct location in the structMap`).toHaveLength(1);
     }
 
     //Check the ADMID matches
     if (admId != null) {
-      expect(testFolderElement[0].getAttribute('ADMID')).toEqual(admId);
+      expect(testFolderElement[0].getAttribute('ADMID'), 'The ADMID elements match correctly').toEqual(admId);
     }
     return testFolderElement[0];
   }
 
   async checkFileExistsInStructure(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, fourthLevel:string, fifthLevel: string, fileName: string, amdId: string, fileID:string) {
 
-    console.log(firstLevel);
-    console.log(secondLevel);
-    console.log(thirdLevel);
-    console.log(fourthLevel);
-    console.log(fifthLevel);
-    console.log(fileName);
     const testFolderElement = await this.checkFolderStructureCorrect(metsXML, firstLevel, secondLevel, thirdLevel, fourthLevel, fifthLevel, amdId);
 
     const testFile1 = (testFolderElement.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fileName.trim());
-    expect(testFile1).toHaveLength(1);
+    expect(testFile1, `We found ${fileName} at the correct location in the structMap`).toHaveLength(1);
     //Get the <mets:fptr> child
     //Check that the FILEID attribute on the fptr matches fileID
-    expect((testFile1[0].getElementsByTagName('mets:fptr'))[0].getAttribute('FILEID')).toEqual(fileID);
+    expect((testFile1[0].getElementsByTagName('mets:fptr'))[0].getAttribute('FILEID'), 'The file IDs match in the METS file').toEqual(fileID);
   }
 
   async checkFileNotPresentInMETS(metsXML: Document, fileName: string, fullFilePath: string){
@@ -575,13 +575,13 @@ export class DepositPage {
     //check gone from the fileSec
     const fileLocations = metsXML.getElementsByTagName('mets:FLocat');
     const itemToFindFLocatElement = fileLocations.filter(item => item.getAttribute('xlink:href').trim() === fullFilePath.trim());
-    expect(itemToFindFLocatElement).toHaveLength(0);
+    expect(itemToFindFLocatElement, 'The file has been removed from the fileSec section').toHaveLength(0);
 
     //Check gone from the structMap
     //Structure Map will always have length 1
     let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
     let elementToFind = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fileName);
-    expect(elementToFind).toHaveLength(0);
+    expect(elementToFind, 'The file has been removed from the structMap section').toHaveLength(0);
   }
 
   async checkFolderDeletedFromMETS(metsXML: Document, folderName: string, fullFolderPath: string){
@@ -592,7 +592,7 @@ export class DepositPage {
     //Structure Map will always have length 1
     let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
     let elementToFind = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === folderName);
-    expect(elementToFind).toHaveLength(0);
+    expect(elementToFind, 'The folder has been deleted from the structMap section').toHaveLength(0);
   }
 
   async uploadFilesToDepositS3Bucket(depositURL: string){

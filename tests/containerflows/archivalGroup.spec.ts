@@ -4,6 +4,7 @@ import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 import { DOMParser, Document } from '@xmldom/xmldom';
 import {checkDateIsWithinNumberOfSeconds, createdByUserName, generateUniqueId} from "../helpers/helpers";
 import {StatusCodes} from "http-status-codes";
+import {arch} from "node:os";
 
 test.describe('Archival Group Tests', () => {
 
@@ -264,19 +265,31 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testImageLocation), 'Test file one is correct').toBeVisible();
       await expect(archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testWordDocLocation), 'Test file two is correct').toBeVisible();
 
+      //Verify the table column contents
+      //Path,	Title,	Last Modified,	By,	Type,	Format,	Access,	☣
+      const imageFileTableRow = archivalGroupPage.resourcesTableRows.filter({has: page.getByRole('cell', {name: 'td-path'}).getByText(archivalGroupPage.depositPage.testImageLocation)})
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-path'}), 'The correct path is displayed for the image file').toHaveText(archivalGroupPage.depositPage.testImageLocation);
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-title'}), 'The correct title is displayed for the image file').toHaveText(archivalGroupPage.depositPage.testImageLocation);
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-last-modified', exact: true}), 'The last modified date is displayed for the image file').not.toBeEmpty();
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-last-modified-by'}), 'The correct last modified by name is displayed for the image file').toHaveText(createdByUserName);
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-type'}), 'The correct type is displayed for the image file').toHaveText(archivalGroupPage.depositPage.testImageFileType);
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-format'}), 'The correct format is displayed for the image file').toHaveText('TODO');
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-access'}), 'The correct access is displayed for the image file').toHaveText('Open');
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-virus'}), 'The virus scan output is displayed for the image file').toHaveText(archivalGroupPage.depositPage.virusScanCheckMark);
+
       //Click and verify we see the file
       await archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testImageLocation).click();
 
-      //TODO
+      //Verify the following fields are shown on the binary page:
       //Name, path, content type, file format, virus scan, size, digest, content
       //Created by and last modified by
       await expect(archivalGroupPage.nameField, 'Name field is correct').toHaveText(archivalGroupPage.depositPage.testImageLocation);
       await expect(archivalGroupPage.pathField, 'Path field is correct').toHaveText(imageLocation);
-      await expect(archivalGroupPage.contentTypeField, 'Content type field is correct').toHaveText('image/png');
+      await expect(archivalGroupPage.contentTypeField, 'Content type field is correct').toHaveText(archivalGroupPage.depositPage.testImageFileType);
       await expect(archivalGroupPage.fileFormatField, 'File format field is correct').toContainText('TODO');
       //TODO is this dubious?
-      await expect(archivalGroupPage.virusScanField, 'Virus scan field is correct').toContainText('✅');
-      await expect(archivalGroupPage.sizeField, 'Size field is correct').toContainText('MB');
+      await expect(archivalGroupPage.virusScanField, 'Virus scan field is correct').toContainText(archivalGroupPage.depositPage.virusScanCheckMark);
+      await expect(archivalGroupPage.sizeField, 'Size field is correct').toContainText(archivalGroupPage.depositPage.testImageFileSize);
       //TODO anything more can be done here?
       await expect(archivalGroupPage.digestField, 'Digest field is populated').not.toBeEmpty();
       await expect(archivalGroupPage.contentField, 'Content field is correct').toContainText('Binary content (Storage API)');
@@ -290,7 +303,7 @@ test.describe('Archival Group Tests', () => {
       // the actual file content, with the correct content type. E.g., a tiff or jpeg or Word doc.
       let response : APIResponse = await storageApiContext.get(archivalGroupFileLocation);
       expect(response.ok()).toBeTruthy();
-      expect(response.headers()['content-type']).toEqual('image/png')
+      expect(response.headers()['content-type']).toEqual(archivalGroupPage.depositPage.testImageFileType)
       //TODO Do we need to do any more than this?
 
       //Check you cannot access via Presentation
