@@ -53,6 +53,18 @@ export class ArchivalGroupPage {
   readonly createNewDepositModalButton : Locator;
   readonly copyFilesFromS3Checkbox : Locator;
 
+  //Binary page locators
+  readonly nameField : Locator;
+  readonly pathField : Locator;
+  readonly contentTypeField : Locator;
+  readonly fileFormatField : Locator;
+  readonly virusScanField : Locator;
+  readonly sizeField : Locator;
+  readonly digestField : Locator;
+  readonly contentField : Locator;
+
+  //<small>Created by: <a class="dlip-agent" href="/agents/zz_libplaywrighttest@leeds.ac.uk">zz_libplaywrighttest@leeds.ac.uk</a> | Last modified by: <a class="dlip-agent" href="/agents/zz_libplaywrighttest@leeds.ac.uk">zz_libplaywrighttest@leeds.ac.uk</a></small>
+
   constructor(page: Page) {
     this.page = page;
     this.navigationPage = new NavigationPage(page);
@@ -94,7 +106,7 @@ export class ArchivalGroupPage {
     this.archivalGroupPageHeading = page.getByRole('heading', { name: this.depositPage.testArchivalGroupName });
     this.breadcrumbs = page.getByRole('navigation');
     this.versionsButton = page.getByRole('link', { name: 'Versions' });
-    this.iiifButton = page.getByRole('link', { name: 'IIIF' });
+    this.iiifButton = page.getByRole('link', { name: 'IIIF'});
     this.resourcesTableRows = page.getByRole('table', {name: 'table-resources'}).locator('tbody tr');
     this.objectsFolderInTable = this.resourcesTableRows.first().getByLabel('td-path');
     this.metsRowInTable = this.resourcesTableRows.nth(1).getByLabel('td-path');
@@ -102,6 +114,16 @@ export class ArchivalGroupPage {
     this.objectsPageTitle = page.getByRole('heading', {name: this.depositPage.objectsFolderName});
     this.createNewDepositModalButton = page.getByRole('button', {name: 'Create New Deposit'});
     this.copyFilesFromS3Checkbox = page.getByRole('dialog').getByRole('checkbox');
+
+    //Binary page locators
+    this.nameField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Name'})}).getByRole('cell');
+    this.pathField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Path'})}).getByRole('cell');
+    this.contentTypeField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Content Type'})}).getByRole('cell');
+    this.fileFormatField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'File format'})}).getByRole('cell');
+    this.virusScanField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Virus scan'})}).getByRole('cell');
+    this.sizeField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Size'})}).getByRole('cell');
+    this.digestField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Digest'})}).getByRole('cell');
+    this.contentField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Content', exact: true})}).getByRole('cell');
   }
 
   async checkModifiedBinariesFoldersEmpty(){

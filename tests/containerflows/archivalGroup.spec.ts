@@ -1,8 +1,9 @@
-import {BrowserContext, expect, Locator, Page} from "@playwright/test";
-import {apiContext, test} from '../../fixture';
+import {APIResponse, BrowserContext, expect, Locator, Page} from "@playwright/test";
+import {presentationApiContext, storageApiContext, test} from '../../fixture';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 import { DOMParser, Document } from '@xmldom/xmldom';
 import {checkDateIsWithinNumberOfSeconds, createdByUserName, generateUniqueId} from "../helpers/helpers";
+import {StatusCodes} from "http-status-codes";
 import {arch} from "node:os";
 
 test.describe('Archival Group Tests', () => {
@@ -18,9 +19,17 @@ test.describe('Archival Group Tests', () => {
     //Set a 5-minute timeout
     test.setTimeout(300_000);
 
-    //Set up the METS file listener to intercept any requests to the METS page to grab the XML
+    //Set up the METS file listeners to intercept any requests to the METS page to grab the XML
     let metsXML : Document;
+
     await context.route(`**/mets`, async route => {
+      const response = await route.fetch();
+      const metsAsString = await response.text();
+      metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+      await route.fulfill();
+    });
+
+    await page.route('**/*view=mets', async route => {
       const response = await route.fetch();
       const metsAsString = await response.text();
       metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
@@ -35,6 +44,7 @@ test.describe('Archival Group Tests', () => {
     let archivalGroupURL : string;
     const imageLocation = `objects/${archivalGroupPage.depositPage.testImageLocation}`;
     const wordLocation = `objects/${archivalGroupPage.depositPage.testWordDocLocation}`;
+    const archivalGroupFileLocation : string = `/content/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}/${imageLocation}`;
 
     await test.step('Create a Deposit from within the structure to ensure archival group already set', async () => {
       await archivalGroupPage.depositPage.getStarted();
@@ -110,7 +120,7 @@ test.describe('Archival Group Tests', () => {
 
     });
 
-    await test.step('Run the import job, ', async () => {
+    await test.step('Run the import job', async () => {
       //Check that initially we have status of waiting, deposit link, archival group link, created, created by,
       //import job & original import job set and match
       await archivalGroupPage.runImportPreserveButton.click();
@@ -180,7 +190,7 @@ test.describe('Archival Group Tests', () => {
 
       //Versions and IIIF should be disabled for now, and therefore aren't 'active' links
       await expect(archivalGroupPage.versionsButton, 'The Versions button is shown').not.toBeVisible();
-      await expect(archivalGroupPage.iiifButton, 'The IIIF button is shown').not.toBeVisible();
+      await expect(archivalGroupPage.iiifButton, 'The IIIF button is shown').toHaveAttribute('class', /disabled/);
 
       // breadcrumbs
       const breadcrumbElements: string[] = archivalGroupPage.navigationPage.basePath.split('/');
@@ -206,19 +216,29 @@ test.describe('Archival Group Tests', () => {
 
     });
 
+    await test.step('Check we can access the METS for this archival group via the UI', async () => {
+
+      await page.goto(page.url()+`?view=mets`);
+
+      //The METS interceptor should have populated metsXML
+      //Verify the 2 test files are in the METS i.e. the right METS was returned
+      await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
+      await page.goBack();
+    });
+
     await test.step('Check we can access the METS for this archival group via the API', async () => {
       //Call the METS endpoint on the API, verify we get the METS file back
       const archivalGroupAPILocation : string = `repository/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}?view=mets`;
-      const metsResponse = await apiContext.get(archivalGroupAPILocation);
+      const metsResponse = await presentationApiContext.get(archivalGroupAPILocation);
       const metsAsString = await metsResponse.text();
       metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
 
-      //Verfiy the 2 test files are in the METS i.e. the right METS was returned
+      //Verify the 2 test files are in the METS i.e. the right METS was returned
       await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
 
     });
 
-      await test.step('Navigate into the archival group sub directory', async () => {
+    await test.step('Navigate into the archival group sub directory', async () => {
 
       await archivalGroupPage.objectsFolderInTable.getByRole('link').click();
 
@@ -245,12 +265,50 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testImageLocation), 'Test file one is correct').toBeVisible();
       await expect(archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testWordDocLocation), 'Test file two is correct').toBeVisible();
 
+      //Verify the table column contents
+      //Path,	Title,	Last Modified,	By,	Type,	Format,	Access,	☣
+      const imageFileTableRow = archivalGroupPage.resourcesTableRows.filter({has: page.getByRole('cell', {name: 'td-path'}).getByText(archivalGroupPage.depositPage.testImageLocation)})
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-path'}), 'The correct path is displayed for the image file').toHaveText(archivalGroupPage.depositPage.testImageLocation);
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-title'}), 'The correct title is displayed for the image file').toHaveText(archivalGroupPage.depositPage.testImageLocation);
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-last-modified', exact: true}), 'The last modified date is displayed for the image file').not.toBeEmpty();
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-last-modified-by'}), 'The correct last modified by name is displayed for the image file').toHaveText(createdByUserName);
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-type'}), 'The correct type is displayed for the image file').toHaveText(archivalGroupPage.depositPage.testImageFileType);
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-format'}), 'The correct format is displayed for the image file').toHaveText('TODO');
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-access'}), 'The correct access is displayed for the image file').toHaveText('Open');
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-virus'}), 'The virus scan output is displayed for the image file').toHaveText(archivalGroupPage.depositPage.virusScanCheckMark);
+
       //Click and verify we see the file
       await archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testImageLocation).click();
 
-      //TODO this will be removed and redone when the file page is built.
-      await expect(page.getByText('A binary woah')).toBeVisible();
+      //Verify the following fields are shown on the binary page:
+      //Name, path, content type, file format, virus scan, size, digest, content
+      //Created by and last modified by
+      await expect(archivalGroupPage.nameField, 'Name field is correct').toHaveText(archivalGroupPage.depositPage.testImageLocation);
+      await expect(archivalGroupPage.pathField, 'Path field is correct').toHaveText(imageLocation);
+      await expect(archivalGroupPage.contentTypeField, 'Content type field is correct').toHaveText(archivalGroupPage.depositPage.testImageFileType);
+      await expect(archivalGroupPage.fileFormatField, 'File format field is correct').toContainText('TODO');
+      //TODO is this dubious?
+      await expect(archivalGroupPage.virusScanField, 'Virus scan field is correct').toContainText(archivalGroupPage.depositPage.virusScanCheckMark);
+      await expect(archivalGroupPage.sizeField, 'Size field is correct').toContainText(archivalGroupPage.depositPage.testImageFileSize);
+      //TODO anything more can be done here?
+      await expect(archivalGroupPage.digestField, 'Digest field is populated').not.toBeEmpty();
+      await expect(archivalGroupPage.contentField, 'Content field is correct').toContainText('Binary content (Storage API)');
+      //Validate it links to the right place
+      await expect(archivalGroupPage.contentField.getByRole('link'), 'The link is correct').toHaveAttribute('href', `${process.env.STORAGE_API_ENDPOINT}${archivalGroupFileLocation}`);
+    });
 
+    await test.step('Check that we can access the binary via the Storage API', async () => {
+      //87701
+      //In the storage API, the path /content/blah/archivalgroup/{path/to/resource/in/ag} will return a binary response
+      // the actual file content, with the correct content type. E.g., a tiff or jpeg or Word doc.
+      let response : APIResponse = await storageApiContext.get(archivalGroupFileLocation);
+      expect(response.ok()).toBeTruthy();
+      expect(response.headers()['content-type']).toEqual(archivalGroupPage.depositPage.testImageFileType)
+      //TODO Do we need to do any more than this?
+
+      //Check you cannot access via Presentation
+      response = await presentationApiContext.get(archivalGroupFileLocation);
+      expect(response.status()).toBe(StatusCodes.NOT_FOUND);
     });
 
     await test.step('Check the original Deposit is now inactive and not editable', async () => {

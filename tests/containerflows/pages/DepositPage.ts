@@ -3,7 +3,7 @@ import {BrowserContext, expect, Locator, Page} from '@playwright/test';
 import {NavigationPage} from "./NavigationPage";
 import * as path from 'path';
 import { Document, Element } from '@xmldom/xmldom';
-import {apiContext} from "../../../fixture";
+import {presentationApiContext} from "../../../fixture";
 import {getS3Client, uploadFile} from "../../helpers/helpers";
 
 export class DepositPage {
@@ -14,6 +14,10 @@ export class DepositPage {
   readonly notYetPopulated:string;
   readonly objectsFolderName : string;
   readonly testImageLocation : string;
+  readonly testImageFileType : string;
+  readonly testImageFileSize : string;
+  readonly virusScanCheckMark : string;
+  readonly nestedTestImageLocation : string;
   readonly testImageLocationFullPath: string;
   readonly testWordDocLocationFullPath: string;
   readonly testPdfDocLocationFullPath: string;
@@ -21,6 +25,9 @@ export class DepositPage {
   readonly testImageWithInvalidCharsLocationTranslated : string;
   readonly newTestFolderTitle : string;
   readonly newTestFolderSlug : string;
+  readonly folder2FullPath : string;
+  readonly folder3FullPath : string;
+  readonly nestedImageFullPath : string;
   readonly testFolderSlugShouldNotExist: string;
   readonly depositsListingURL: string;
   readonly depositsURL: RegExp;
@@ -37,6 +44,8 @@ export class DepositPage {
   readonly inDepositOnlyText: string;
   readonly inBothText: string;
   readonly inMETSOnlyText: string;
+  readonly level2FolderName : string;
+  readonly level3FolderName : string;
 
   //Locator to initially create the deposit
   readonly newDepositButton: Locator;
@@ -78,6 +87,7 @@ export class DepositPage {
   readonly newTestImageFileTranslatedCharsInTable : Locator;
   readonly newTestWordFileInTable : Locator;
   readonly newTestPdfFileInTable : Locator;
+  readonly nestedImageFileInTable : Locator;
 
   //Actions on files and folders
   readonly uploadFileIcon : Locator;
@@ -200,22 +210,24 @@ export class DepositPage {
     //identity service, in which case they might no longer be 8-char alphanumeric.
     //They will be for now though.
     this.depositsListingURL = '/deposits?pageSize=100';
-    this.depositsURL = /deposits\/\w{8}/;
+    this.depositsURL = /deposits\/\w{12}/;
     this.testFileLocation = '../../../test-data/deposit/objects/New-test-folder-inside-objects/';
     this.objectsFolderName = 'objects';
     this.metsFileName = 'mets.xml';
     this.testImageLocation = 'test_image.png';
+    this.nestedTestImageLocation = 'test_image.jpg';
+    this.testImageFileType = 'image/png';
+    this.testImageFileSize = '1.4 MB';
+    this.virusScanCheckMark = '✅';
     this.testImageWithInvalidCharsLocation = 'test&&image.png';
     this.testImageWithInvalidCharsLocationTranslated = 'test--image.png';
     this.testWordDocLocation = 'test_word_document.docx';
     this.testPdfDocLocation = 'test_pdf_document.pdf';
-    //this.cannotUploadTopLevelMessage = 'Uploaded files must go in or below the objects folder.';
     this.newTestFolderTitle = 'New test folder inside objects';
     this.newTestFolderSlug = this.objectsFolderName + '/new-test-folder-inside-objects';
     this.testImageLocationFullPath = this.newTestFolderSlug+'/'+this.testImageLocation;
     this.testWordDocLocationFullPath = this.newTestFolderSlug+'/'+this.testWordDocLocation;
     this.testPdfDocLocationFullPath = this.newTestFolderSlug+'/'+this.testPdfDocLocation;
-
     this.testFolderSlugShouldNotExist = 'new-test-folder-inside-objects';
     this.testDepositNote = 'Playwright test archival group note';
     this.testArchivalGroupName = 'Playwright test archival group name';
@@ -232,6 +244,11 @@ export class DepositPage {
     this.inDepositOnlyText = 'Deposit';
     this.inBothText = 'Both';
     this.inMETSOnlyText = 'Mets';
+    this.level2FolderName = 'folderatlevel2';
+    this.level3FolderName = 'folderatlevel3';
+    this.folder2FullPath = `${this.newTestFolderSlug}/${this.level2FolderName}`;
+    this.folder3FullPath = `${this.folder2FullPath}/${this.level3FolderName}`;
+    this.nestedImageFullPath = `${this.folder3FullPath}/${this.nestedTestImageLocation}`;
 
     //Locator to initially create the deposit
     this.newDepositButton = page.getByRole('button', { name: 'New Deposit' });
@@ -250,7 +267,7 @@ export class DepositPage {
     this.depositVersionExported = page.getByLabel('version-exported', {exact:true});
 
     //Header Locators
-    this.depositHeaderNoSlug = page.getByRole('heading', {name: /\w{8}/});
+    this.depositHeaderNoSlug = page.getByRole('heading', {name: /\w{12}/});
     this.depositHeaderSlug = page.getByRole('heading', {name: /Deposit/});
 
     //Actions on files and folders
@@ -279,6 +296,7 @@ export class DepositPage {
     this.newTestImageFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testImageLocation}"]`);
     this.newTestWordFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testWordDocLocation}"]`);
     this.newTestPdfFileInTable = page.locator(`[data-type="file"][data-path="${this.newTestFolderSlug}/${this.testPdfDocLocation}"]`);
+    this.nestedImageFileInTable = page.locator(`[data-type="file"][data-path="${this.nestedImageFullPath}"]`);
     this.testImageSelectArea =  this.newTestImageFileInTable.getByLabel('select-row');
     this.testWordDocSelectArea = this.newTestWordFileInTable.getByLabel('select-row');
     this.testPdfSelectArea =  this.newTestPdfFileInTable.getByLabel('select-row')
@@ -377,7 +395,7 @@ export class DepositPage {
     this.testPdfDocFileInDialog = this.page.getByRole('dialog').getByRole('cell').getByText(this.testPdfDocLocation);
     this.addToMetsDialogButton = this.page.getByRole('button', {name: 'Add to METS'});
     this.addToMetsCloseDialogButton = this.page.getByRole('button', {name: 'Close'}).first();
-    this.addToMetsHelpText = this.page.locator('#addToMetsHelpText');
+    this.addToMetsHelpText = this.page.locator('#addToMetsHelp');
   }
 
   async goto() {
@@ -410,7 +428,7 @@ export class DepositPage {
     await this.deleteSelectedButton.click();
     await this.deleteFromMetsAndDeposit.click();
     await this.deleteItemModalButton.click();
-    await expect(fileToDelete).toBeHidden();
+    await expect(fileToDelete, 'The delete icon for the file is no longer visible').toBeHidden();
     await expect(this.alertMessage, 'Success message is shown').toContainText(`1 item(s) DELETED.`);
   }
 
@@ -451,7 +469,7 @@ export class DepositPage {
   async filterUsingAdvancedSearchDropdown(selectElementId: string, valueToSelect: string){
 
     //Await the table to display
-    await expect(this.depositsTable).toBeVisible();
+    await expect(this.depositsTable, 'We can see the deposits table').toBeVisible();
 
     //Click advanced search
     await this.page.locator('#showFormToggle').click();
@@ -466,7 +484,7 @@ export class DepositPage {
   async filterUsingAdvancedSearchDateField(dateElementId: string, valueToEnter: string){
 
     //Await the table to display
-    await expect(this.depositsTable).toBeVisible();
+    await expect(this.depositsTable, 'We can see the deposits table').toBeVisible();
 
     //Click advanced search
     await this.page.locator('#showFormToggle').click();
@@ -491,10 +509,10 @@ export class DepositPage {
     const amdSecValues = metsXML.getElementsByTagName('mets:amdSec');
     const itemToFindElement = amdSecValues.filter(item => (item.getElementsByTagName('premis:originalName'))[0].textContent.trim() === itemToFind.trim());
     if (shouldBePresent) {
-      expect(itemToFindElement).toHaveLength(1);
+      expect(itemToFindElement, `We found ${itemToFind} in the amdSec`).toHaveLength(1);
       return itemToFindElement[0].getAttribute('ID');
     }else{
-      expect(itemToFindElement).toHaveLength(0);
+      expect(itemToFindElement, `We did not find ${itemToFind} in the amdSec`).toHaveLength(0);
       return '';
     }
   }
@@ -506,40 +524,48 @@ export class DepositPage {
     const itemToFindElement = files.filter(item => item.getAttribute('ADMID').trim() === admId.trim());
     const fileLocations = itemToFindElement[0].getElementsByTagName('mets:FLocat');
     const itemToFindFLocatElement = fileLocations.filter(item => item.getAttribute('xlink:href').trim() === itemToFind.trim());
-    expect(itemToFindFLocatElement).toHaveLength(1);
+    expect(itemToFindFLocatElement, `We found ${itemToFind} in the fileSec`).toHaveLength(1);
     return itemToFindElement[0].getAttribute('ID');
   }
 
   //TODO - I could send the list of levels in a string array, and loop through that array to iterate down the levels
   //As I progress through further tests I'll see if this is necessary.
-  async checkFolderStructureCorrect(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, admId: string): Promise<Element>{
+  async checkFolderStructureCorrect(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, fourthLevel:string, fifthLevel: string, admId: string): Promise<Element>{
     //Structure Map will always have length 1
     let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
     let rootElement = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === firstLevel);
-    expect(rootElement).toHaveLength(1);
+    expect(rootElement, `We found ${firstLevel} at the correct location in the structMap`).toHaveLength(1);
     let testFolderElement = (rootElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === secondLevel);
-    expect(testFolderElement).toHaveLength(1);
+    expect(testFolderElement, `We found ${secondLevel} at the correct location in the structMap`).toHaveLength(1);
     if (thirdLevel != null) {
       testFolderElement = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === thirdLevel);
-      expect(testFolderElement).toHaveLength(1);
+      expect(testFolderElement, `We found ${thirdLevel} at the correct location in the structMap`).toHaveLength(1);
+    }
+    if (fourthLevel != null) {
+      testFolderElement = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fourthLevel);
+      expect(testFolderElement, `We found ${fourthLevel} at the correct location in the structMap`).toHaveLength(1);
+    }
+    if (fifthLevel != null) {
+      testFolderElement = (testFolderElement[0].getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fifthLevel);
+      expect(testFolderElement, `We found ${fifthLevel} at the correct location in the structMap`).toHaveLength(1);
     }
 
     //Check the ADMID matches
     if (admId != null) {
-      expect(testFolderElement[0].getAttribute('ADMID')).toEqual(admId);
+      expect(testFolderElement[0].getAttribute('ADMID'), 'The ADMID elements match correctly').toEqual(admId);
     }
     return testFolderElement[0];
   }
 
-  async checkFileExistsInStructure(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, fileName: string, amdId: string, fileID:string) {
+  async checkFileExistsInStructure(metsXML: Document, firstLevel: string, secondLevel:string, thirdLevel: string, fourthLevel:string, fifthLevel: string, fileName: string, amdId: string, fileID:string) {
 
-    const testFolderElement = await this.checkFolderStructureCorrect(metsXML, firstLevel, secondLevel, thirdLevel, amdId);
+    const testFolderElement = await this.checkFolderStructureCorrect(metsXML, firstLevel, secondLevel, thirdLevel, fourthLevel, fifthLevel, amdId);
 
     const testFile1 = (testFolderElement.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fileName.trim());
-    expect(testFile1).toHaveLength(1);
+    expect(testFile1, `We found ${fileName} at the correct location in the structMap`).toHaveLength(1);
     //Get the <mets:fptr> child
     //Check that the FILEID attribute on the fptr matches fileID
-    expect((testFile1[0].getElementsByTagName('mets:fptr'))[0].getAttribute('FILEID')).toEqual(fileID);
+    expect((testFile1[0].getElementsByTagName('mets:fptr'))[0].getAttribute('FILEID'), 'The file IDs match in the METS file').toEqual(fileID);
   }
 
   async checkFileNotPresentInMETS(metsXML: Document, fileName: string, fullFilePath: string){
@@ -549,13 +575,13 @@ export class DepositPage {
     //check gone from the fileSec
     const fileLocations = metsXML.getElementsByTagName('mets:FLocat');
     const itemToFindFLocatElement = fileLocations.filter(item => item.getAttribute('xlink:href').trim() === fullFilePath.trim());
-    expect(itemToFindFLocatElement).toHaveLength(0);
+    expect(itemToFindFLocatElement, 'The file has been removed from the fileSec section').toHaveLength(0);
 
     //Check gone from the structMap
     //Structure Map will always have length 1
     let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
     let elementToFind = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === fileName);
-    expect(elementToFind).toHaveLength(0);
+    expect(elementToFind, 'The file has been removed from the structMap section').toHaveLength(0);
   }
 
   async checkFolderDeletedFromMETS(metsXML: Document, folderName: string, fullFolderPath: string){
@@ -566,13 +592,13 @@ export class DepositPage {
     //Structure Map will always have length 1
     let structMap = (metsXML.getElementsByTagName('mets:structMap'))[0];
     let elementToFind = (structMap.getElementsByTagName('mets:div')).filter(item => item.getAttribute('LABEL').trim() === folderName);
-    expect(elementToFind).toHaveLength(0);
+    expect(elementToFind, 'The folder has been deleted from the structMap section').toHaveLength(0);
   }
 
   async uploadFilesToDepositS3Bucket(depositURL: string){
-    let depositId: string = depositURL.substring(depositURL.length-8);
+    let depositId: string = depositURL.substring(depositURL.length-12);
 
-    const depositResponse = await apiContext.get(`deposits/${depositId}`);
+    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
     const body = await depositResponse.body();
     const depositItem = JSON.parse(body.toString('utf-8'));
     //Get the s3 files location
@@ -592,7 +618,7 @@ export class DepositPage {
     }
   }
 
-  async validateFilePresentInMETS(context: BrowserContext ,metsXML: Document, admID: string, filename: string, firstLevel: string, secondLevel: string, thirdLevel: string, expectToFind: boolean){
+  async validateFilePresentInMETS(context: BrowserContext ,metsXML: Document, admID: string, filename: string, firstLevel: string, secondLevel: string, thirdLevel: string, fourthLevel: string, fifthLevel: string, expectToFind: boolean){
     //Validate that we have an amdSec with each new file
     const admIDImage  = await this.checkAmdSecExists(metsXML, filename, expectToFind);
 
@@ -601,16 +627,20 @@ export class DepositPage {
       const fileIDImage = await this.checkFileSecExists(metsXML, filename, admIDImage);
 
       //Check for the correct folder and file structure
-      await this.checkFileExistsInStructure(metsXML, '__ROOT', firstLevel, secondLevel, thirdLevel, admID, fileIDImage);
+      await this.checkFileExistsInStructure(metsXML, '__ROOT', firstLevel, secondLevel, thirdLevel, fourthLevel, fifthLevel, admID, fileIDImage);
     }
   }
 
-  async createTheSubFolder(){
+  async createASubFolder(page: Page, parentFolder: Locator, newFolderName: string, newFolderPath: string){
     //Create a new sub folder
-    await this.createFolderWithinObjectsFolder.click();
-    await this.newFolderNameInput.fill(this.newTestFolderTitle);
+    await parentFolder.click();
+    await this.newFolderNameInput.fill(newFolderName);
     await this.newFolderDialogButton.click();
-    await expect(this.newTestFolderInTable, 'The new test folder has been created in the correct place in the hierarchy').toBeVisible();
+    await expect(this.createFolderLocator(newFolderPath), 'The new test folder has been created in the correct place in the hierarchy').toBeVisible();
+  }
+
+  createFolderLocator(folderPath: string){
+    return this.page.locator(`[data-type="directory"][data-path="${folderPath}"]`);
   }
 
   async deleteTheCurrentDeposit(){
@@ -619,5 +649,14 @@ export class DepositPage {
     await expect(this.deleteDepositModalButton, 'Delete button is initially disabled').toBeDisabled();
     await this.confirmDeleteDeposit.check();
     await this.deleteDepositModalButton.click();
+  }
+
+  async deleteFolder(folderLocation: Locator){
+    await folderLocation.click();
+    await this.actionsMenu.click();
+    await this.deleteSelectedButton.click();
+    await this.deleteFromMetsAndDeposit.click();
+    await this.deleteItemModalButton.click();
+    await expect(this.alertMessage, 'Success message is shown').toContainText(`1 item(s) DELETED.`);
   }
 }

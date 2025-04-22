@@ -1,4 +1,4 @@
-import { expect} from "@playwright/test";
+import {expect, Locator} from "@playwright/test";
 import { DepositPage } from './pages/DepositPage';
 import { test} from '../../fixture';
 import {
@@ -136,7 +136,7 @@ test.describe('Deposit Tests', () => {
     await test.step('Validate that we can create a sub folder and files, and the METS file is updated', async() => {
 
       //Create a new sub folder
-      await depositPage.createTheSubFolder();
+      await depositPage.createASubFolder(page, depositPage.createFolderWithinObjectsFolder, depositPage.newTestFolderTitle, depositPage.newTestFolderSlug);
 
       //Open the METS file
       await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
@@ -144,7 +144,7 @@ test.describe('Deposit Tests', () => {
       //Validate that we have an amdSec with the name newTestFolderTitle
       let admID = await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug, true);
       //Validate that we have newTestFolderTitle at the 3rd level of the structMap
-      await depositPage.checkFolderStructureCorrect(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), admID);
+      await depositPage.checkFolderStructureCorrect(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), null, null, admID);
 
       //Add some files to the new folder
       await depositPage.uploadFile(depositPage.testFileLocation+depositPage.testImageLocation, false, depositPage.uploadFileToTestFolder);
@@ -164,8 +164,54 @@ test.describe('Deposit Tests', () => {
       const fileIDWord = await depositPage.checkFileSecExists(metsXML, depositPage.testWordDocLocationFullPath, admIDWord);
 
       //Check for the correct folder and file structure
-      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testImageLocation, admID, fileIDImage);
-      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testWordDocLocation, admID, fileIDWord);
+      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), null, null, depositPage.testImageLocation, admID, fileIDImage);
+      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), null, null, depositPage.testWordDocLocation, admID, fileIDWord);
+
+    });
+
+    await test.step('Validate that the table structure is correct', async() => {
+
+      //Get the row containing the image test file,
+      //and check the various fields are correct
+      //Name (and path)	Hash	Size	Type	Pronom	Virus
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'name'}), 'The correct name is displayed for the image file').toHaveText(depositPage.testImageLocation);
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'hash'}), 'The hash is displayed for the image file').toHaveText(/[0-9a-z]{8}/);
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'file-size'}), 'The correct file size is displayed for the image file').toContainText(depositPage.testImageFileSize);
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'content-type'}), 'The correct content type is displayed for the image file').toHaveText(depositPage.testImageFileType);
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'pronom'}), 'The pronom is displayed for the image file').toHaveText('TODO');
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'virus'}), 'The virus scan is displayed for the image file').toHaveText(depositPage.virusScanCheckMark);
+    });
+
+    await test.step('Validate that we can add nested subfolders, and they appear in the METS', async() => {
+
+      //Create some nested subfolders
+      await depositPage.createASubFolder(page, depositPage.createFolderLocator(depositPage.newTestFolderSlug).locator(depositPage.createFolderIcon), depositPage.level2FolderName, depositPage.folder2FullPath);
+      await depositPage.createASubFolder(page, depositPage.createFolderLocator(depositPage.folder2FullPath).locator(depositPage.createFolderIcon), depositPage.level3FolderName, depositPage.folder3FullPath);
+
+      //Open the METS file
+      await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
+
+      //Validate that we have an amdSec with the name level3FolderName
+      let admID = await depositPage.checkAmdSecExists(metsXML, depositPage.folder3FullPath, true);
+      //Validate that we have +'/${depositPage.f}/${depositPage.level3FolderName}' at the 5th level of the structMap
+      await depositPage.checkFolderStructureCorrect(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.level2FolderName, depositPage.level3FolderName, admID);
+
+      //Need to add a test file at the lowest level now
+      const folderToUploadTo : Locator =  page.locator(`[data-type="directory"][data-path="${depositPage.folder3FullPath}"]`).locator(depositPage.uploadFileIcon);
+      await depositPage.uploadFile(depositPage.testFileLocation+depositPage.nestedTestImageLocation, false, folderToUploadTo);
+      await expect(depositPage.nestedImageFileInTable, 'We see the new file in the Deposits table').toBeVisible();
+      //Check it's in the METS at the right location
+      await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
+
+      //Validate that we have an amdSec with each new file
+      admID  = await depositPage.checkAmdSecExists(metsXML, depositPage.nestedImageFullPath, true);
+
+      //Check for a fileSec entry
+      const fileID = await depositPage.checkFileSecExists(metsXML, depositPage.nestedImageFullPath, admID);
+
+      //Check for the correct folder and file structure - we don't need to pass the admId of the containing folder,
+      //we don't have it here and we checked it already
+      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.level2FolderName.trim(), depositPage.level3FolderName.trim(), depositPage.nestedTestImageLocation, null, fileID);
 
     });
 
@@ -224,7 +270,7 @@ test.describe('Deposit Tests', () => {
 
       //Check for the correct folder and file structure - we don't need to pass the admId of the containing folder,
       //we don't have it here and we checked it already
-      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testPdfDocLocation, null, fileIDPDF);
+      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), null, null,  depositPage.testPdfDocLocation, null, fileIDPDF);
 
     });
 
@@ -244,7 +290,7 @@ test.describe('Deposit Tests', () => {
 
       //Check for the correct folder and file structure - we don't need to pass the admId of the containing folder,
       //we don't have it here and we checked it already
-      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), null, depositPage.testImageWithInvalidCharsLocation, null, fileID);
+      await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), null, null, null, depositPage.testImageWithInvalidCharsLocation, null, fileID);
 
     });
 
@@ -264,6 +310,8 @@ test.describe('Deposit Tests', () => {
       await depositPage.deleteFile(depositPage.newTestWordFileInTable, depositPage.testWordDocLocation);
       await depositPage.deleteFile(depositPage.newTestImageFileInTable, depositPage.testImageLocation);
       await depositPage.deleteFile(depositPage.newTestImageFileTranslatedCharsInTable, depositPage.testImageWithInvalidCharsLocationTranslated);
+      await depositPage.deleteFile(depositPage.nestedImageFileInTable, depositPage.nestedTestImageLocation);
+
 
       //Get the metsXML and check files all gone
       await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
@@ -276,12 +324,10 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step('User can delete an empty folder from the deposit, and the METS is updated', async() => {
-      await depositPage.deleteTestFolder.click();
-      await depositPage.actionsMenu.click();
-      await depositPage.deleteSelectedButton.click();
-      await depositPage.deleteFromMetsAndDeposit.click();
-      await depositPage.deleteItemModalButton.click();
-      await expect(depositPage.alertMessage, 'Success message is shown').toContainText(`1 item(s) DELETED.`);
+
+      await depositPage.deleteFolder(depositPage.createFolderLocator(`${depositPage.newTestFolderSlug}/${depositPage.level2FolderName}/${depositPage.level3FolderName}`).locator(depositPage.fileFolderCheckbox));
+      await depositPage.deleteFolder(depositPage.createFolderLocator(`${depositPage.newTestFolderSlug}/${depositPage.level2FolderName}`).locator(depositPage.fileFolderCheckbox));
+      await depositPage.deleteFolder(depositPage.deleteTestFolder);
 
       //Get the metsXML and check folder is gone
       await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
@@ -390,14 +436,14 @@ test.describe('Deposit Tests', () => {
       await depositPage.modalCreateNewDepositButton.click();
 
       //Cannot create message is displayed to the user
-      await expect(depositPage.alertMessage).toContainText('There is already an ACTIVE deposit for the archival group.');
+      await expect.soft(depositPage.alertMessage).toContainText('There is already an ACTIVE deposit for the archival group.');
     });
 
     await test.step('Create a sub folder', async() => {
 
       await page.goto(depositURL);
       //Create a new sub folder
-      await depositPage.createTheSubFolder();
+      await depositPage.createASubFolder(page, depositPage.createFolderWithinObjectsFolder, depositPage.newTestFolderTitle, depositPage.newTestFolderSlug);
     });
 
     await test.step('Create some files directly in the AWS bucket for the Deposit', async() => {
@@ -471,7 +517,7 @@ test.describe('Deposit Tests', () => {
       let admID: string = await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug, true);
 
       //Passing TRUE to the methods below, as we DO now expect to find them in the METS
-      await depositPage.validateFilePresentInMETS(context,metsXML, admID, depositPage.testImageLocationFullPath, depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testImageLocation, true);
+      await depositPage.validateFilePresentInMETS(context,metsXML, admID, depositPage.testImageLocationFullPath, depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), null, null, depositPage.testImageLocation, true);
 
       //Check that items are correctly listed as Both or Deposit
       await expect(depositPage.testImageSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
@@ -507,8 +553,8 @@ test.describe('Deposit Tests', () => {
       let admID = await depositPage.checkAmdSecExists(metsXML, depositPage.newTestFolderSlug, true);
 
       //Passing TRUE to the methods below, as we DO now expect to find them in the METS
-      await depositPage.validateFilePresentInMETS(context,metsXML, admID, depositPage.testWordDocLocationFullPath, depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testWordDocLocation, true);
-      await depositPage.validateFilePresentInMETS(context,metsXML, admID, depositPage.testPdfDocLocationFullPath, depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), depositPage.testPdfDocLocation, true);
+      await depositPage.validateFilePresentInMETS(context,metsXML, admID, depositPage.testWordDocLocationFullPath, depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), null, null, depositPage.testWordDocLocation, true);
+      await depositPage.validateFilePresentInMETS(context,metsXML, admID, depositPage.testPdfDocLocationFullPath, depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), null, null, depositPage.testPdfDocLocation, true);
 
       //Check that the 3 items are now listed as 'Both'
       await expect(depositPage.testImageSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
@@ -520,7 +566,7 @@ test.describe('Deposit Tests', () => {
     await test.step('Try to add files to METS without selecting any files', async() => {
       await depositPage.actionsMenu.click();
       await depositPage.addToMetsButton.click();
-      await expect.soft(depositPage.addToMetsHelpText).toHaveText('Tom to complete this as part of bug fix 90777')
+      await expect.soft(depositPage.addToMetsHelpText).toHaveText('There are no items selected.')
       await depositPage.addToMetsCloseDialogButton.click();
     });
 
@@ -536,13 +582,12 @@ test.describe('Deposit Tests', () => {
       await page.goBack();
     });
 
-    await test.step(`Delete file from the Deposit only`, async() => {
+    await test.step(`Check cannot delete file from the Deposit only`, async() => {
       await depositPage.testImageCheckbox.check();
       await depositPage.actionsMenu.click();
       await depositPage.deleteSelectedButton.click();
-      await depositPage.deleteFromDepositOnly.click();
-      await depositPage.deleteItemModalButton.click();
-      await expect(depositPage.testImageSelectArea, 'Listed as Mets only').toHaveText(depositPage.inMETSOnlyText);
+      await expect(depositPage.deleteFromDepositOnly).toBeDisabled();
+      await depositPage.addToMetsCloseDialogButton.click();
       await depositPage.createDiffImportJobButton.click();
 
       //Check that there are 3 files in the list, plus the METS file

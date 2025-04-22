@@ -1,10 +1,10 @@
 import { expect} from '@playwright/test';
-import { apiContext, test } from '../../fixture';
+import { presentationApiContext, test } from '../../fixture';
 
 test('view-repository-root', async ({page}) => {
 
   test.setTimeout(4000_000);
-  let rootReq = await apiContext.get('/repository');
+  let rootReq = await presentationApiContext.get('/repository');
   expect(rootReq.ok()).toBeTruthy();
 
   const root = await rootReq.json();
@@ -14,7 +14,7 @@ test('view-repository-root', async ({page}) => {
   }));
 
   await page.waitForTimeout(3_800_000);
-  rootReq = await apiContext.get('/repository');
+  rootReq = await presentationApiContext.get('/repository');
   expect(rootReq.ok()).toBeTruthy();
 });
 
