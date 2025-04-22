@@ -1,0 +1,122 @@
+<mets:mets xmlns:mods="http://www.loc.gov/mods/v3" xmlns:premis="http://www.loc.gov/premis/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mets="http://www.loc.gov/METS/">
+    <mets:metsHdr CREATEDATE="2025-04-22T10:30:15.3145077+00:00">
+        <mets:agent ROLE="CREATOR" TYPE="OTHER" OTHERTYPE="SOFTWARE">
+            <mets:name>University of Leeds Digital Library Infrastructure Project</mets:name>
+        </mets:agent>
+    </mets:metsHdr>
+    <mets:dmdSec ID="DMD_PHYS_ROOT">
+        <mets:mdWrap MDTYPE="MODS">
+            <mets:xmlData>
+                <mods:mods>
+                    <mods:name>UAT Test 1</mods:name>
+                </mods:mods>
+            </mets:xmlData>
+        </mets:mdWrap>
+    </mets:dmdSec>
+    <mets:amdSec ID="ADM_objects">
+        <mets:techMD ID="TECH_objects">
+            <mets:mdWrap MDTYPE="PREMIS:OBJECT">
+                <mets:xmlData>
+                    <premis:object xsi:type="premis:file" xsi:schemaLocation="http://www.loc.gov/premis/v3 http://www.loc.gov/standards/premis/v3/premis.xsd" version="3.0">
+                        <premis:originalName>objects</premis:originalName>
+                    </premis:object>
+                </mets:xmlData>
+            </mets:mdWrap>
+        </mets:techMD>
+    </mets:amdSec>
+    <mets:amdSec ID="ADM_objects/new-test-folder-inside-objects">
+        <mets:techMD ID="TECH_objects/new-test-folder-inside-objects">
+            <mets:mdWrap MDTYPE="PREMIS:OBJECT">
+                <mets:xmlData>
+                    <premis:object xsi:type="premis:file" xsi:schemaLocation="http://www.loc.gov/premis/v3 http://www.loc.gov/standards/premis/v3/premis.xsd" version="3.0">
+                        <premis:originalName>objects/new-test-folder-inside-objects</premis:originalName>
+                    </premis:object>
+                </mets:xmlData>
+            </mets:mdWrap>
+        </mets:techMD>
+    </mets:amdSec>
+    <mets:amdSec ID="ADM_objects/new-test-folder-inside-objects/test_image.png">
+        <mets:techMD ID="TECH_objects/new-test-folder-inside-objects/test_image.png">
+            <mets:mdWrap MDTYPE="PREMIS:OBJECT">
+                <mets:xmlData>
+                    <premis:object xsi:type="premis:file" xsi:schemaLocation="http://www.loc.gov/premis/v3 http://www.loc.gov/standards/premis/v3/premis.xsd" version="3.0">
+                        <premis:objectCharacteristics>
+                            <premis:fixity>
+                                <premis:messageDigestAlgorithm>sha256</premis:messageDigestAlgorithm>
+                                <premis:messageDigest>95e6710fba8df4dbe395b09693bb1b1bff1c63b6bffb0e1c32beaab50221968a</premis:messageDigest>
+                            </premis:fixity>
+                            <premis:size>1451628</premis:size>
+                        </premis:objectCharacteristics>
+                        <premis:originalName>objects/new-test-folder-inside-objects/test_image.png</premis:originalName>
+                    </premis:object>
+                </mets:xmlData>
+            </mets:mdWrap>
+        </mets:techMD>
+    </mets:amdSec>
+    <mets:amdSec ID="ADM_objects/new-test-folder-inside-objects/test_pdf_document.pdf">
+        <mets:techMD ID="TECH_objects/new-test-folder-inside-objects/test_pdf_document.pdf">
+            <mets:mdWrap MDTYPE="PREMIS:OBJECT">
+                <mets:xmlData>
+                    <premis:object xsi:type="premis:file" xsi:schemaLocation="http://www.loc.gov/premis/v3 http://www.loc.gov/standards/premis/v3/premis.xsd" version="3.0">
+                        <premis:objectCharacteristics>
+                            <premis:fixity>
+                                <premis:messageDigestAlgorithm>sha256</premis:messageDigestAlgorithm>
+                                <premis:messageDigest>b07b3df4509ddd400f18b0c078f1a40d2241eb716d0ee3b1ec7a97df18ac5305</premis:messageDigest>
+                            </premis:fixity>
+                            <premis:size>16091</premis:size>
+                        </premis:objectCharacteristics>
+                        <premis:originalName>objects/new-test-folder-inside-objects/test_pdf_document.pdf</premis:originalName>
+                    </premis:object>
+                </mets:xmlData>
+            </mets:mdWrap>
+        </mets:techMD>
+    </mets:amdSec>
+    <mets:amdSec ID="ADM_objects/new-test-folder-inside-objects/test_word_document.docx">
+        <mets:techMD ID="TECH_objects/new-test-folder-inside-objects/test_word_document.docx">
+            <mets:mdWrap MDTYPE="PREMIS:OBJECT">
+                <mets:xmlData>
+                    <premis:object xsi:type="premis:file" xsi:schemaLocation="http://www.loc.gov/premis/v3 http://www.loc.gov/standards/premis/v3/premis.xsd" version="3.0">
+                        <premis:objectCharacteristics>
+                            <premis:fixity>
+                                <premis:messageDigestAlgorithm>sha256</premis:messageDigestAlgorithm>
+                                <premis:messageDigest>132d77469b1653818753e0c9c6a7e6387f29042cdffcd4887387a004d9e30dff</premis:messageDigest>
+                            </premis:fixity>
+                            <premis:size>13212</premis:size>
+                        </premis:objectCharacteristics>
+                        <premis:originalName>objects/new-test-folder-inside-objects/test_word_document.docx</premis:originalName>
+                    </premis:object>
+                </mets:xmlData>
+            </mets:mdWrap>
+        </mets:techMD>
+    </mets:amdSec>
+    <mets:fileSec>
+        <mets:fileGrp USE="OBJECTS">
+            <mets:file ID="FILE_objects/new-test-folder-inside-objects/test_image.png" MIMETYPE="application/octet-stream" ADMID="ADM_objects/new-test-folder-inside-objects/test_image.png">
+                <mets:FLocat LOCTYPE="URL" xlink:type="simple" xlink:href="objects/new-test-folder-inside-objects/test_image.png"/>
+            </mets:file>
+            <mets:file ID="FILE_objects/new-test-folder-inside-objects/test_pdf_document.pdf" MIMETYPE="application/octet-stream" ADMID="ADM_objects/new-test-folder-inside-objects/test_pdf_document.pdf">
+                <mets:FLocat LOCTYPE="URL" xlink:type="simple" xlink:href="objects/new-test-folder-inside-objects/test_pdf_document.pdf"/>
+            </mets:file>
+            <mets:file ID="FILE_objects/new-test-folder-inside-objects/test_word_document.docx" MIMETYPE="application/octet-stream" ADMID="ADM_objects/new-test-folder-inside-objects/test_word_document.docx">
+                <mets:FLocat LOCTYPE="URL" xlink:type="simple" xlink:href="objects/new-test-folder-inside-objects/test_word_document.docx"/>
+            </mets:file>
+        </mets:fileGrp>
+    </mets:fileSec>
+    <mets:structMap TYPE="PHYSICAL">
+        <mets:div ID="PHYS_ROOT" LABEL="__ROOT" DMDID="DMD_PHYS_ROOT" TYPE="Directory">
+            <mets:div ID="PHYS_objects" LABEL="objects" DMDID="DMD_objects" ADMID="ADM_objects" TYPE="Directory">
+                <mets:div ID="PHYS_objects/new-test-folder-inside-objects" LABEL="New test folder inside objects" ADMID="ADM_objects/new-test-folder-inside-objects" TYPE="Directory">
+                    <mets:div ID="PHYS_objects/new-test-folder-inside-objects/test_image.png" LABEL="test_image.png" TYPE="Item">
+                        <mets:fptr FILEID="FILE_objects/new-test-folder-inside-objects/test_image.png"/>
+                    </mets:div>
+                    <mets:div ID="PHYS_objects/new-test-folder-inside-objects/test_pdf_document.pdf" LABEL="test_pdf_document.pdf" TYPE="Item">
+                        <mets:fptr FILEID="FILE_objects/new-test-folder-inside-objects/test_pdf_document.pdf"/>
+                    </mets:div>
+                    <mets:div ID="PHYS_objects/new-test-folder-inside-objects/test_word_document.docx" LABEL="test_word_document.docx" TYPE="Item">
+                        <mets:fptr FILEID="FILE_objects/new-test-folder-inside-objects/test_word_document.docx"/>
+                    </mets:div>
+                </mets:div>
+            </mets:div>
+        </mets:div>
+    </mets:structMap>
+</mets:mets>

@@ -116,6 +116,7 @@ export class DepositPage {
   readonly updateArchivalPropertiesButton : Locator;
 
   //New Deposit Dialog used in 'Browse - create deposit ' journey
+  readonly objectIdentifier : Locator;
   readonly modalArchivalSlug : Locator;
   readonly modalArchivalName : Locator;
   readonly modalCreateNewDepositButton : Locator;
@@ -321,6 +322,7 @@ export class DepositPage {
 
     //New Deposit Dialog used in 'Browse - create deposit ' journey
     this.modalCreateNewDepositButton = page.getByRole('button', { name: 'Create New Deposit' });
+    this.objectIdentifier = page.locator('#objectIdentifier');
     this.modalArchivalSlug = page.locator('#archivalGroupSlug');
     this.modalArchivalName = page.locator('#archivalGroupProposedName');
     this.slugDisplayOnModal = page.locator('#slugDisplay');
@@ -595,7 +597,7 @@ export class DepositPage {
     expect(elementToFind, 'The folder has been deleted from the structMap section').toHaveLength(0);
   }
 
-  async uploadFilesToDepositS3Bucket(depositURL: string){
+  async uploadFilesToDepositS3Bucket(depositURL: string, uploadMETS: boolean = false){
     let depositId: string = depositURL.substring(depositURL.length-12);
 
     const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
@@ -607,11 +609,14 @@ export class DepositPage {
     // we are going to set the checksum, because we have no
     // other way of providing it. Later we will be able to get checksums from BagIt.
     const sourceDir : string = 'test-data/deposit/';
-    const files = [
+    let files = [
       `${this.newTestFolderSlug}/${this.testImageLocation}`,
       `${this.newTestFolderSlug}/${this.testWordDocLocation}`,
       `${this.newTestFolderSlug}/${this.testPdfDocLocation}`,
     ];
+    if (uploadMETS){
+      files.push(`mets.xml`);
+    }
     const s3Client = getS3Client();
     for (const file of files) {
       await uploadFile(s3Client, filesLocation, sourceDir + file, file, true);

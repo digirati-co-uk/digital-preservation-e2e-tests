@@ -591,14 +591,11 @@ test.describe('Deposit Tests', () => {
       await depositPage.createDiffImportJobButton.click();
 
       //Check that there are 3 files in the list, plus the METS file
-      //TODO currently fails due to bug 90783
-      await expect.soft(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 4 items in the Binaries to add').toHaveCount(4);
-      await expect.soft(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 4 items in the Binaries to add').toHaveCount(4);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.testWordDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.testPdfDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
-
-
     });
 
     await test.step('Tidy up and delete the Deposit', async() => {
