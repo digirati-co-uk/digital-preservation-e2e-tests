@@ -35,19 +35,19 @@
             </mets:mdWrap>
         </mets:techMD>
     </mets:amdSec>
-    <mets:amdSec ID="ADM_objects/new-test-folder-inside-objects/test_image.png">
-        <mets:techMD ID="TECH_objects/new-test-folder-inside-objects/test_image.png">
+    <mets:amdSec ID="ADM_objects/new-test-folder-inside-objects/test_image.jpg">
+        <mets:techMD ID="TECH_objects/new-test-folder-inside-objects/test_image.jpg">
             <mets:mdWrap MDTYPE="PREMIS:OBJECT">
                 <mets:xmlData>
                     <premis:object xsi:type="premis:file" xsi:schemaLocation="http://www.loc.gov/premis/v3 http://www.loc.gov/standards/premis/v3/premis.xsd" version="3.0">
                         <premis:objectCharacteristics>
                             <premis:fixity>
                                 <premis:messageDigestAlgorithm>sha256</premis:messageDigestAlgorithm>
-                                <premis:messageDigest>95e6710fba8df4dbe395b09693bb1b1bff1c63b6bffb0e1c32beaab50221968a</premis:messageDigest>
+                                <premis:messageDigest>62db932f4c8b13da0bb441b21a5b90fa47758a29afa519cb03fcae9606912e82</premis:messageDigest>
                             </premis:fixity>
-                            <premis:size>1451628</premis:size>
+                            <premis:size>46051</premis:size>
                         </premis:objectCharacteristics>
-                        <premis:originalName>objects/new-test-folder-inside-objects/test_image.png</premis:originalName>
+                        <premis:originalName>objects/new-test-folder-inside-objects/test_image.jpg</premis:originalName>
                     </premis:object>
                 </mets:xmlData>
             </mets:mdWrap>
@@ -91,13 +91,13 @@
     </mets:amdSec>
     <mets:fileSec>
         <mets:fileGrp USE="OBJECTS">
-            <mets:file ID="FILE_objects/new-test-folder-inside-objects/test_image.png" MIMETYPE="application/octet-stream" ADMID="ADM_objects/new-test-folder-inside-objects/test_image.png">
-                <mets:FLocat LOCTYPE="URL" xlink:type="simple" xlink:href="objects/new-test-folder-inside-objects/test_image.png"/>
+            <mets:file ID="FILE_objects/new-test-folder-inside-objects/test_image.jpg" MIMETYPE="image/jpeg" ADMID="ADM_objects/new-test-folder-inside-objects/test_image.jpg">
+                <mets:FLocat LOCTYPE="URL" xlink:type="simple" xlink:href="objects/new-test-folder-inside-objects/test_image.jpg"/>
             </mets:file>
-            <mets:file ID="FILE_objects/new-test-folder-inside-objects/test_pdf_document.pdf" MIMETYPE="application/octet-stream" ADMID="ADM_objects/new-test-folder-inside-objects/test_pdf_document.pdf">
+            <mets:file ID="FILE_objects/new-test-folder-inside-objects/test_pdf_document.pdf" MIMETYPE="application/pdf" ADMID="ADM_objects/new-test-folder-inside-objects/test_pdf_document.pdf">
                 <mets:FLocat LOCTYPE="URL" xlink:type="simple" xlink:href="objects/new-test-folder-inside-objects/test_pdf_document.pdf"/>
             </mets:file>
-            <mets:file ID="FILE_objects/new-test-folder-inside-objects/test_word_document.docx" MIMETYPE="application/octet-stream" ADMID="ADM_objects/new-test-folder-inside-objects/test_word_document.docx">
+            <mets:file ID="FILE_objects/new-test-folder-inside-objects/test_word_document.docx" MIMETYPE="application/vnd.openxmlformats-officedocument.wordprocessingml.document" ADMID="ADM_objects/new-test-folder-inside-objects/test_word_document.docx">
                 <mets:FLocat LOCTYPE="URL" xlink:type="simple" xlink:href="objects/new-test-folder-inside-objects/test_word_document.docx"/>
             </mets:file>
         </mets:fileGrp>
@@ -106,8 +106,8 @@
         <mets:div ID="PHYS_ROOT" LABEL="__ROOT" DMDID="DMD_PHYS_ROOT" TYPE="Directory">
             <mets:div ID="PHYS_objects" LABEL="objects" DMDID="DMD_objects" ADMID="ADM_objects" TYPE="Directory">
                 <mets:div ID="PHYS_objects/new-test-folder-inside-objects" LABEL="New test folder inside objects" ADMID="ADM_objects/new-test-folder-inside-objects" TYPE="Directory">
-                    <mets:div ID="PHYS_objects/new-test-folder-inside-objects/test_image.png" LABEL="test_image.png" TYPE="Item">
-                        <mets:fptr FILEID="FILE_objects/new-test-folder-inside-objects/test_image.png"/>
+                    <mets:div ID="PHYS_objects/new-test-folder-inside-objects/test_image.jpg" LABEL="test_image.jpg" TYPE="Item">
+                        <mets:fptr FILEID="FILE_objects/new-test-folder-inside-objects/test_image.jpg"/>
                     </mets:div>
                     <mets:div ID="PHYS_objects/new-test-folder-inside-objects/test_pdf_document.pdf" LABEL="test_pdf_document.pdf" TYPE="Item">
                         <mets:fptr FILEID="FILE_objects/new-test-folder-inside-objects/test_pdf_document.pdf"/>

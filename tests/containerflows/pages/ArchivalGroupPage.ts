@@ -74,7 +74,7 @@ export class ArchivalGroupPage {
     this.runImportPreserveButton = page.getByRole('button', { name: 'Run Import (Preserve)' });
     this.diffStatus = page.getByLabel('status');
     this.diffDepositValue = page.getByLabel('deposit');
-    this.diffArchivalGroup = page.getByLabel('archival group', {exact:true});
+    this.diffArchivalGroup = page.getByLabel('archival group', {exact:true}).getByRole('link');
     this.diffArchivalGroupName = page.getByLabel('archival group name');
     this.diffSourceVersion = page.getByLabel('source version');
     this.diffContainersToAdd = page.getByLabel('containers to add');
@@ -175,8 +175,6 @@ export class ArchivalGroupPage {
       await this.copyFilesFromS3Checkbox.check();
     }
     await this.createNewDepositModalButton.click();
-
-
   }
 
 }
