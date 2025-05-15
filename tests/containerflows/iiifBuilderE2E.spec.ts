@@ -127,7 +127,7 @@ test.describe('IIIF Builder End To End Tests', () => {
       await archivalGroupPage.allowJobToComplete();
 
       //Follow the archival group link
-      await archivalGroupPage.diffArchivalGroup.click();
+      await archivalGroupPage.diffArchivalGroupLink.click();
       await expect(iiifBuilderPage.archivalGroupHeader).toBeVisible();
       await expect(page, 'The URL is correct').toHaveURL(iiifBuilderPage.fullPathOfIRN);
     });

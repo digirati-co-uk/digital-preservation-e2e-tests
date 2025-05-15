@@ -107,8 +107,9 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.diffSourceVersion, 'There is no diffSourceVersion').toHaveText('(none)');
 
       //Check objects only thing in the list
-      await expect(archivalGroupPage.diffContainersToAdd.getByRole('listitem'), 'There is only 1 item in the Containers to Add').toHaveCount(1);
+      await expect(archivalGroupPage.diffContainersToAdd.getByRole('listitem'), 'There are only 2 items in the Containers to Add').toHaveCount(2);
       await expect(archivalGroupPage.diffContainersToAdd, 'The Container to Add is objects').toContainText(objectsFolderFullPath);
+      await expect(archivalGroupPage.diffContainersToAdd, 'The Container to Add is metadata').toContainText('metadata');
 
       //Check the 2 files are in the list, and that's the only 3 things there (the 2 files, plus the mets file)
       await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 3 items in the Binaries to add').toHaveCount(3);
@@ -166,8 +167,8 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
 
       //Check objects only thing in the list
-      await expect(archivalGroupPage.diffContainersAdded.getByRole('listitem'), 'There is only 1 item in the Containers Added').toHaveCount(1);
-      await expect(archivalGroupPage.diffContainersAdded, 'The Container Added is objects').toContainText(objectsFolderFullPath);
+      await expect(archivalGroupPage.diffContainersAdded.getByRole('listitem'), 'There are only 2 items in the Containers Added').toHaveCount(2);
+      await expect(archivalGroupPage.diffContainersAdded, 'The Container Added is metadata').toContainText('metadata');
 
       //Check the 2 files are in the list, and there are 3 items there (mets and the 2 files)
       await expect(archivalGroupPage.diffBinariesAdded.getByRole('listitem'), 'There are only 3 items in the Binaries added').toHaveCount(3);
@@ -210,8 +211,9 @@ test.describe('Archival Group Tests', () => {
       //deposits -  1 only
 
       //Validate the file structure matches
-      await expect(archivalGroupPage.resourcesTableRows, 'We correctly have only the 2 rows in the Resources table, objects and METS.xml').toHaveCount(2);
+      await expect(archivalGroupPage.resourcesTableRows, 'We correctly have only the 3 rows in the Resources table, objects, metadata and METS.xml').toHaveCount(3);
       await expect(archivalGroupPage.objectsFolderInTable, 'That row is the objects folder, as expected').toHaveText(archivalGroupPage.depositPage.objectsFolderName);
+      await expect(archivalGroupPage.metadataFolderInTable, 'That row is the metadata folder, as expected').toHaveText(archivalGroupPage.depositPage.metadataFolderName);
       await expect(archivalGroupPage.metsRowInTable, 'THe 2nd row contains the METS file, as expected').toHaveText(archivalGroupPage.depositPage.metsFileName);
 
     });
@@ -276,9 +278,9 @@ test.describe('Archival Group Tests', () => {
       await expect(imageFileTableRow.getByRole('cell', {name: 'td-last-modified', exact: true}), 'The last modified date is displayed for the image file').not.toBeEmpty();
       await expect(imageFileTableRow.getByRole('cell', {name: 'td-last-modified-by'}), 'The correct last modified by name is displayed for the image file').toHaveText(createdByUserName);
       await expect(imageFileTableRow.getByRole('cell', {name: 'td-type'}), 'The correct type is displayed for the image file').toHaveText(archivalGroupPage.depositPage.testImageFileType);
-      await expect(imageFileTableRow.getByRole('cell', {name: 'td-format'}), 'The correct format is displayed for the image file').toHaveText('TODO');
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-format'}), 'The correct format is displayed for the image file').toHaveText('dlip/unknown');
       await expect(imageFileTableRow.getByRole('cell', {name: 'td-access'}), 'The correct access is displayed for the image file').toHaveText('Open');
-      await expect(imageFileTableRow.getByRole('cell', {name: 'td-virus'}), 'The virus scan output is displayed for the image file').toHaveText(archivalGroupPage.depositPage.virusScanCheckMark);
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-virus'}), 'The virus scan output is displayed for the image file').toBeEmpty();
 
       //Click and verify we see the file
       await archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testImageLocation).click();
@@ -289,9 +291,9 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.nameField, 'Name field is correct').toHaveText(archivalGroupPage.depositPage.testImageLocation);
       await expect(archivalGroupPage.pathField, 'Path field is correct').toHaveText(imageLocation);
       await expect(archivalGroupPage.contentTypeField, 'Content type field is correct').toHaveText(archivalGroupPage.depositPage.testImageFileType);
-      await expect(archivalGroupPage.fileFormatField, 'File format field is correct').toContainText('TODO');
+      await expect(archivalGroupPage.fileFormatField, 'File format field is correct').toContainText('dlip/unknown: [Not Identified]');
       //TODO is this dubious?
-      await expect(archivalGroupPage.virusScanField, 'Virus scan field is correct').toContainText(archivalGroupPage.depositPage.virusScanCheckMark);
+      await expect(archivalGroupPage.virusScanField, 'Virus scan field is correct').toBeEmpty();
       await expect(archivalGroupPage.sizeField, 'Size field is correct').toContainText(archivalGroupPage.depositPage.testImageFileSize);
       //TODO anything more can be done here?
       await expect(archivalGroupPage.digestField, 'Digest field is populated').not.toBeEmpty();

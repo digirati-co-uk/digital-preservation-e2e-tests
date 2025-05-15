@@ -47,7 +47,9 @@ test.describe('Deposit Tests', () => {
         await depositPage.newDepositButton.click();
 
         await expect(depositPage.modalArchivalSlug, 'There is NO URI field').not.toBeVisible();
-        await depositPage.useBagitLayout.check();
+        if(useBagitLayout) {
+          await depositPage.useBagitLayout.check();
+        }
         await depositPage.modalCreateNewDepositButton.click();
 
         //Validate that we're navigated into the new Deposit
@@ -868,7 +870,9 @@ test.describe('Deposit Tests', () => {
     const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
 
     //Create a recent date to filter by in later steps
-    const yesterday : Date = depositPage.generateDateInPast(1);
+    let yesterday : Date = depositPage.generateDateInPast(1);
+    //Add an hour in case it's GMT - or else formattedYesterday will be 2 days ago
+    yesterday.setHours(1);
     const formattedYesterday = yesterday.toISOString().substring(0, 10);
 
     //Create a deposit to ensure we have one new deposit, then visit the listing page
