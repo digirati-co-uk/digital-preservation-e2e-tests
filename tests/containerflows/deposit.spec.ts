@@ -97,7 +97,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.archivalGroupInput.fill(depositPage.testInvalidArchivalURI);
       //Save changes, verify failed
       await depositPage.updateArchivalPropertiesButton.click();
-      await expect(depositPage.alertMessage, 'Failure message is shown').toHaveText(`BadRequest: Archive path '${depositPage.testInvalidArchivalURI}' contains invalid characters.`);
+      await expect.soft(depositPage.alertMessage, 'Failure message is shown').toHaveText(`BadRequest: Archive path '${depositPage.testInvalidArchivalURI}' contains invalid characters.`);
       await expect(depositPage.archivalGroupInput, 'The Archival group was not set').toBeEmpty();
 
       //Wait for a second so that we can see if the modified time stamp properly updates
@@ -178,7 +178,7 @@ test.describe('Deposit Tests', () => {
       await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'hash'}), 'The hash is displayed for the image file').toHaveText(/[0-9a-z]{8}/);
       await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'file-size'}), 'The correct file size is displayed for the image file').toContainText(depositPage.testImageFileSize);
       await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'content-type'}), 'The correct content type is displayed for the image file').toHaveText(depositPage.testImageFileType);
-      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'pronom'}), 'The pronom is displayed for the image file').toHaveText('TODO');
+      await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'pronom'}), 'The pronom is displayed for the image file').toHaveText('dlip/unknown');
       await expect(depositPage.newTestImageFileInTable.getByRole('cell', {name: 'virus'}), 'The virus scan is displayed for the image file').toHaveText(depositPage.virusScanCheckMark);
     });
 

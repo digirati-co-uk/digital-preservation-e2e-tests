@@ -74,7 +74,7 @@ export class ArchivalGroupPage {
     this.runImportPreserveButton = page.getByRole('button', { name: 'Run Import (Preserve)' });
     this.diffStatus = page.getByLabel('status');
     this.diffDepositValue = page.getByLabel('deposit');
-    this.diffArchivalGroup = page.getByLabel('archival group', {exact:true}).getByRole('link');
+    this.diffArchivalGroup = page.getByLabel('archival group', {exact:true});
     this.diffArchivalGroupName = page.getByLabel('archival group name');
     this.diffSourceVersion = page.getByLabel('source version');
     this.diffContainersToAdd = page.getByLabel('containers to add');

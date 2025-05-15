@@ -229,7 +229,10 @@ test.describe('Archival Group Tests', () => {
     await test.step('Check we can access the METS for this archival group via the API', async () => {
       //Call the METS endpoint on the API, verify we get the METS file back
       const archivalGroupAPILocation : string = `repository/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}?view=mets`;
-      const metsResponse = await presentationApiContext.get(archivalGroupAPILocation);
+      const metsResponse = await presentationApiContext.get(archivalGroupAPILocation,
+        {
+          ignoreHTTPSErrors: true
+        });
       const metsAsString = await metsResponse.text();
       metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
 
@@ -307,7 +310,10 @@ test.describe('Archival Group Tests', () => {
       //TODO Do we need to do any more than this?
 
       //Check you cannot access via Presentation
-      response = await presentationApiContext.get(archivalGroupFileLocation);
+      response = await presentationApiContext.get(archivalGroupFileLocation,
+        {
+          ignoreHTTPSErrors: true
+        });
       expect(response.status()).toBe(StatusCodes.NOT_FOUND);
     });
 

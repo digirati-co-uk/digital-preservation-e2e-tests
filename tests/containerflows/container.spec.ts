@@ -50,7 +50,10 @@ test.describe('Container Tests', () => {
 
     await test.step(`API contains all the expected fields`, async () => {
 
-      const containerResponse = await presentationApiContext.get(`${containerPage.navigationPage.baseBrowseAPIPath}${folderSlug.toLowerCase()}`);
+      const containerResponse = await presentationApiContext.get(`${containerPage.navigationPage.baseBrowseAPIPath}${folderSlug.toLowerCase()}`,
+        {
+          ignoreHTTPSErrors: true
+        });
       const body = await containerResponse.body();
       containerItem = JSON.parse(body.toString('utf-8'));
 
@@ -168,12 +171,12 @@ test.describe('Container Tests', () => {
       await containerPage.createContainer(folderSlug, '');
       await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);
       await expect(containerPage.alertMessage, 'The successful created container message is shown and references the correct title').toContainText(folderSlug.toLowerCase());
-      await expect(containerPage.getFolderSlug(folderSlug.toLowerCase()), 'The new Container is visible on the page').toBeVisible();
+      await expect(containerPage.getFolderSlug(folderSlug.toLowerCase()).first(), 'The new Container is visible on the page').toBeVisible();
     });
 
     await test.step(`can create a child container`, async () => {
 
-      const myContainerLink: Locator = containerPage.getFolderSlug(folderSlug.toLowerCase());
+      const myContainerLink: Locator = containerPage.getFolderSlug(folderSlug.toLowerCase()).first();
       await expect(myContainerLink, 'Can see the Container on the page').toBeVisible();
 
       //Navigate into the new parent Container
