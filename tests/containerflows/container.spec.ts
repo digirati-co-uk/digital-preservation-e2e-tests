@@ -52,9 +52,8 @@ test.describe('Container Tests', () => {
 
       const containerResponse = await presentationApiContext.get(`${containerPage.navigationPage.baseBrowseAPIPath}${folderSlug.toLowerCase()}`,
         {
-          ignoreHTTPSErrors: true,
-        }
-      );
+          ignoreHTTPSErrors: true
+        });
       const body = await containerResponse.body();
       containerItem = JSON.parse(body.toString('utf-8'));
 
@@ -167,7 +166,7 @@ test.describe('Container Tests', () => {
     let folderSlugChild: string;
     let folderTitleChild: string;
 
-    await test.step(`Can create the container without a title`, async () => {
+    await test.step(`Can create the container without a slug`, async () => {
       
       await containerPage.createContainer(folderSlug, '');
       await expect(containerPage.alertMessage, 'The successful created container message is shown').toContainText(containerPage.createdContainerMessage);

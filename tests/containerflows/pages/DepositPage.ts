@@ -606,7 +606,10 @@ export class DepositPage {
   async uploadFilesToDepositS3Bucket(depositURL: string, uploadMETS: boolean = false){
     let depositId: string = depositURL.substring(depositURL.length-12);
 
-    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
+    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`,
+      {
+        ignoreHTTPSErrors: true
+      });
     const body = await depositResponse.body();
     const depositItem = JSON.parse(body.toString('utf-8'));
     //Get the s3 files location

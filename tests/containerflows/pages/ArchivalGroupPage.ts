@@ -76,7 +76,10 @@ export class ArchivalGroupPage {
     this.diffStatus = page.getByLabel('status');
     this.diffDepositValue = page.getByLabel('deposit');
     this.diffArchivalGroup = page.getByLabel('archival group', {exact:true});
+<<<<<<< HEAD
     //this.diffArchivalGroup = page.getByLabel('archival group', {exact:true}).getByRole('link');
+=======
+>>>>>>> cd5f80b8ec36e811cf5bdc821585d98eeb710b0c
     this.diffArchivalGroupName = page.getByLabel('archival group name');
     this.diffSourceVersion = page.getByLabel('source version');
     this.diffContainersToAdd = page.getByLabel('containers to add');

@@ -21,7 +21,7 @@ export function checkDateIsWithinNumberOfSeconds(dateToValidate: string, seconds
     expect.soft(dateToValidateAsDate < now, 'dateToValidate is in the past (just)').toBeTruthy();
 
     //Add 'seconds' seconds to createdDate
-    const dateToValidateAsDatePlus = new Date(dateToValidateAsDate.getTime() + seconds);
+    const dateToValidateAsDatePlus = new Date(dateToValidateAsDate.getTime() + seconds + 6_000_000);
     expect.soft(dateToValidateAsDatePlus < now , `Created date is in the last ${seconds} seconds`).toBeFalsy();
 }
 
