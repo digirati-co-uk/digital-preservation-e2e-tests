@@ -7,6 +7,7 @@ import {readFileSync} from "fs";
 
 export const createdByUserName :string = process.env.FRONTEND_USERNAME;
 export const frontendBaseUrl : string = process.env.FRONTEND_BASE_URL;
+const s3Client = getS3Client();
 
 // This utility appends a randomly generated suffix onto the input string - used for creating unique IDs
 export function generateUniqueId(): string {
@@ -37,14 +38,12 @@ export function getS3Client() {
 // if that checksum is provided in a METS file, allowing multiple
 // ways to get the content into S3
 export async function uploadFile(
-  s3: S3Client,
   depositUri: string,
   localFilePath: string,
   relativePathInDigitalObject: string,
   withChecksum: boolean=false) {
 
     const s3Url = parseS3Url(depositUri);
-
     // be forgiving of joining paths...
     const key = s3Url.key.endsWith('/') ? s3Url.key.slice(0, -1) : s3Url.key;
     const path = relativePathInDigitalObject.startsWith('/') ? relativePathInDigitalObject.slice(1) : relativePathInDigitalObject;
@@ -60,5 +59,27 @@ export async function uploadFile(
         // But if you DO provide this information in S3 metadata, we will validate it against the METS file.
     });
 
-    await s3.send(putCmd);
+    await s3Client.send(putCmd);
+
+  }
+
+  export async function checkForFileInS3(  depositUri: string, fileToFind: string): Promise<boolean> {
+
+    const s3Url = parseS3Url(depositUri);
+    const input = { // ListObjectsV2Request
+      Bucket: s3Url.bucket,
+      Prefix: s3Url.key,
+    };
+    const command = new ListObjectsV2Command(input);
+    const response = await s3Client.send(command);
+    const contents = response.Contents;
+    const stringToFind = `${s3Url.key}${fileToFind}/`;
+    //TODO determine if contents contains, and return boolean based on that
+    console.log(contents);
+    console.log(stringToFind);
+    var result = contents.filter(obj => {
+      return obj.Key === stringToFind;
+    })
+    console.log(result);
+    return result.length > 0;
   }

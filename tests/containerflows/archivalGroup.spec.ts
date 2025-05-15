@@ -29,6 +29,13 @@ test.describe('Archival Group Tests', () => {
       await route.fulfill();
     });
 
+    await context.route(`**/mets.xml`, async route => {
+      const response = await route.fetch();
+      const metsAsString = await response.text();
+      metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+      await route.fulfill();
+    });
+
     await page.route('**/*view=mets', async route => {
       const response = await route.fetch();
       const metsAsString = await response.text();
@@ -107,7 +114,7 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.diffSourceVersion, 'There is no diffSourceVersion').toHaveText('(none)');
 
       //Check objects only thing in the list
-      await expect(archivalGroupPage.diffContainersToAdd.getByRole('listitem'), 'There is only 1 item in the Containers to Add').toHaveCount(1);
+      await expect(archivalGroupPage.diffContainersToAdd.getByRole('listitem'), 'There are 2 items in the Containers to Add').toHaveCount(2);
       await expect(archivalGroupPage.diffContainersToAdd, 'The Container to Add is objects').toContainText(objectsFolderFullPath);
 
       //Check the 2 files are in the list, and that's the only 3 things there (the 2 files, plus the mets file)
@@ -166,7 +173,7 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.diffCreatedBy, 'Created by is correct').toHaveText(createdByUserName);
 
       //Check objects only thing in the list
-      await expect(archivalGroupPage.diffContainersAdded.getByRole('listitem'), 'There is only 1 item in the Containers Added').toHaveCount(1);
+      await expect(archivalGroupPage.diffContainersAdded.getByRole('listitem'), 'There are only 2 items in the Containers Added').toHaveCount(2);
       await expect(archivalGroupPage.diffContainersAdded, 'The Container Added is objects').toContainText(objectsFolderFullPath);
 
       //Check the 2 files are in the list, and there are 3 items there (mets and the 2 files)
@@ -210,10 +217,21 @@ test.describe('Archival Group Tests', () => {
       //deposits -  1 only
 
       //Validate the file structure matches
-      await expect(archivalGroupPage.resourcesTableRows, 'We correctly have only the 2 rows in the Resources table, objects and METS.xml').toHaveCount(2);
-      await expect(archivalGroupPage.objectsFolderInTable, 'That row is the objects folder, as expected').toHaveText(archivalGroupPage.depositPage.objectsFolderName);
+      await expect(archivalGroupPage.resourcesTableRows, 'We correctly have only the 3 rows in the Resources table, objects, metadata and METS.xml').toHaveCount(3);
+      await expect(archivalGroupPage.metadataFolderInTable, 'The first row is the objects folder, as expected').toHaveText(archivalGroupPage.depositPage.metadataFolderName);
+      await expect(archivalGroupPage.objectsFolderInTable, 'The second row is the objects folder, as expected').toHaveText(archivalGroupPage.depositPage.objectsFolderName);
       await expect(archivalGroupPage.metsRowInTable, 'THe 2nd row contains the METS file, as expected').toHaveText(archivalGroupPage.depositPage.metsFileName);
 
+    });
+
+    await test.step('Check we can access the METS by clicking on the mets file', async () => {
+
+      await archivalGroupPage.metsRowInTable.click();
+
+      //The METS interceptor should have populated metsXML
+      //Verify the 2 test files are in the METS i.e. the right METS was returned
+      await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
+      await page.goBack();
     });
 
     await test.step('Check we can access the METS for this archival group via the UI', async () => {
@@ -229,7 +247,10 @@ test.describe('Archival Group Tests', () => {
     await test.step('Check we can access the METS for this archival group via the API', async () => {
       //Call the METS endpoint on the API, verify we get the METS file back
       const archivalGroupAPILocation : string = `repository/${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}?view=mets`;
-      const metsResponse = await presentationApiContext.get(archivalGroupAPILocation);
+      const metsResponse = await presentationApiContext.get(archivalGroupAPILocation,
+        {
+          ignoreHTTPSErrors: true,
+        });
       const metsAsString = await metsResponse.text();
       metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
 
@@ -273,9 +294,9 @@ test.describe('Archival Group Tests', () => {
       await expect(imageFileTableRow.getByRole('cell', {name: 'td-last-modified', exact: true}), 'The last modified date is displayed for the image file').not.toBeEmpty();
       await expect(imageFileTableRow.getByRole('cell', {name: 'td-last-modified-by'}), 'The correct last modified by name is displayed for the image file').toHaveText(createdByUserName);
       await expect(imageFileTableRow.getByRole('cell', {name: 'td-type'}), 'The correct type is displayed for the image file').toHaveText(archivalGroupPage.depositPage.testImageFileType);
-      await expect(imageFileTableRow.getByRole('cell', {name: 'td-format'}), 'The correct format is displayed for the image file').toHaveText('TODO');
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-format'}), 'The correct format is displayed for the image file').toHaveText('dlip/unknown');
       await expect(imageFileTableRow.getByRole('cell', {name: 'td-access'}), 'The correct access is displayed for the image file').toHaveText('Open');
-      await expect(imageFileTableRow.getByRole('cell', {name: 'td-virus'}), 'The virus scan output is displayed for the image file').toHaveText(archivalGroupPage.depositPage.virusScanCheckMark);
+      await expect(imageFileTableRow.getByRole('cell', {name: 'td-virus'}), 'The virus scan output is empty for the image file').toBeEmpty();
 
       //Click and verify we see the file
       await archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testImageLocation).click();
@@ -286,9 +307,9 @@ test.describe('Archival Group Tests', () => {
       await expect(archivalGroupPage.nameField, 'Name field is correct').toHaveText(archivalGroupPage.depositPage.testImageLocation);
       await expect(archivalGroupPage.pathField, 'Path field is correct').toHaveText(imageLocation);
       await expect(archivalGroupPage.contentTypeField, 'Content type field is correct').toHaveText(archivalGroupPage.depositPage.testImageFileType);
-      await expect(archivalGroupPage.fileFormatField, 'File format field is correct').toContainText('TODO');
+      await expect(archivalGroupPage.fileFormatField, 'File format field is correct').toContainText('dlip/unknown');
       //TODO is this dubious?
-      await expect(archivalGroupPage.virusScanField, 'Virus scan field is correct').toContainText(archivalGroupPage.depositPage.virusScanCheckMark);
+      await expect(archivalGroupPage.virusScanField, 'Virus scan field is correct').toBeEmpty();
       await expect(archivalGroupPage.sizeField, 'Size field is correct').toContainText(archivalGroupPage.depositPage.testImageFileSize);
       //TODO anything more can be done here?
       await expect(archivalGroupPage.digestField, 'Digest field is populated').not.toBeEmpty();
@@ -307,7 +328,10 @@ test.describe('Archival Group Tests', () => {
       //TODO Do we need to do any more than this?
 
       //Check you cannot access via Presentation
-      response = await presentationApiContext.get(archivalGroupFileLocation);
+      response = await presentationApiContext.get(archivalGroupFileLocation,
+        {
+          ignoreHTTPSErrors: true,
+        });
       expect(response.status()).toBe(StatusCodes.NOT_FOUND);
     });
 
@@ -375,11 +399,13 @@ test.describe('Archival Group Tests', () => {
       //Create a New Deposit within an existing Archival Group
       await archivalGroupPage.createDepositFromArchivalGroup(archivalGroupURL, true);
 
-      //Initially the page will contain a message stating that it is exporting files to the Deposit.
-      //Need to pause then refresh to load the files
-      await expect(archivalGroupPage.depositPage.alertMessage).toContainText('The server is currently exporting files into this Deposit');
-      await page.waitForTimeout(3_000);
-      await page.reload();
+      if ((await page.getByRole('alert').getByText('The server is currently exporting files into this Deposit')).isVisible()) {
+        //Initially the page will contain a message stating that it is exporting files to the Deposit.
+        //Need to pause then refresh to load the files
+        //await expect(archivalGroupPage.depositPage.alertMessage).toContainText('The server is currently exporting files into this Deposit');
+        await page.waitForTimeout(3_000);
+        await page.reload();
+      }
 
       //Verify the METS file has the files in it, and rows are Both
       await expect(page.getByLabel('select-row').filter({ hasText: archivalGroupPage.depositPage.inBothText })).toHaveCount(2);

@@ -4,7 +4,7 @@ import {NavigationPage} from "./NavigationPage";
 import * as path from 'path';
 import { Document, Element } from '@xmldom/xmldom';
 import {presentationApiContext} from "../../../fixture";
-import {getS3Client, uploadFile} from "../../helpers/helpers";
+import {checkForFileInS3, getS3Client, uploadFile} from "../../helpers/helpers";
 
 export class DepositPage {
   readonly page: Page;
@@ -13,6 +13,7 @@ export class DepositPage {
   //consts
   readonly notYetPopulated:string;
   readonly objectsFolderName : string;
+  readonly metadataFolderName: string;
   readonly testImageLocation : string;
   readonly testImageFileType : string;
   readonly testImageFileSize : string;
@@ -77,6 +78,7 @@ export class DepositPage {
   //Deposit file structure table locators
   readonly depositFilesTable : Locator;
   readonly objectsFolder : Locator;
+  readonly metadataFolder : Locator;
   readonly uploadFileToObjectsFolder :Locator;
   readonly createFolderWithinObjectsFolder : Locator;
   readonly metsFile : Locator;
@@ -121,6 +123,7 @@ export class DepositPage {
   readonly modalArchivalName : Locator;
   readonly modalCreateNewDepositButton : Locator;
   readonly slugDisplayOnModal: Locator;
+  readonly useBagitLayout: Locator;
 
   //New folder dialog
   readonly newFolderCloseDialogButton : Locator;
@@ -214,6 +217,7 @@ export class DepositPage {
     this.depositsURL = /deposits\/\w{12}/;
     this.testFileLocation = '../../../test-data/deposit/objects/New-test-folder-inside-objects/';
     this.objectsFolderName = 'objects';
+    this.metadataFolderName = 'metadata';
     this.metsFileName = 'mets.xml';
     this.testImageLocation = 'test_image.jpg';
     this.nestedTestImageLocation = 'test_image.png';
@@ -281,6 +285,7 @@ export class DepositPage {
 
     //Locators specific to the objects folder
     this.objectsFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.objectsFolderName}"]`);
+    this.metadataFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.metadataFolderName}"]`);
     this.uploadFileToObjectsFolder = this.objectsFolder.locator(this.uploadFileIcon);
     this.createFolderWithinObjectsFolder = this.objectsFolder.locator(this.createFolderIcon);
 
@@ -326,6 +331,7 @@ export class DepositPage {
     this.modalArchivalSlug = page.locator('#archivalGroupSlug');
     this.modalArchivalName = page.locator('#archivalGroupProposedName');
     this.slugDisplayOnModal = page.locator('#slugDisplay');
+    this.useBagitLayout = page.getByRole('checkbox', {name:'use bagit layout'});
 
     //New folder dialog
     this.newFolderNameInput = page.locator('#newFolderName');
@@ -617,9 +623,8 @@ export class DepositPage {
     if (uploadMETS){
       files.push(`mets.xml`);
     }
-    const s3Client = getS3Client();
     for (const file of files) {
-      await uploadFile(s3Client, filesLocation, sourceDir + file, file, true);
+      await uploadFile(filesLocation, sourceDir + file, file, true);
     }
   }
 
@@ -663,5 +668,18 @@ export class DepositPage {
     await this.deleteFromMetsAndDeposit.click();
     await this.deleteItemModalButton.click();
     await expect(this.alertMessage, 'Success message is shown').toContainText(`1 item(s) DELETED.`);
+  }
+
+  async verifyBagitStructure(inBagitFormat: boolean, page: Page){
+    const depositURL: string = page.url();
+    let depositId: string = depositURL.substring(depositURL.length-12);
+
+    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
+    const body = await depositResponse.body();
+    const depositItem = JSON.parse(body.toString('utf-8'));
+    //Get the s3 files location
+    const filesLocation = depositItem.files;
+    expect(await checkForFileInS3(filesLocation, 'data'), `The data folder is ${inBagitFormat?'':'not'} present`).toEqual(inBagitFormat);
+
   }
 }
