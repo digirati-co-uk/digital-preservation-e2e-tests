@@ -393,7 +393,7 @@ test.describe('Archival Group Tests', () => {
 
         //Initially the page will contain a message stating that it is exporting files to the Deposit.
         //Need to pause then refresh to load the files
-        await expect(archivalGroupPage.depositPage.alertMessage).toContainText('The server is currently exporting files into this Deposit');
+        await expect.soft(archivalGroupPage.depositPage.alertMessage).toContainText('The server is currently exporting files into this Deposit');
         await page.waitForTimeout(3_000);
         await page.reload();
 

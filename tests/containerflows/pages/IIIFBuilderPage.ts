@@ -16,7 +16,7 @@ export class IIIFBuilderPage {
     this.irnForDeposit = '1000001';
     this.irnForDepositHeading = 'UAT Test 1';
     this.iiifManifestLink = 'IIIF Manifest Link';
-    this.fullPathOfIRN = `/browse/cc-test/${this.irnForArchivalGroup}`;
+    this.fullPathOfIRN = `/browse/cc/${this.irnForArchivalGroup}`;
     this.archivalGroupHeader = this.page.getByRole('heading', {name: 'UAT Test 3'});
 
   }
