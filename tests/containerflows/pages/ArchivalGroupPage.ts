@@ -13,6 +13,7 @@ export class ArchivalGroupPage {
   readonly diffStatus : Locator;
   readonly diffDepositValue : Locator;
   readonly diffArchivalGroup : Locator;
+  readonly diffArchivalGroupLink : Locator;
   readonly diffArchivalGroupName : Locator;
   readonly diffDateBegun : Locator;
   readonly diffDateFinished : Locator;
@@ -46,6 +47,7 @@ export class ArchivalGroupPage {
   readonly versionsButton : Locator;
   readonly iiifButton : Locator;
   readonly resourcesTableRows : Locator;
+  readonly metadataFolderInTable: Locator;
   readonly objectsFolderInTable : Locator;
   readonly metsRowInTable : Locator;
   readonly goToArchivalGroupButton : Locator;
@@ -75,6 +77,7 @@ export class ArchivalGroupPage {
     this.diffStatus = page.getByLabel('status');
     this.diffDepositValue = page.getByLabel('deposit');
     this.diffArchivalGroup = page.getByLabel('archival group', {exact:true});
+    this.diffArchivalGroupLink = page.getByLabel('archival group', {exact:true}).getByRole('link');
     this.diffArchivalGroupName = page.getByLabel('archival group name');
     this.diffSourceVersion = page.getByLabel('source version');
     this.diffContainersToAdd = page.getByLabel('containers to add');
@@ -108,8 +111,9 @@ export class ArchivalGroupPage {
     this.versionsButton = page.getByRole('link', { name: 'Versions' });
     this.iiifButton = page.getByRole('link', { name: 'IIIF'});
     this.resourcesTableRows = page.getByRole('table', {name: 'table-resources'}).locator('tbody tr');
-    this.objectsFolderInTable = this.resourcesTableRows.first().getByLabel('td-path');
-    this.metsRowInTable = this.resourcesTableRows.nth(1).getByLabel('td-path');
+    this.metadataFolderInTable = this.resourcesTableRows.nth(0).getByLabel('td-path');
+    this.objectsFolderInTable = this.resourcesTableRows.nth(1).getByLabel('td-path');
+    this.metsRowInTable = this.resourcesTableRows.nth(2).getByLabel('td-path');
     this.goToArchivalGroupButton = page.getByRole('link', {name: 'Go to Archival Group'});
     this.objectsPageTitle = page.getByRole('heading', {name: this.depositPage.objectsFolderName});
     this.createNewDepositModalButton = page.getByRole('button', {name: 'Create New Deposit'});
