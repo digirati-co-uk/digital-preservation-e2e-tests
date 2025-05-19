@@ -3,7 +3,7 @@ import { DepositPage } from './pages/DepositPage';
 import {presentationApiContext, test} from '../../fixture';
 import {
   checkDateIsWithinNumberOfSeconds, checkForFileInS3,
-  createdByUserName,
+  createdByUserName, frontendBaseUrl,
   generateUniqueId
 } from "../helpers/helpers";
 import * as path from 'path';
@@ -615,6 +615,14 @@ test.describe('Deposit Tests', () => {
       await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.testPdfDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
     });
+
+    await test.step('Check a ghost archival group was created', async() => {
+      await depositPage.getStarted();
+      const ghostLink: Locator = page.getByLabel('td-path').getByRole('link', { name:  validSlug});
+      await expect(ghostLink).toBeVisible();
+      await expect(ghostLink).toHaveAttribute('href', depositURL.replace(frontendBaseUrl, ''));
+    });
+
 
     await test.step('Tidy up and delete the Deposit', async() => {
       //Navigate back into the first deposit in order to delete it
