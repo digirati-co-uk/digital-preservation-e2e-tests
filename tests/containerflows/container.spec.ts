@@ -50,10 +50,7 @@ test.describe('Container Tests', () => {
 
     await test.step(`API contains all the expected fields`, async () => {
 
-      const containerResponse = await presentationApiContext.get(`${containerPage.navigationPage.baseBrowseAPIPath}${folderSlug.toLowerCase()}`,
-        {
-          ignoreHTTPSErrors: true
-        });
+      const containerResponse = await presentationApiContext.get(`${containerPage.navigationPage.baseBrowseAPIPath}${folderSlug.toLowerCase()}`);
       const body = await containerResponse.body();
       containerItem = JSON.parse(body.toString('utf-8'));
 
