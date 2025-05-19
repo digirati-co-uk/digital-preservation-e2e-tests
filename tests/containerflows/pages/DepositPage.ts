@@ -4,7 +4,7 @@ import {NavigationPage} from "./NavigationPage";
 import * as path from 'path';
 import { Document, Element } from '@xmldom/xmldom';
 import {presentationApiContext} from "../../../fixture";
-import {getS3Client, uploadFile} from "../../helpers/helpers";
+import {checkForFileInS3, getS3Client, uploadFile} from "../../helpers/helpers";
 
 export class DepositPage {
   readonly page: Page;
@@ -13,6 +13,7 @@ export class DepositPage {
   //consts
   readonly notYetPopulated:string;
   readonly objectsFolderName : string;
+  readonly metadataFolderName: string;
   readonly testImageLocation : string;
   readonly testImageFileType : string;
   readonly testImageFileSize : string;
@@ -77,6 +78,7 @@ export class DepositPage {
   //Deposit file structure table locators
   readonly depositFilesTable : Locator;
   readonly objectsFolder : Locator;
+  readonly metadataFolder : Locator;
   readonly uploadFileToObjectsFolder :Locator;
   readonly createFolderWithinObjectsFolder : Locator;
   readonly metsFile : Locator;
@@ -116,10 +118,12 @@ export class DepositPage {
   readonly updateArchivalPropertiesButton : Locator;
 
   //New Deposit Dialog used in 'Browse - create deposit ' journey
+  readonly objectIdentifier : Locator;
   readonly modalArchivalSlug : Locator;
   readonly modalArchivalName : Locator;
   readonly modalCreateNewDepositButton : Locator;
   readonly slugDisplayOnModal: Locator;
+  readonly useBagitLayout: Locator;
 
   //New folder dialog
   readonly newFolderCloseDialogButton : Locator;
@@ -213,14 +217,15 @@ export class DepositPage {
     this.depositsURL = /deposits\/\w{12}/;
     this.testFileLocation = '../../../test-data/deposit/objects/New-test-folder-inside-objects/';
     this.objectsFolderName = 'objects';
+    this.metadataFolderName = 'metadata';
     this.metsFileName = 'mets.xml';
-    this.testImageLocation = 'test_image.png';
-    this.nestedTestImageLocation = 'test_image.jpg';
-    this.testImageFileType = 'image/png';
-    this.testImageFileSize = '1.4 MB';
+    this.testImageLocation = 'test_image.jpg';
+    this.nestedTestImageLocation = 'test_image.png';
+    this.testImageFileType = 'image/jpeg';
+    this.testImageFileSize = '45 KB';
     this.virusScanCheckMark = '✅';
-    this.testImageWithInvalidCharsLocation = 'test&&image.png';
-    this.testImageWithInvalidCharsLocationTranslated = 'test--image.png';
+    this.testImageWithInvalidCharsLocation = 'test&&image.jpg';
+    this.testImageWithInvalidCharsLocationTranslated = 'test--image.jpg';
     this.testWordDocLocation = 'test_word_document.docx';
     this.testPdfDocLocation = 'test_pdf_document.pdf';
     this.newTestFolderTitle = 'New test folder inside objects';
@@ -280,6 +285,7 @@ export class DepositPage {
 
     //Locators specific to the objects folder
     this.objectsFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.objectsFolderName}"]`);
+    this.metadataFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.metadataFolderName}"]`);
     this.uploadFileToObjectsFolder = this.objectsFolder.locator(this.uploadFileIcon);
     this.createFolderWithinObjectsFolder = this.objectsFolder.locator(this.createFolderIcon);
 
@@ -321,9 +327,11 @@ export class DepositPage {
 
     //New Deposit Dialog used in 'Browse - create deposit ' journey
     this.modalCreateNewDepositButton = page.getByRole('button', { name: 'Create New Deposit' });
+    this.objectIdentifier = page.locator('#objectIdentifier');
     this.modalArchivalSlug = page.locator('#archivalGroupSlug');
     this.modalArchivalName = page.locator('#archivalGroupProposedName');
     this.slugDisplayOnModal = page.locator('#slugDisplay');
+    this.useBagitLayout = page.getByRole('checkbox', {name:'use bagit layout'});
 
     //New folder dialog
     this.newFolderNameInput = page.locator('#newFolderName');
@@ -595,10 +603,13 @@ export class DepositPage {
     expect(elementToFind, 'The folder has been deleted from the structMap section').toHaveLength(0);
   }
 
-  async uploadFilesToDepositS3Bucket(depositURL: string){
+  async uploadFilesToDepositS3Bucket(depositURL: string, uploadMETS: boolean = false){
     let depositId: string = depositURL.substring(depositURL.length-12);
 
-    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
+    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`,
+      {
+        ignoreHTTPSErrors: true
+      });
     const body = await depositResponse.body();
     const depositItem = JSON.parse(body.toString('utf-8'));
     //Get the s3 files location
@@ -607,14 +618,16 @@ export class DepositPage {
     // we are going to set the checksum, because we have no
     // other way of providing it. Later we will be able to get checksums from BagIt.
     const sourceDir : string = 'test-data/deposit/';
-    const files = [
+    let files = [
       `${this.newTestFolderSlug}/${this.testImageLocation}`,
       `${this.newTestFolderSlug}/${this.testWordDocLocation}`,
       `${this.newTestFolderSlug}/${this.testPdfDocLocation}`,
     ];
-    const s3Client = getS3Client();
+    if (uploadMETS){
+      files.push(`mets.xml`);
+    }
     for (const file of files) {
-      await uploadFile(s3Client, filesLocation, sourceDir + file, file, true);
+      await uploadFile(filesLocation, sourceDir + file, file, true);
     }
   }
 
@@ -658,5 +671,18 @@ export class DepositPage {
     await this.deleteFromMetsAndDeposit.click();
     await this.deleteItemModalButton.click();
     await expect(this.alertMessage, 'Success message is shown').toContainText(`1 item(s) DELETED.`);
+  }
+
+  async verifyBagitStructure(inBagitFormat: boolean, page: Page){
+    const depositURL: string = page.url();
+    let depositId: string = depositURL.substring(depositURL.length-12);
+
+    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
+    const body = await depositResponse.body();
+    const depositItem = JSON.parse(body.toString('utf-8'));
+    //Get the s3 files location
+    const filesLocation = depositItem.files;
+    expect(await checkForFileInS3(filesLocation, 'data'), `The data folder is ${inBagitFormat?'':'not'} present`).toEqual(inBagitFormat);
+
   }
 }
