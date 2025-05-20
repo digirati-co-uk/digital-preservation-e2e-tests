@@ -203,6 +203,18 @@ export class DepositPage {
   readonly addToMetsCloseDialogButton : Locator;
   readonly addToMetsHelpText: Locator;
 
+  //Access Conditions And Rights Modal
+  readonly allAccessConditions: string[];
+  readonly selectedAccessConditions: string[];
+  readonly modifiedAccessConditions: string[];
+  readonly selectedRightsOption: string;
+  readonly selectedRightsOptionShortCode: string;
+  readonly modifiedRightsOptionShortCode: string;
+  readonly modifiedRightsOption: string;
+  readonly openAccessConditionsAndRightsButton: Locator;
+  readonly saveAccessConditionsAndRightsButton: Locator;
+  readonly closeAccessConditionsAndRightsButton: Locator;
+
   constructor(page: Page) {
     this.page = page;
     this.navigationPage = new NavigationPage(page);
@@ -404,6 +416,18 @@ export class DepositPage {
     this.addToMetsDialogButton = this.page.getByRole('button', {name: 'Add to METS'});
     this.addToMetsCloseDialogButton = this.page.getByRole('button', {name: 'Close'}).first();
     this.addToMetsHelpText = this.page.locator('#addToMetsHelp');
+
+    //Access Conditions And Rights Modal
+    this.openAccessConditionsAndRightsButton = page.getByRole('button', {name: 'Set rights and access conditions'});
+    this.saveAccessConditionsAndRightsButton = page.getByRole('button', {name: 'Save'});
+    this.closeAccessConditionsAndRightsButton = page.getByRole('button', {name: 'Close'}).first();
+    this.allAccessConditions = ['Open', 'Restricted', 'Staff', 'Closed'];
+    this.selectedAccessConditions = [this.allAccessConditions[1], this.allAccessConditions[3]];
+    this.modifiedAccessConditions = [this.allAccessConditions[0], this.allAccessConditions[2]];
+    this.selectedRightsOption = 'In Copyright - EU Orphan Work';
+    this.modifiedRightsOption = 'No Copyright - United States';
+    this.modifiedRightsOptionShortCode = 'NoC-US';
+    this.selectedRightsOptionShortCode = 'InC-OW-EU';
   }
 
   async goto() {
@@ -603,6 +627,19 @@ export class DepositPage {
     expect(elementToFind, 'The folder has been deleted from the structMap section').toHaveLength(0);
   }
 
+  async checkAccessRightsExist(metsXML: Document, itemToFind: string, shouldBePresent: boolean = true){
+    //Only ever 1 dmdSec
+    const dmdSecValue = (metsXML.getElementsByTagName('mets:dmdSec'))[0];
+    const accessRightsElements = dmdSecValue.getElementsByTagName('mods:accessCondition');
+    const itemToFindElement = accessRightsElements.filter(item => (item.textContent.trim() === itemToFind.trim()));
+    if(shouldBePresent) {
+      expect(itemToFindElement, `We found ${itemToFind} in the dmdSec`).toHaveLength(1);
+    }else{
+      expect(itemToFindElement, `We did not find ${itemToFind} in the dmdSec`).toHaveLength(0);
+    }
+  }
+
+
   async uploadFilesToDepositS3Bucket(depositURL: string, uploadMETS: boolean = false){
     let depositId: string = depositURL.substring(depositURL.length-12);
 
@@ -684,5 +721,16 @@ export class DepositPage {
     const filesLocation = depositItem.files;
     expect(await checkForFileInS3(filesLocation, 'data'), `The data folder is ${inBagitFormat?'':'not'} present`).toEqual(inBagitFormat);
 
+  }
+
+  async setAccessConditionsAndRights(accessConditions: string[], rightsStatement: string, saveChanges: boolean = true){
+    await this.openAccessConditionsAndRightsButton.click();
+    await this.page.selectOption(`#accessRestrictionsSelect`, accessConditions);
+    await this.page.selectOption(`#rightsStatementSelect`, rightsStatement);
+    if (saveChanges) {
+      await this.saveAccessConditionsAndRightsButton.click();
+    }else{
+      await this.closeAccessConditionsAndRightsButton.click();
+    }
   }
 }
