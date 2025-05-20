@@ -210,6 +210,8 @@ export class DepositPage {
   readonly selectedRightsOption: string;
   readonly selectedRightsOptionShortCode: string;
   readonly modifiedRightsOptionShortCode: string;
+  readonly modifiedRightsOptionURL: string;
+  readonly selectedRightsOptionURL: string;
   readonly modifiedRightsOption: string;
   readonly openAccessConditionsAndRightsButton: Locator;
   readonly saveAccessConditionsAndRightsButton: Locator;
@@ -427,6 +429,8 @@ export class DepositPage {
     this.selectedRightsOption = 'In Copyright - EU Orphan Work';
     this.modifiedRightsOption = 'No Copyright - United States';
     this.modifiedRightsOptionShortCode = 'NoC-US';
+    this.modifiedRightsOptionURL = 'http://rightsstatements.org/vocab/NoC-US/1.0/';
+    this.selectedRightsOptionURL = 'http://rightsstatements.org/vocab/InC-OW-EU/1.0/';
     this.selectedRightsOptionShortCode = 'InC-OW-EU';
   }
 
@@ -627,19 +631,33 @@ export class DepositPage {
     expect(elementToFind, 'The folder has been deleted from the structMap section').toHaveLength(0);
   }
 
-  async checkAccessRightsExist(metsXML: Document, itemToFind: string, shouldBePresent: boolean = true){
-    //Only ever 1 dmdSec
-    const dmdSecValue = (metsXML.getElementsByTagName('mets:dmdSec'))[0];
-    const accessRightsElements = dmdSecValue.getElementsByTagName('mods:accessCondition');
-    const itemToFindElement = accessRightsElements.filter(item => (item.textContent.trim() === itemToFind.trim()));
+  async checkAccessExists(metsXML: Document, itemToFind: string, shouldBePresent: boolean = true){
+    const itemToFindElement = await this.getAccessConditionElement(metsXML, itemToFind);
     if(shouldBePresent) {
       expect(itemToFindElement, `We found ${itemToFind} in the dmdSec`).toHaveLength(1);
+      expect(itemToFindElement[0].getAttribute('type')).toEqual('restriction on access');
+    }else{
+      expect(itemToFindElement, `We did not find ${itemToFind} in the dmdSec`).toHaveLength(0);
+    }
+  }
+  async checkRightsExist(metsXML: Document, itemToFind: string, shouldBePresent: boolean = true){
+    const itemToFindElement = await this.getAccessConditionElement(metsXML, itemToFind);
+    if(shouldBePresent) {
+      expect(itemToFindElement, `We found ${itemToFind} in the dmdSec`).toHaveLength(1);
+      expect(itemToFindElement[0].getAttribute('type')).toEqual('use and reproduction');
     }else{
       expect(itemToFindElement, `We did not find ${itemToFind} in the dmdSec`).toHaveLength(0);
     }
   }
 
+  async getAccessConditionElement(metsXML: Document, itemToFind: string): Promise<Element[]>{
+    //Only ever 1 dmdSec
+    const dmdSecValue = (metsXML.getElementsByTagName('mets:dmdSec'))[0];
+    const accessRightsElements = dmdSecValue.getElementsByTagName('mods:accessCondition');
+    const itemToFindElement = accessRightsElements.filter(item => (item.textContent.trim() === itemToFind.trim()));
+    return itemToFindElement;
 
+  }
   async uploadFilesToDepositS3Bucket(depositURL: string, uploadMETS: boolean = false){
     let depositId: string = depositURL.substring(depositURL.length-12);
 
