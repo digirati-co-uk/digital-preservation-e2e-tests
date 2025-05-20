@@ -118,8 +118,6 @@ test.describe('Archival Group Tests', () => {
         //Check the rights and access control have been set in the METS
         //Open the METS file
         await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
-
-        //Validate that we have an amdSec with the name newTestFolderTitle
         await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.modifiedAccessConditions[0]);
         await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.modifiedAccessConditions[1]);
         await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.selectedAccessConditions[0], false);
@@ -441,8 +439,6 @@ test.describe('Archival Group Tests', () => {
         //Check the rights and access control have been set in the METS
         //Open the METS file
         await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
-
-        //Validate that we have an amdSec with the name newTestFolderTitle
         await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.selectedAccessConditions[0]);
         await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.selectedAccessConditions[1]);
         await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.modifiedAccessConditions[0], false);
