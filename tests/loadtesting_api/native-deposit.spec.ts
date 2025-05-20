@@ -79,7 +79,7 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
         const depositReq = await request.post('/deposits', {
             data: {
                 type: "Deposit",
-                useObjectTemplate: true,  // This is what tells the API it's one of ours
+                template: "RootLevel",  // This is what tells the API it's one of ours
                 archivalGroup: preservedDigitalObjectUri,
                 archivalGroupName: agName,
                 submissionText: "This is going to create a METS file and edit the METS as we go"
@@ -159,13 +159,16 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
         console.log("filesystem:");
         console.log(fileSystem);
         console.log("----");
+        console.log("files")
+        console.log(fileSystem.directories[1].files)
+        console.log(`File count:  ${fileSystem.directories[1].files.length}, expected: ${files.length}`)
         // The above is not used in this test, it's just to demonstrate that you can inspect the filesystem
         // of the deposit via the API. (The UI app does not go via the API for this - it uses the same
         // library but interacts with the filesystem directly)
 
         // In this example, it's easy to navigate this filesystem:
         
-        expect(fileSystem.directories[0].files).toHaveLength(files.length); // the four files mentioned above
+        expect(fileSystem.directories[1].files.length).toEqual(files.length); // the four files mentioned above
 
         // but these aren't in the METS file; we can call an additional endpoint to add them,
         // using the information in the filesystem (most importantly, the hash or digest)
@@ -185,10 +188,11 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
         });
         expect(metsUpdateResp.status()).toBe(200);
         const itemsAffected = await metsUpdateResp.json();
-        expect(itemsAffected.items).toHaveLength(files.length);
+               
         console.log("----");
-        console.log("items affected:");
+        console.log(`itemsAffected : ${itemsAffected.items.length}`)
         console.log(itemsAffected);
+        expect(itemsAffected.items.filter((i) => !i.isDir).length).toEqual(files.length);
 
         // now we can try to create an import job
         const secondDiffResp = await request.get(diffJobGeneratorUri,  { 
