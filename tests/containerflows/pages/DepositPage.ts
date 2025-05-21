@@ -111,6 +111,9 @@ export class DepositPage {
   readonly alertMessage : Locator;
   readonly actionsMenu : Locator;
   readonly selectAllNonMetsButton : Locator;
+  readonly releaseLockButton: Locator;
+  readonly lockButton: Locator;
+  readonly refreshStorageButton: Locator;
   readonly deleteSelectedButton: Locator;
   readonly deleteFromMetsAndDeposit: Locator;
   readonly deleteFromDepositOnly : Locator;
@@ -334,6 +337,9 @@ export class DepositPage {
     this.alertMessage = page.getByRole('alert');
     this.actionsMenu = page.getByRole('button', {name: 'Actions'});
     this.selectAllNonMetsButton = page.getByRole('button', {name: 'Select all non-METS'});
+    this.releaseLockButton = page.getByRole('button', {name: 'Release lock'});
+    this.lockButton = page.getByRole('button', {name: 'Lock deposit'});
+    this.refreshStorageButton = page.getByRole('button', {name: 'Refresh storage'});
     this.deleteSelectedButton = page.getByRole('button', {name: 'Delete selected...'});
     this.deleteFromMetsAndDeposit = page.locator('#deleteFromMetsAndDeposit');
     this.deleteFromDepositOnly = page.locator('#deleteFromDeposit');
@@ -660,11 +666,8 @@ export class DepositPage {
   }
   async uploadFilesToDepositS3Bucket(depositURL: string, uploadMETS: boolean = false){
     let depositId: string = depositURL.substring(depositURL.length-12);
-
-    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`,
-      {
-        ignoreHTTPSErrors: true
-      });
+console.log(depositId);
+    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
     const body = await depositResponse.body();
     const depositItem = JSON.parse(body.toString('utf-8'));
     //Get the s3 files location
