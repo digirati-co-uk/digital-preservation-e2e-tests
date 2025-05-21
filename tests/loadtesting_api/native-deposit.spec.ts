@@ -160,8 +160,8 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
         console.log(fileSystem);
         console.log("----");
         console.log("files")
-        console.log(fileSystem.directories[1].files)
-        console.log(`File count:  ${fileSystem.directories[1].files.length}, expected: ${files.length}`)
+        console.log(fileSystem.directories.filter((i) => i.localPath == 'objects').files)
+        console.log(`File count:  ${fileSystem.directories.filter((i) => i.localPath = 'objects')[0].files.length}, expected: ${files.length}`)
         // The above is not used in this test, it's just to demonstrate that you can inspect the filesystem
         // of the deposit via the API. (The UI app does not go via the API for this - it uses the same
         // library but interacts with the filesystem directly)
