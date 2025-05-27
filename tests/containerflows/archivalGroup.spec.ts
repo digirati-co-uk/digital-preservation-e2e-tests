@@ -95,6 +95,38 @@ test.describe('Archival Group Tests', () => {
 
       });
 
+      await test.step('Add rights statement and access restrictions', async () => {
+
+        //set them, but then cancel
+        await archivalGroupPage.depositPage.setAccessConditionsAndRights(archivalGroupPage.depositPage.selectedAccessConditions, archivalGroupPage.depositPage.selectedRightsOption, false);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Access Restrictions are not displayed').not.toContainText(archivalGroupPage.depositPage.selectedAccessConditions[0]);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Access Restrictions are not displayed').not.toContainText(archivalGroupPage.depositPage.selectedAccessConditions[1]);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Rights Statement is not displayed').not.toContainText(archivalGroupPage.depositPage.selectedRightsOptionShortCode);
+
+        //This time set them and save
+        await archivalGroupPage.depositPage.setAccessConditionsAndRights(archivalGroupPage.depositPage.selectedAccessConditions, archivalGroupPage.depositPage.selectedRightsOption);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Access Restrictions are displayed').toContainText(archivalGroupPage.depositPage.selectedAccessConditions[0]);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Access Restrictions are displayed').toContainText(archivalGroupPage.depositPage.selectedAccessConditions[1]);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Rights Statement is displayed').toContainText(archivalGroupPage.depositPage.selectedRightsOptionShortCode);
+
+        //Modify the rights and access
+        await archivalGroupPage.depositPage.setAccessConditionsAndRights(archivalGroupPage.depositPage.modifiedAccessConditions, archivalGroupPage.depositPage.modifiedRightsOption);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Access Restrictions are displayed').toContainText(archivalGroupPage.depositPage.modifiedAccessConditions[0]);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Access Restrictions are displayed').toContainText(archivalGroupPage.depositPage.modifiedAccessConditions[1]);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Rights Statement is displayed').toContainText(archivalGroupPage.depositPage.modifiedRightsOptionShortCode);
+
+        //Check the rights and access control have been set in the METS
+        //Open the METS file
+        await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
+        await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.modifiedAccessConditions[0]);
+        await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.modifiedAccessConditions[1]);
+        await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.selectedAccessConditions[0], false);
+        await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.selectedAccessConditions[1], false);
+        await archivalGroupPage.depositPage.checkRightsExist(metsXML, archivalGroupPage.depositPage.modifiedRightsOptionURL);
+        await archivalGroupPage.depositPage.checkRightsExist(metsXML, archivalGroupPage.depositPage.selectedRightsOptionURL, false);
+
+      });
+
       await test.step('Check for presence of required Import Jobs fields and info', async () => {
         await expect(archivalGroupPage.depositPage.createDiffImportJobButton, 'Button to create an archival group is now enabled').toBeEnabled();
         await expect(archivalGroupPage.depositPage.noCurrentImportJobsText, 'Message indicating no current jobs is visible').toBeVisible();
@@ -315,16 +347,13 @@ test.describe('Archival Group Tests', () => {
         //In the storage API, the path /content/blah/archivalgroup/{path/to/resource/in/ag} will return a binary response
         // the actual file content, with the correct content type. E.g., a tiff or jpeg or Word doc.
         let response: APIResponse = await storageApiContext.get(archivalGroupFileLocation);
-        expect(response.ok()).toBeTruthy();
-        expect(response.headers()['content-type']).toEqual(archivalGroupPage.depositPage.testImageFileType)
+        expect(response.ok(), 'API response was good').toBeTruthy();
+        expect(response.headers()['content-type'], 'Correct content-type is sent in the response').toEqual(archivalGroupPage.depositPage.testImageFileType)
         //TODO Do we need to do any more than this?
 
         //Check you cannot access via Presentation
-        response = await presentationApiContext.get(archivalGroupFileLocation,
-          {
-            ignoreHTTPSErrors: true
-          });
-        expect(response.status()).toBe(StatusCodes.NOT_FOUND);
+        response = await presentationApiContext.get(archivalGroupFileLocation);
+        expect(response.status(), 'API response correctly states NOT FOUND').toBe(StatusCodes.NOT_FOUND);
       });
 
       await test.step('Check the original Deposit is now inactive and not editable', async () => {
@@ -352,8 +381,8 @@ test.describe('Archival Group Tests', () => {
         await archivalGroupPage.createDepositFromArchivalGroup(archivalGroupURL, false);
 
         //Verify the METS file has the files in it, and rows are marked Mets only
-        await expect(page.getByLabel('select-row').filter({hasText: archivalGroupPage.depositPage.inMETSOnlyText})).toHaveCount(2);
-        //Check the mets file has been updated
+        await expect(page.getByLabel('select-row').filter({hasText: archivalGroupPage.depositPage.inMETSOnlyText}), 'Correctly displays as METS only').toHaveCount(2);
+        //Check the mets file is correct
         await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
         await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
 
@@ -386,19 +415,59 @@ test.describe('Archival Group Tests', () => {
         await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
       });
 
+      await test.step('Create a further Deposit and amend the rights and access, check mets updated', async () => {
+
+        //Create a New Deposit within an existing Archival Group
+        await archivalGroupPage.createDepositFromArchivalGroup(archivalGroupURL, false);
+
+        //Verify create diff import job has nothing in it yet
+        await verifyDiffImportJobHasNoUpdates(page);
+
+        //Check the rights and access are displayed on the new Deposit
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Access Restrictions are displayed').toContainText(archivalGroupPage.depositPage.modifiedAccessConditions[0]);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Access Restrictions are displayed').toContainText(archivalGroupPage.depositPage.modifiedAccessConditions[1]);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Rights Statement is displayed').toContainText(archivalGroupPage.depositPage.modifiedRightsOptionShortCode);
+
+        //Amend them
+        await archivalGroupPage.depositPage.setAccessConditionsAndRights(archivalGroupPage.depositPage.selectedAccessConditions, archivalGroupPage.depositPage.selectedRightsOption);
+
+        //Check the new rights and access are displayed on the new Deposit
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Access Restrictions are displayed').toContainText(archivalGroupPage.depositPage.selectedAccessConditions[0]);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Access Restrictions are displayed').toContainText(archivalGroupPage.depositPage.selectedAccessConditions[1]);
+        await expect(archivalGroupPage.depositPage.objectsFolder, 'Correct Rights Statement is displayed').toContainText(archivalGroupPage.depositPage.selectedRightsOptionShortCode);
+
+        //Check the rights and access control have been set in the METS
+        //Open the METS file
+        await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
+        await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.selectedAccessConditions[0]);
+        await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.selectedAccessConditions[1]);
+        await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.modifiedAccessConditions[0], false);
+        await archivalGroupPage.depositPage.checkAccessExists(metsXML, archivalGroupPage.depositPage.modifiedAccessConditions[1], false);
+        await archivalGroupPage.depositPage.checkRightsExist(metsXML, archivalGroupPage.depositPage.selectedRightsOptionURL);
+        await archivalGroupPage.depositPage.checkRightsExist(metsXML, archivalGroupPage.depositPage.modifiedRightsOptionURL, false);
+
+        //Check the diff import job would patch the METS
+        await archivalGroupPage.depositPage.createDiffImportJobButton.click();
+        await expect(archivalGroupPage.diffBinariesToPatch, 'METS file will be amended').toContainText(archivalGroupPage.depositPage.metsFileName);
+
+        //Now go back and delete the deposit to tidy up
+        await page.goBack();
+        await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
+      });
+
       await test.step('Create a further Deposit from the archival Group, clone the s3 contents this time', async () => {
 
         //Create a New Deposit within an existing Archival Group
         await archivalGroupPage.createDepositFromArchivalGroup(archivalGroupURL, true);
 
         //Initially the page will contain a message stating that it is exporting files to the Deposit.
+        //This isn't guaranteed though, so don't check for the message, just refresh the page just in case
         //Need to pause then refresh to load the files
-        await expect.soft(archivalGroupPage.depositPage.alertMessage).toContainText('The server is currently exporting files into this Deposit');
         await page.waitForTimeout(3_000);
         await page.reload();
 
         //Verify the METS file has the files in it, and rows are Both
-        await expect(page.getByLabel('select-row').filter({hasText: archivalGroupPage.depositPage.inBothText})).toHaveCount(2);
+        await expect(page.getByLabel('select-row').filter({hasText: archivalGroupPage.depositPage.inBothText}), 'Correctly displays as in BOTH').toHaveCount(2);
         //Check the mets file has been updated
         await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
         await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
@@ -407,9 +476,9 @@ test.describe('Archival Group Tests', () => {
         const allCheckBoxes = await page.getByLabel('select-row').getByRole('checkbox').all();
         await checkAllTheFiles(allCheckBoxes);
         await deleteFromDeposit(archivalGroupPage.depositPage.deleteFromDepositOnly);
-        await expect(page.getByLabel('select-row').filter({hasText: archivalGroupPage.depositPage.inMETSOnlyText})).toHaveCount(2);
+        await expect(page.getByLabel('select-row').filter({hasText: archivalGroupPage.depositPage.inMETSOnlyText}), 'Correctly displays as METS only').toHaveCount(2);
 
-        //Check the mets file has been updated
+        //Check the mets file has not been updated as the files haven't been removed from the mets, only the deposit
         await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
         await checkMetsForTheTestFiles(context, metsXML, true, imageLocation, wordLocation);
 
@@ -421,7 +490,7 @@ test.describe('Archival Group Tests', () => {
         await deleteFromDeposit(archivalGroupPage.depositPage.deleteFromMetsAndDeposit);
         await expect(archivalGroupPage.depositPage.alertMessage, 'Success message is shown').toContainText(`2 item(s) DELETED.`);
 
-        //Check the mets file has been updated
+        //Check the mets file has now been updated
         await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
         await checkMetsForTheTestFiles(context, metsXML, false, imageLocation, wordLocation);
 
@@ -451,7 +520,7 @@ test.describe('Archival Group Tests', () => {
   async function checkTheFilesWillBeRemovedFromImportJob(page: Page, file1Location: string, file2Location: string){
     //Check diff import job deleted 2 files and patches the mets
     await archivalGroupPage.depositPage.createDiffImportJobButton.click();
-    await expect(archivalGroupPage.diffBinariesToDelete).not.toBeEmpty();
+    await expect(archivalGroupPage.diffBinariesToDelete, 'There are files in the delete section').not.toBeEmpty();
     await expect(archivalGroupPage.diffBinariesToDelete, 'First test file to remove is correct').toContainText(file1Location);
     await expect(archivalGroupPage.diffBinariesToDelete, 'Second test file to remove is correct').toContainText(file2Location);
     await expect(archivalGroupPage.diffBinariesToPatch, 'METS file will be amended').toContainText(archivalGroupPage.depositPage.metsFileName);

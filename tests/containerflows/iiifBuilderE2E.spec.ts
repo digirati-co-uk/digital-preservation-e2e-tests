@@ -53,7 +53,7 @@ test.describe('IIIF Builder End To End Tests', () => {
       //Verify the files are there in the UI
       await page.goto(depositURL);
       await archivalGroupPage.depositPage.actionsMenu.click();
-      await page.getByRole('button', {name: 'Refresh storage'}).click();
+      await archivalGroupPage.depositPage.refreshStorageButton.click();
       await expect(archivalGroupPage.depositPage.newTestImageFileInTable, 'We see the new file in the Deposits table').toBeVisible();
       await expect(archivalGroupPage.depositPage.newTestWordFileInTable, 'We see the new file in the Deposits table').toBeVisible();
       await expect(archivalGroupPage.depositPage.newTestPdfFileInTable, 'We see the new file in the Deposits table').toBeVisible();

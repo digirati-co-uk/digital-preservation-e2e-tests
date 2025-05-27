@@ -470,7 +470,7 @@ test.describe('Deposit Tests', () => {
       //Verify the files are there in the UI
       await page.goto(depositURL);
       await depositPage.actionsMenu.click();
-      await page.getByRole('button', {name: 'Refresh storage'}).click();
+      await depositPage.refreshStorageButton.click();
       await expect(depositPage.newTestImageFileInTable, 'We see the new file in the Deposits table').toBeVisible();
       await expect(depositPage.newTestWordFileInTable, 'We see the new file in the Deposits table').toBeVisible();
       await expect(depositPage.newTestPdfFileInTable, 'We see the new file in the Deposits table').toBeVisible();
