@@ -9,6 +9,10 @@ on:
     # Mon-Fri 8am utc, 5pm utc
     - cron: '0 8,17 * * 1-5'
 
+permissions:
+  id-token: write  # required for OIDC / AWS
+  contents: read   # This is required for actions/checkout
+
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
@@ -20,6 +24,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - id: configure-aws-creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.S3_IAM_ROLE }}
+          aws-region: eu-west-1
 
       - name: Install Node.js
         uses: actions/setup-node@v4
