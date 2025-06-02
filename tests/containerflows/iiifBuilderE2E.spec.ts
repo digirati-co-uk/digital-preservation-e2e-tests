@@ -48,7 +48,12 @@ test.describe('IIIF Builder End To End Tests', () => {
     });
 
     await test.step('Create some files directly in the AWS bucket for the Deposit', async() => {
-      await archivalGroupPage.depositPage.uploadFilesToDepositS3Bucket(depositURL, true);
+      let files = [
+        `${archivalGroupPage.depositPage.newTestFolderSlug}/${archivalGroupPage.depositPage.testImageLocation}`,
+        `${archivalGroupPage.depositPage.newTestFolderSlug}/${archivalGroupPage.depositPage.testWordDocLocation}`,
+        `${archivalGroupPage.depositPage.newTestFolderSlug}/${archivalGroupPage.depositPage.testPdfDocLocation}`,
+      ];
+      await archivalGroupPage.depositPage.uploadFilesToDepositS3Bucket(files, depositURL, 'test-data/deposit/',true, true);
 
       //Verify the files are there in the UI
       await page.goto(depositURL);

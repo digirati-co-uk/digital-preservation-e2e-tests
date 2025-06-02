@@ -6,8 +6,8 @@ on:
       - main
   schedule:
     # * is a special character in YAML so you have to quote this string
-    # Mon-Fri 8am utc, 5pm utc
-    - cron: '0 8,17 * * 1-5'
+    # Mon-Fri 8am utc
+    - cron: '0 8 * * 1-5'
 
 jobs:
   e2e-tests:

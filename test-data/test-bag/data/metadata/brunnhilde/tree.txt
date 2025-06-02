@@ -1,0 +1,11 @@
+[4.0K May 19 08:43]  /home/tomcrane/working-area/test-bag/objects
+├── [ 17K Apr 20 12:45]  Fedora-Usage-Principles.docx
+├── [4.2M Apr 20 12:45]  IMAGE-2.tiff
+├── [ 10M Apr 20 12:45]  warteck.jpg
+└── [4.0K May 19 08:57]  nyc
+    ├── [7.8M Apr 20 12:45]  DSCF0981.JPG
+    ├── [8.9M Apr 20 12:45]  DSCF1044.JPG
+    ├── [9.6M Apr 20 12:45]  DSCF1090.JPG
+    └── [9.2M Apr 20 12:45]  DSCF1128.JPG
+
+2 directories, 7 files

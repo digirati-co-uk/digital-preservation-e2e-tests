@@ -21,10 +21,8 @@ test.describe('Deposit Tests', () => {
   });
 
   for (const useBagitLayout of [true, false]) {
-    test(`can create a Deposit from the Deposits Left Hand Nav item and add folders and files, ${useBagitLayout?'':'NOT'} in Bagit layout`, async ({
-                                                                                                         page,
-                                                                                                         context
-                                                                                                       }) => {
+    test(`can create a Deposit from the Deposits Left Hand Nav item and add folders and files, ${useBagitLayout?'':'NOT'} in Bagit layout`,
+      async ({page,context}) => {
 
       //Set a 5-minute timeout
       test.setTimeout(300_000);
@@ -465,7 +463,12 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step('Create some files directly in the AWS bucket for the Deposit', async() => {
-      await depositPage.uploadFilesToDepositS3Bucket(depositURL);
+      let files = [
+        `${depositPage.newTestFolderSlug}/${depositPage.testImageLocation}`,
+        `${depositPage.newTestFolderSlug}/${depositPage.testWordDocLocation}`,
+        `${depositPage.newTestFolderSlug}/${depositPage.testPdfDocLocation}`,
+      ];
+      await depositPage.uploadFilesToDepositS3Bucket(files, depositURL, 'test-data/deposit/', true);
 
       //Verify the files are there in the UI
       await page.goto(depositURL);
@@ -815,7 +818,7 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step('there are pagination elements when more than one page of deposits', async() => {
-      console.log(totalNumberOfItems);
+
       //Now set it up such that we should get 2 pages of results
       requiredPageSize = totalNumberOfItems - 1;
       await depositPage.navigateToDepositListingPageWithParams(`showAll=true&pageSize=${requiredPageSize}`);

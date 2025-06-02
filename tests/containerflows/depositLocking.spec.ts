@@ -11,8 +11,6 @@ async function logDepositLockDetails(request: APIRequestContext, deposit, header
   const depositResp = await request.get(deposit.id, { headers: headers });
   expect(depositResp.status()).toBe(200);
   const returnedDeposit = await depositResp.json();
-  console.log("Deposit locked by " + returnedDeposit.lockedBy);
-  console.log("Deposit locked date " + returnedDeposit.lockDate);
   return returnedDeposit;
 }
 
