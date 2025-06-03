@@ -753,18 +753,19 @@ export class DepositPage {
 
   }
   async uploadFilesToDepositS3Bucket(files: string[], depositURL: string, sourceDir: string, createChecksum: boolean, uploadMETS: boolean = false){
-    let depositId: string = depositURL.substring(depositURL.length-12);
-    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
-    const body = await depositResponse.body();
-    const depositItem = JSON.parse(body.toString('utf-8'));
+    //let depositId: string = depositURL.substring(depositURL.length-12);
+    //const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
+    //const body = await depositResponse.body();
+    //const depositItem = JSON.parse(body.toString('utf-8'));
     //Get the s3 files location
-    const filesLocation = depositItem.files;
+    //const filesLocation = depositItem.files;
 
     if (uploadMETS){
       files.push(`mets.xml`);
     }
     for (const file of files) {
-      await uploadFile(filesLocation, sourceDir + file, file, createChecksum);
+      await uploadFile('s3://dlip-pres-dev-deposits/deposits/jec5jusrfbr4/', sourceDir + file, file, createChecksum);
+      //await uploadFile(filesLocation, sourceDir + file, file, createChecksum);
     }
   }
 
