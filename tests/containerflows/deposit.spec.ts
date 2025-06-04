@@ -435,25 +435,25 @@ test.describe('Deposit Tests', () => {
     });
 
     await test.step('Validate that the folder is not in the BagIt structure', async() => {
-      //await depositPage.verifyBagitStructure(false, page);
+      await depositPage.verifyBagitStructure(false, page);
     });
 
-    // await test.step('Verify we cannot create a second deposit at the same slug', async() => {
-    //   //Validate we can't create another deposit at this archival group location
-    //   await depositPage.getStarted();
-    //   await depositPage.newDepositButton.click();
-    //   await expect(depositPage.modalArchivalSlug, 'Slug field has loaded').toBeVisible();
-    //
-    //   //This click into the archival group slug field is important,
-    //   //otherwise the typing doesn't register properly in the following step
-    //   await depositPage.modalArchivalSlug.click();
-    //   await depositPage.modalArchivalSlug.pressSequentially(validSlug);
-    //   await expect(depositPage.slugDisplayOnModal, 'The slug is as expected').toHaveText(validSlug);
-    //   await depositPage.modalCreateNewDepositButton.click();
-    //
-    //   //Cannot create message is displayed to the user
-    //   await expect.soft(depositPage.alertMessage).toContainText('There is already an ACTIVE deposit for the archival group.');
-    // });
+    await test.step('Verify we cannot create a second deposit at the same slug', async() => {
+      //Validate we can't create another deposit at this archival group location
+      await depositPage.getStarted();
+      await depositPage.newDepositButton.click();
+      await expect(depositPage.modalArchivalSlug, 'Slug field has loaded').toBeVisible();
+
+      //This click into the archival group slug field is important,
+      //otherwise the typing doesn't register properly in the following step
+      await depositPage.modalArchivalSlug.click();
+      await depositPage.modalArchivalSlug.pressSequentially(validSlug);
+      await expect(depositPage.slugDisplayOnModal, 'The slug is as expected').toHaveText(validSlug);
+      await depositPage.modalCreateNewDepositButton.click();
+
+      //Cannot create message is displayed to the user
+      await expect.soft(depositPage.alertMessage).toContainText('There is already an ACTIVE deposit for the archival group.');
+    });
 
     await test.step('Create a sub folder', async() => {
 
