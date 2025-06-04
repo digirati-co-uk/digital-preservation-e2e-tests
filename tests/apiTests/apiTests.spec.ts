@@ -17,4 +17,3 @@ test('view-repository-root', async ({page}) => {
   rootReq = await presentationApiContext.get('/repository');
   expect(rootReq.ok()).toBeTruthy();
 });
-
