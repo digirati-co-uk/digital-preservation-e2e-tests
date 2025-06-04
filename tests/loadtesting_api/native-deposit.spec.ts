@@ -84,7 +84,7 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
                 archivalGroupName: agName,
                 submissionText: "This is going to create a METS file and edit the METS as we go"
             },
-            headers: headers
+            headers: headers,
         });
 
 

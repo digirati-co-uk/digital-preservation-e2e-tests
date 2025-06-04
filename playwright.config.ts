@@ -72,7 +72,7 @@ export default defineConfig({
       testDir: './tests/apiTests',
       testMatch: /.*\.spec\.ts/,
       use: {
-      }
+      },
     },
     {
       dependencies: ['frontend-setup'],
@@ -93,7 +93,11 @@ export default defineConfig({
           ...devices['Desktop Chrome'],
           baseURL: process.env.PRESERVATION_API_ENDPOINT,
           storageState: frontendSessionFile,
+          contextOptions: {
+          ignoreHTTPSErrors: true,
         },
+        },
+        
     },
   ],
 });
