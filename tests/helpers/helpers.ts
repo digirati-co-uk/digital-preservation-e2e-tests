@@ -28,7 +28,7 @@ export function checkDateIsWithinNumberOfSeconds(dateToValidate: string, seconds
 export function getS3Client() {
     return new S3Client({
         region: "eu-west-1",
-        credentials: fromIni({profile: 'leeds'})
+       // credentials: fromIni({profile: 'leeds'})
     });
 }
 
