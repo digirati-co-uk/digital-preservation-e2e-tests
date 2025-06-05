@@ -73,6 +73,7 @@ export async function uploadFile(
     const command = new ListObjectsV2Command(input);
     const response = await s3Client.send(command);
     const contents = response.Contents;
+    console.log(contents);
     const stringToFind = `${s3Url.key}${fileToFind}/`;
 
     var result = contents.filter(obj => {
