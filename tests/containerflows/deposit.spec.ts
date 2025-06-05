@@ -628,12 +628,12 @@ test.describe('Deposit Tests', () => {
     });
 
 
-    // await test.step('Tidy up and delete the Deposit', async() => {
-    //   //Navigate back into the first deposit in order to delete it
-    //   await page.goto(depositURL);
-    //   //Tidy up
-    //   await depositPage.deleteTheCurrentDeposit();
-    // });
+    await test.step('Tidy up and delete the Deposit', async() => {
+      //Navigate back into the first deposit in order to delete it
+      await page.goto(depositURL);
+      //Tidy up
+      await depositPage.deleteTheCurrentDeposit();
+    });
   });
 
   test(`Deposits listing - check basic page details are correct`, async ({page}) => {

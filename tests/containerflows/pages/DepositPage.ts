@@ -814,14 +814,13 @@ export class DepositPage {
     const depositURL: string = page.url();
     let depositId: string = depositURL.substring(depositURL.length-12);
 
-    //const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
-    //const body = await depositResponse.body();
-    //const depositItem = JSON.parse(body.toString('utf-8'));
+    const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
+    const body = await depositResponse.body();
+    const depositItem = JSON.parse(body.toString('utf-8'));
     //Get the s3 files location
-    //const filesLocation = depositItem.files;
+    const filesLocation = depositItem.files;
 
-    //expect(await checkForFileInS3(filesLocation, 'data'), `The data folder is ${inBagitFormat?'':'not'} present`).toEqual(inBagitFormat);
-    expect(await checkForFileInS3('s3://dlip-pres-dev-deposits/deposits/jec5jusrfbr4/', 'data'), `The data folder is ${inBagitFormat?'':'not'} present`).toEqual(inBagitFormat);
+    expect(await checkForFileInS3(filesLocation, 'data'), `The data folder is ${inBagitFormat?'':'not'} present`).toEqual(inBagitFormat);
     if (inBagitFormat) {
       await expect(this.usingBagitGuidance, 'We can see the advice that we are using Bagit Layout').toBeVisible();
     }
