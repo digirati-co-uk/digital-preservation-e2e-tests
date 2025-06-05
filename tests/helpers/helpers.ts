@@ -26,10 +26,17 @@ export function checkDateIsWithinNumberOfSeconds(dateToValidate: string, seconds
 }
 
 export function getS3Client() {
+
+  if(process.env.AWS_PROFILE != null) {
     return new S3Client({
-        region: "eu-west-1",
-       // credentials: fromIni({profile: 'leeds'})
+      region: "eu-west-1",
+      credentials: fromIni({profile: process.env.AWS_PROFILE})
     });
+  }else{
+    return new S3Client({
+      region: "eu-west-1",
+    });
+  }
 }
 
 // This isn't using any of the custom Leeds API at all.
