@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   e2e-tests:
-    runs-on: ubuntu-latest
+    runs-on: dliprunner2core8ramStaticIP
     environment: development
     permissions:
       id-token: write
