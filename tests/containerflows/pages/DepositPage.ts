@@ -1,4 +1,3 @@
-
 import {BrowserContext, expect, Locator, Page} from '@playwright/test';
 import {NavigationPage} from "./NavigationPage";
 import * as path from 'path';
@@ -127,6 +126,7 @@ export class DepositPage {
   readonly modalCreateNewDepositButton : Locator;
   readonly slugDisplayOnModal: Locator;
   readonly useBagitLayout: Locator;
+  readonly usingBagitGuidance: Locator;
 
   //New folder dialog
   readonly newFolderCloseDialogButton : Locator;
@@ -219,6 +219,33 @@ export class DepositPage {
   readonly openAccessConditionsAndRightsButton: Locator;
   readonly saveAccessConditionsAndRightsButton: Locator;
   readonly closeAccessConditionsAndRightsButton: Locator;
+
+  //BitCurator test specific Locators
+  readonly bitCuratorFileOneName: string;
+  readonly bitCuratorFileTwoName: string;
+  readonly bitCuratorFileThreeName: string;
+  readonly bitCuratorFileFourName: string;
+  readonly bitCuratorFileFiveName: string;
+  readonly bitCuratorFileOneFullPath: string;
+  readonly bitCuratorFileTwoFullPath: string;
+  readonly bitCuratorFileThreeFullPath: string;
+  readonly bitCuratorFileFourFullPath: string;
+  readonly bitCuratorFileFiveFullPath: string;
+  readonly bitCuratorFileOne: Locator;
+  readonly bitCuratorFileTwo: Locator;
+  readonly bitCuratorFileThree: Locator;
+  readonly bitCuratorFileFour: Locator;
+  readonly bitCuratorFileFive: Locator;
+  readonly bitCuratorFileOneSelectArea: Locator;
+  readonly bitCuratorFileTwoSelectArea: Locator;
+  readonly bitCuratorFileThreeSelectArea: Locator;
+  readonly bitCuratorFileFourSelectArea: Locator;
+  readonly bitCuratorFileFiveSelectArea: Locator;
+  readonly pronomKey: string;
+  readonly expectedFileType: string;
+  readonly checkSumType: string;
+  readonly bitCuratorFileThreeChecksum: string;
+  readonly bitCuratorFileFourChecksum: string;
 
   constructor(page: Page) {
     this.page = page;
@@ -352,6 +379,7 @@ export class DepositPage {
     this.modalArchivalName = page.locator('#archivalGroupProposedName');
     this.slugDisplayOnModal = page.locator('#slugDisplay');
     this.useBagitLayout = page.getByRole('checkbox', {name:'use bagit layout'});
+    this.usingBagitGuidance = page.getByText('This Deposit uses BagIt layout on disk/S3.');
 
     //New folder dialog
     this.newFolderNameInput = page.locator('#newFolderName');
@@ -438,6 +466,33 @@ export class DepositPage {
     this.modifiedRightsOptionURL = 'http://rightsstatements.org/vocab/NoC-US/1.0/';
     this.selectedRightsOptionURL = 'http://rightsstatements.org/vocab/InC-OW-EU/1.0/';
     this.selectedRightsOptionShortCode = 'InC-OW-EU';
+
+    //BitCurator test specific Locators
+    this.bitCuratorFileOneName = 'metadata';
+    this.bitCuratorFileTwoName = 'nyc';
+      this.bitCuratorFileThreeName = 'DSCF1044.JPG';
+    this.bitCuratorFileFourName = 'warteck.jpg';
+    this.bitCuratorFileFiveName = 'mimetypes.csv';
+    this.bitCuratorFileOneFullPath = this.bitCuratorFileOneName;
+    this.bitCuratorFileTwoFullPath = `objects/${this.bitCuratorFileTwoName}`;
+    this.bitCuratorFileThreeFullPath = `objects/nyc/${this.bitCuratorFileThreeName}`;
+    this.bitCuratorFileFourFullPath = `objects/${this.bitCuratorFileFourName}`;
+    this.bitCuratorFileFiveFullPath = `metadata/brunnhilde/csv_reports/${this.bitCuratorFileFiveName}`;
+    this.bitCuratorFileOne = page.locator(`[data-type="directory"][data-path="${this.bitCuratorFileOneFullPath}"]`);
+    this.bitCuratorFileTwo = page.locator(`[data-type="directory"][data-path="${this.bitCuratorFileTwoFullPath}"]`);
+    this.bitCuratorFileThree = page.locator(`[data-type="file"][data-path="${this.bitCuratorFileThreeFullPath}"]`);
+    this.bitCuratorFileFour = page.locator(`[data-type="file"][data-path="${this.bitCuratorFileFourFullPath}"]`);
+    this.bitCuratorFileFive = page.locator(`[data-type="file"][data-path="${this.bitCuratorFileFiveFullPath}"]`);
+    this.bitCuratorFileOneSelectArea = this.bitCuratorFileOne.getByLabel('select-row');
+    this.bitCuratorFileTwoSelectArea = this.bitCuratorFileTwo.getByLabel('select-row');
+    this.bitCuratorFileThreeSelectArea = this.bitCuratorFileThree.getByLabel('select-row');
+    this.bitCuratorFileFourSelectArea = this.bitCuratorFileFour.getByLabel('select-row');
+    this.bitCuratorFileFiveSelectArea = this.bitCuratorFileFive.getByLabel('select-row');
+    this.pronomKey = 'fmt/1507';
+    this.expectedFileType = 'image/jpeg';
+    this.checkSumType = 'SHA256';
+    this.bitCuratorFileThreeChecksum = 'e2e9f06f8180d1f101eb5e02f97b70bc395750e6ffdecf045db43605acb50682';
+    this.bitCuratorFileFourChecksum = '243c32394db4879c2fee146a0175ad5d402ed151656e7fb5ea580d04e2d4a6db';
   }
 
   async goto() {
@@ -559,11 +614,44 @@ export class DepositPage {
     }
   }
 
-  async checkFileSecExists(metsXML: Document, itemToFind: string, admId: string) : Promise<string>{
+  async checkForChecksum(metsXML: Document, itemToFind: string, checksumType: string, checksum: string){
+    const amdSecValues = metsXML.getElementsByTagName('mets:amdSec');
+    const itemToFindElement = amdSecValues.filter(item => (item.getElementsByTagName('premis:originalName'))[0].textContent.trim() === itemToFind.trim());
+
+    //itemToFindElement should have length 1
+    const messageDigestAlgorithmElement = itemToFindElement[0].getElementsByTagName('premis:messageDigestAlgorithm');
+    expect(messageDigestAlgorithmElement, 'There is only 1 messageDigestAlgoithm item').toHaveLength(1);
+    expect(messageDigestAlgorithmElement[0].textContent, 'The checksum type is as expected').toEqual(checksumType);
+    const messageDigestElement = itemToFindElement[0].getElementsByTagName('premis:messageDigest');
+    expect(messageDigestElement, 'There is only 1 messageDigest item').toHaveLength(1);
+    expect(messageDigestElement[0].textContent, 'The checksum is as expected').toEqual(checksum);
+  }
+
+  async checkPronomInformation(metsXML: Document, itemToFind: string, formatName: string, formatKey: string){
+    const amdSecValues = metsXML.getElementsByTagName('mets:amdSec');
+    const itemToFindElement = amdSecValues.filter(item => (item.getElementsByTagName('premis:originalName'))[0].textContent.trim() === itemToFind.trim());
+
+    //itemToFindElement should have length 1
+    const formatNameElement = itemToFindElement[0].getElementsByTagName('premis:formatName');
+    expect(formatNameElement, 'There is only 1 formatName item').toHaveLength(1);
+    expect(formatNameElement[0].textContent, 'The format name is as expected').toEqual(formatName);
+    const formatKeyElement = itemToFindElement[0].getElementsByTagName('premis:formatRegistryKey');
+    expect(formatKeyElement, 'There is only 1 formatRegistryKey item').toHaveLength(1);
+    expect(formatKeyElement[0].textContent, 'The format key is as expected').toEqual(formatKey);
+  }
+
+  async checkFileSecExists(metsXML: Document, itemToFind: string, admId: string, mimeType: string = null) : Promise<string>{
     const fileSecValues = metsXML.getElementsByTagName('mets:fileSec')[0];
     const files = fileSecValues.getElementsByTagName('mets:file');
 
     const itemToFindElement = files.filter(item => item.getAttribute('ADMID').trim() === admId.trim());
+
+    //At this stage we should have only item in itemToFindElement
+    if (mimeType!=null) {
+      const mimeTypeAttribute = itemToFindElement[0].getAttribute('MIMETYPE');
+      expect(mimeTypeAttribute, 'Mime type is correct').toEqual(mimeType);
+    }
+
     const fileLocations = itemToFindElement[0].getElementsByTagName('mets:FLocat');
     const itemToFindFLocatElement = fileLocations.filter(item => item.getAttribute('xlink:href').trim() === itemToFind.trim());
     expect(itemToFindFLocatElement, `We found ${itemToFind} in the fileSec`).toHaveLength(1);
@@ -664,38 +752,29 @@ export class DepositPage {
     return itemToFindElement;
 
   }
-  async uploadFilesToDepositS3Bucket(depositURL: string, uploadMETS: boolean = false){
+  async uploadFilesToDepositS3Bucket(files: string[], depositURL: string, sourceDir: string, createChecksum: boolean, uploadMETS: boolean = false){
     let depositId: string = depositURL.substring(depositURL.length-12);
-console.log(depositId);
     const depositResponse = await presentationApiContext.get(`deposits/${depositId}`);
     const body = await depositResponse.body();
     const depositItem = JSON.parse(body.toString('utf-8'));
     //Get the s3 files location
     const filesLocation = depositItem.files;
 
-    // we are going to set the checksum, because we have no
-    // other way of providing it. Later we will be able to get checksums from BagIt.
-    const sourceDir : string = 'test-data/deposit/';
-    let files = [
-      `${this.newTestFolderSlug}/${this.testImageLocation}`,
-      `${this.newTestFolderSlug}/${this.testWordDocLocation}`,
-      `${this.newTestFolderSlug}/${this.testPdfDocLocation}`,
-    ];
     if (uploadMETS){
       files.push(`mets.xml`);
     }
     for (const file of files) {
-      await uploadFile(filesLocation, sourceDir + file, file, true);
+      await uploadFile(filesLocation, sourceDir + file, file, createChecksum);
     }
   }
 
-  async validateFilePresentInMETS(context: BrowserContext ,metsXML: Document, admID: string, filename: string, firstLevel: string, secondLevel: string, thirdLevel: string, fourthLevel: string, fifthLevel: string, expectToFind: boolean){
+  async validateFilePresentInMETS(context: BrowserContext ,metsXML: Document, admID: string, filename: string, firstLevel: string, secondLevel: string, thirdLevel: string, fourthLevel: string, fifthLevel: string, expectToFind: boolean, mimetype: string = null){
     //Validate that we have an amdSec with each new file
     const admIDImage  = await this.checkAmdSecExists(metsXML, filename, expectToFind);
 
     if (expectToFind) {
       //Check for a fileSec entry
-      const fileIDImage = await this.checkFileSecExists(metsXML, filename, admIDImage);
+      const fileIDImage = await this.checkFileSecExists(metsXML, filename, admIDImage, mimetype);
 
       //Check for the correct folder and file structure
       await this.checkFileExistsInStructure(metsXML, '__ROOT', firstLevel, secondLevel, thirdLevel, fourthLevel, fifthLevel, admID, fileIDImage);
@@ -740,8 +819,11 @@ console.log(depositId);
     const depositItem = JSON.parse(body.toString('utf-8'));
     //Get the s3 files location
     const filesLocation = depositItem.files;
-    expect(await checkForFileInS3(filesLocation, 'data'), `The data folder is ${inBagitFormat?'':'not'} present`).toEqual(inBagitFormat);
 
+    expect(await checkForFileInS3(filesLocation, 'data'), `The data folder is ${inBagitFormat?'':'not'} present`).toEqual(inBagitFormat);
+    if (inBagitFormat) {
+      await expect(this.usingBagitGuidance, 'We can see the advice that we are using Bagit Layout').toBeVisible();
+    }
   }
 
   async setAccessConditionsAndRights(accessConditions: string[], rightsStatement: string, saveChanges: boolean = true){

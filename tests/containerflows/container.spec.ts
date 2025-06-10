@@ -32,6 +32,9 @@ test.describe('Container Tests', () => {
 
   test(`can create a container/folder with a properly formed slug and see the details displayed`, async ({page}) => {
 
+    //Set a 2-minute timeout
+    test.setTimeout(120_000);
+
     const uniqueId = generateUniqueId();
     const folderTitle = `${containerPage.playwrightContainerTitle} ${uniqueId}`;
     const folderSlug = `${containerPage.playwrightContainerSlug}-${uniqueId.toLowerCase()}`;

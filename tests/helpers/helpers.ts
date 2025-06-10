@@ -26,10 +26,17 @@ export function checkDateIsWithinNumberOfSeconds(dateToValidate: string, seconds
 }
 
 export function getS3Client() {
+
+  if(process.env.AWS_PROFILE != null) {
     return new S3Client({
-        region: "eu-west-1",
-        credentials: fromIni({profile: 'leeds'})
+      region: "eu-west-1",
+      credentials: fromIni({profile: process.env.AWS_PROFILE})
     });
+  }else{
+    return new S3Client({
+      region: "eu-west-1",
+    });
+  }
 }
 
 // This isn't using any of the custom Leeds API at all.
@@ -74,12 +81,10 @@ export async function uploadFile(
     const response = await s3Client.send(command);
     const contents = response.Contents;
     const stringToFind = `${s3Url.key}${fileToFind}/`;
-    //TODO determine if contents contains, and return boolean based on that
-    console.log(contents);
-    console.log(stringToFind);
+
     var result = contents.filter(obj => {
       return obj.Key === stringToFind;
     })
-    console.log(result);
+
     return result.length > 0;
   }

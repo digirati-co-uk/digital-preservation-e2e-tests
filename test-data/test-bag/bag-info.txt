@@ -1,0 +1,4 @@
+Bag-Software-Agent: bagit.py v1.8.1 <https://github.com/LibraryOfCongress/bagit-python>
+Bagging-Date: 2025-05-19
+Payload-Oxum: 52212313.15
+Source-Organization: uol-dlip
