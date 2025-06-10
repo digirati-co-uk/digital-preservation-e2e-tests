@@ -92,10 +92,6 @@ test.describe('Deposit Tests', () => {
         await expect(depositPage.metsFile, 'METS file is present').toBeVisible();
       });
 
-      await test.step(`Validate that the folder is ${useBagitLayout?'':'not'} in the BagIt structure`, async () => {
-        await depositPage.verifyBagitStructure(useBagitLayout, page);
-      });
-
       await test.step('Can add the Archival Group name and a note, and the URI', async () => {
 
         //Test that initially there is no create archival group button, and
@@ -177,6 +173,10 @@ test.describe('Deposit Tests', () => {
         await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), null, null, depositPage.testImageLocation, admID, fileIDImage);
         await depositPage.checkFileExistsInStructure(metsXML, '__ROOT', depositPage.objectsFolderName.trim(), depositPage.newTestFolderTitle.trim(), null, null, depositPage.testWordDocLocation, admID, fileIDWord);
 
+      });
+
+      await test.step(`Validate that the folder is ${useBagitLayout?'':'not'} in the BagIt structure`, async () => {
+        await depositPage.verifyBagitStructure(useBagitLayout, page);
       });
 
       await test.step('Validate that the table structure is correct', async () => {
