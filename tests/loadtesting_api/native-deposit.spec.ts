@@ -100,11 +100,13 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
         // Unlike the create-deposit.spec example, we ARE going to set the checksum, because we have no
         // other way of providing it. Later we will be able to get checksums from BagIt.
         
+        var count = 0;
         const s3Client = getS3Client();
         console.log("Uploading " + files.length + " files to the S3 location provided by the Deposit:");
         console.log(newDeposit.files);
         for (const file of files) {
-            await uploadFile(s3Client, newDeposit.files, sourceDir + file, "objects/" + file, true)
+            await uploadFile(s3Client, newDeposit.files, sourceDir + file, "objects/" + file, true);
+            console.log(`Sent File: ${count++} of ${files.length}`);
         }
         console.log("----");
 
