@@ -12,12 +12,12 @@ export class IIIFBuilderPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.irnForArchivalGroup = 'c54x355t';
+    this.irnForArchivalGroup = 'j9pg62xd'; //'c54x355t';
     this.irnForDeposit = '1000001';
     this.irnForDepositHeading = 'UAT Test 1';
     this.iiifManifestLink = 'IIIF Manifest Link';
     this.fullPathOfIRN = `/browse/cc/${this.irnForArchivalGroup}`;
-    this.archivalGroupHeader = this.page.getByRole('heading', {name: 'UAT Test 8'});
+    this.archivalGroupHeader = this.page.getByRole('heading', {name: 'UAT Test 3'}); //{name: 'UAT Test 8'});
 
   }
   async refreshTheManifestJSON(page : Page, expectedItems: number){

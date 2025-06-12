@@ -1,4 +1,4 @@
-import {expect, Page} from "@playwright/test";
+import {expect} from "@playwright/test";
 import {test} from '../../fixture';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 import {IIIFBuilderPage} from "./pages/IIIFBuilderPage";
@@ -13,7 +13,7 @@ test.describe('IIIF Builder End To End Tests', () => {
     iiifBuilderPage = new IIIFBuilderPage(page);
   });
 
-  test(`Can create a Deposit using an EMU Id`, async ({page, context}) => {
+  test(`Can create a Deposit using an EMU Id`, async ({page}) => {
 
     //This test will create a Deposit from a test EMU Id, upload
     //some files to that Deposit via AWS, and sync the Deposit via the UI.
@@ -168,13 +168,61 @@ test.describe('IIIF Builder End To End Tests', () => {
         expect(jsonBody.items, 'Manifest has the correct number of canvas items').toHaveLength(2);
       }
 
+      //92023 Rewrite Rules testing
+      //Check that all of the URLs are the rewritten Leeds domain URLs
+      const domain: string = process.env.LEEDS_DOMAIN;
+      const dlcsDomain: string = `${process.env.PRESERVATION_API_ENDPOINT_NOT_REWRITTEN}/${process.env.LEEDS_DLCS_CUSTOMER}`;
+      expect(jsonBody.id, 'Manifest ID is correct').toEqual(`${domain}/presentation/cc/${iiifBuilderPage.irnForArchivalGroup}`);
+      await checkManifestBodyRewritten(jsonBody, domain);
+
+      //Check that the non rewritten DLCS endpoint is not referenced anywhere
+      let jsonAsString = JSON.stringify(jsonBody);
+      expect(jsonAsString, 'There are no references to the DLCS domain').not.toEqual(expect.stringContaining(dlcsDomain));
+
+      //Now open a page with the non Leeds (i.e. dlcs) domain URL, check the id is the non-rewritten, but
+      //everything else is the rewritten URLs
+      await page.goto(`${dlcsDomain}/cc/${iiifBuilderPage.irnForArchivalGroup}`);
+      await page.waitForLoadState();
+
+      //Get the JSON from the page
+      jsonBody = JSON.parse(await page.innerText('pre'));
+      expect(jsonBody.id, 'Manifest ID is correct').toEqual(`${dlcsDomain}/cc/${iiifBuilderPage.irnForArchivalGroup}`);
+      await checkManifestBodyRewritten(jsonBody, domain);
+
+      //Replace the DLCS URL in the initial ID paramter with blank, and then check no further occurrences
+      jsonAsString = JSON.stringify(jsonBody);
+      jsonAsString = jsonAsString.replace(dlcsDomain, '');
+      expect(jsonAsString, 'There are no references to the DLCS domain').not.toEqual(expect.stringContaining(dlcsDomain));
+
       //Tidy up
       await iiifTab.close();
       await iiifViewerTab.close();
 
     });
+
+    async function checkManifestBodyRewritten(jsonBody : any, domain: string){
+      //Check each item in the items array
+      for(let canvas of jsonBody.items) {
+        expect(canvas.id, 'Canvas ID is correct').toEqual(expect.stringContaining(`${domain}/canvases`));
+
+        for(let thumbnail of canvas.thumbnail) {
+          expect(thumbnail.id, 'Thumbnail Id is correct').toEqual(expect.stringContaining(`${domain}/thumbs`));
+          expect(thumbnail.service[0]["@id"], 'Thumbnail Image Service ID is correct').toEqual(expect.stringContaining(`${domain}/thumbs/v2`));
+          expect(thumbnail.service[1].id, 'Thumbnail Image Service ID is correct').toEqual(expect.stringContaining(`${domain}/thumbs`));
+        }
+
+        for(let annotationPage of canvas.items) {
+          expect(annotationPage.id, 'Annotation Page ID is correct').toEqual(expect.stringContaining(`${domain}/canvases`));
+          for(let annotation of annotationPage.items) {
+            expect(annotation.id, 'Annotation Id is correct').toEqual(expect.stringContaining(`${domain}/canvases`));
+            expect(annotation.body.id, 'Annotation Body Id is correct').toEqual(expect.stringContaining(`${domain}/image`));
+            expect(annotation.target, 'Annotation Target is correct').toEqual(expect.stringContaining(`${domain}/canvases`));
+            expect(annotation.body.service[0]["@id"], 'Annotation Body Image Service ID is correct').toEqual(expect.stringContaining(`${domain}/image/v2`));
+            expect(annotation.body.service[1].id, 'Annotation Body Image Service ID is correct').toEqual(expect.stringContaining(`${domain}/image`));
+          }
+        }
+      }
+    }
   });
-
-
 
 });
