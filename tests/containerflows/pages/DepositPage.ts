@@ -3,7 +3,7 @@ import {NavigationPage} from "./NavigationPage";
 import * as path from 'path';
 import { Document, Element } from '@xmldom/xmldom';
 import {presentationApiContext} from "../../../fixture";
-import {checkForFileInS3, getS3Client, uploadFile} from "../../helpers/helpers";
+import {checkForFileInS3, uploadFile} from "../../helpers/helpers";
 
 export class DepositPage {
   readonly page: Page;
@@ -246,6 +246,8 @@ export class DepositPage {
   readonly checkSumType: string;
   readonly bitCuratorFileThreeChecksum: string;
   readonly bitCuratorFileFourChecksum: string;
+  readonly bitCuratorDepositFileSizeTotals: Locator;
+  readonly bitCuratorDepositFilesTotals: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -493,6 +495,8 @@ export class DepositPage {
     this.checkSumType = 'SHA256';
     this.bitCuratorFileThreeChecksum = 'e2e9f06f8180d1f101eb5e02f97b70bc395750e6ffdecf045db43605acb50682';
     this.bitCuratorFileFourChecksum = '243c32394db4879c2fee146a0175ad5d402ed151656e7fb5ea580d04e2d4a6db';
+    this.bitCuratorDepositFileSizeTotals = page.getByText('49.8 MB in Deposit, 49.8 MB in METS, 49.8 MB Overall.');
+    this.bitCuratorDepositFilesTotals = page.getByText('16 files in 6 directories');
   }
 
   async goto() {
@@ -766,6 +770,7 @@ export class DepositPage {
     for (const file of files) {
       await uploadFile(filesLocation, sourceDir + file, file, createChecksum);
     }
+
   }
 
   async validateFilePresentInMETS(context: BrowserContext ,metsXML: Document, admID: string, filename: string, firstLevel: string, secondLevel: string, thirdLevel: string, fourthLevel: string, fifthLevel: string, expectToFind: boolean, mimetype: string = null){
@@ -822,6 +827,7 @@ export class DepositPage {
 
     expect(await checkForFileInS3(filesLocation, 'data'), `The data folder is ${inBagitFormat?'':'not'} present`).toEqual(inBagitFormat);
     if (inBagitFormat) {
+      expect(await checkForFileInS3(filesLocation, `data/${this.newTestFolderSlug}`), `The subfolder is within the data folder`).toEqual(inBagitFormat);
       await expect(this.usingBagitGuidance, 'We can see the advice that we are using Bagit Layout').toBeVisible();
     }
   }

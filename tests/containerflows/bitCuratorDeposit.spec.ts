@@ -139,6 +139,12 @@ test.describe('BitCurator Deposit Tests', () => {
     });
 
     //Check for the additional information in the METS produced by the BitCurator info
+    await test.step('Check the file size totals', async() => {
+      await expect(depositPage.bitCuratorDepositFilesTotals).toBeVisible();
+      await expect(depositPage.bitCuratorDepositFileSizeTotals).toBeVisible();
+    });
+
+    //Check for the additional information in the METS produced by the BitCurator info
     await test.step('Check that we have the info from the BitCurator process in the METS', async() => {
 
       //PROMON info and checksum
