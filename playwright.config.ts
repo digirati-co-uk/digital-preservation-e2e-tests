@@ -90,9 +90,7 @@ export default defineConfig({
         testDir: './tests/loadtesting_api',
         testMatch: /.*\.spec\.ts/,
         use: {
-          ...devices['Desktop Chrome'],
           baseURL: process.env.PRESERVATION_API_ENDPOINT,
-          storageState: frontendSessionFile,
           contextOptions: {
           ignoreHTTPSErrors: true,
         },

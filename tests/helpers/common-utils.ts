@@ -1,5 +1,5 @@
 import {APIRequestContext, expect} from '@playwright/test';
-import {ListObjectsV2Command, paginateListObjectsV2, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import {ListObjectsV2Command, paginateListObjectsV2, PutObjectCommand, CopyObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {fromIni} from '@aws-sdk/credential-providers';
 import {parseS3Url} from 'amazon-s3-url'
 import {readFileSync, readdirSync} from "fs";
@@ -57,12 +57,27 @@ export async function uploadFile(
     await s3.send(putCmd);
 }
 
+
+export async function copyS3File(
+    s3: S3Client,
+    copySource: string,
+    destBucket: string,
+    destKey: string) {
+
+    const copyCmd = new CopyObjectCommand({
+        Bucket: destBucket,
+        Key: destKey,
+        CopySource: copySource,
+    });
+    await s3.send(copyCmd);
+}
+
 export async function listKeys(s3: S3Client, parentKey: string){
 
     const s3Url = parseS3Url(parentKey);
     var opts = {
         Bucket: s3Url.bucket,
-        Prefix: parentKey
+        Prefix: s3Url.key
     }
 
     const files = [];
