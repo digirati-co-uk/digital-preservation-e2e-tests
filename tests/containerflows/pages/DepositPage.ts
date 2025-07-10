@@ -13,6 +13,7 @@ export class DepositPage {
   readonly notYetPopulated:string;
   readonly objectsFolderName : string;
   readonly metadataFolderName: string;
+  readonly brunnhildeFolderName: string;
   readonly testImageLocation : string;
   readonly testImageFileType : string;
   readonly testImageFileSize : string;
@@ -78,8 +79,13 @@ export class DepositPage {
   readonly depositFilesTable : Locator;
   readonly objectsFolder : Locator;
   readonly metadataFolder : Locator;
+  readonly brunnhildeFolder: Locator;
   readonly uploadFileToObjectsFolder :Locator;
+  readonly uploadFileToMetadataFolder : Locator;
+  readonly uploadFileToBrunnhildeFolder: Locator;
   readonly createFolderWithinObjectsFolder : Locator;
+  readonly createFolderWithinMetadataFolder : Locator;
+  readonly createFolderWithinBrunnhildeFolder: Locator;
   readonly metsFile : Locator;
   readonly newTestFolderInTable : Locator;
   readonly uploadFileToTestFolder : Locator;
@@ -264,6 +270,7 @@ export class DepositPage {
     this.testFileLocation = '../../../test-data/deposit/objects/New-test-folder-inside-objects/';
     this.objectsFolderName = 'objects';
     this.metadataFolderName = 'metadata';
+    this.brunnhildeFolderName = 'brunnhilde';
     this.metsFileName = 'mets.xml';
     this.testImageLocation = 'test_image.jpg';
     this.nestedTestImageLocation = 'test_image.png';
@@ -332,8 +339,14 @@ export class DepositPage {
     //Locators specific to the objects folder
     this.objectsFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.objectsFolderName}"]`);
     this.metadataFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.metadataFolderName}"]`);
+    this.brunnhildeFolder = this.depositFilesTable.locator(`[data-type="directory"][data-path="${this.brunnhildeFolderName}"]`);
     this.uploadFileToObjectsFolder = this.objectsFolder.locator(this.uploadFileIcon);
+    this.uploadFileToMetadataFolder = this.metadataFolder.locator(this.uploadFileIcon);
+    this.uploadFileToBrunnhildeFolder = this.brunnhildeFolder.locator(this.uploadFileIcon);
+
     this.createFolderWithinObjectsFolder = this.objectsFolder.locator(this.createFolderIcon);
+    this.createFolderWithinMetadataFolder = this.metadataFolder.locator(this.createFolderIcon);
+    this.createFolderWithinBrunnhildeFolder = this.brunnhildeFolder.locator(this.createFolderIcon);
 
     //METS file locators
     this.metsFile = this.depositFilesTable.locator('[data-type="file"][data-path="mets.xml"]');
@@ -841,5 +854,6 @@ export class DepositPage {
     }else{
       await this.closeAccessConditionsAndRightsButton.click();
     }
+    await expect(this.page.getByRole('dialog')).not.toBeVisible();
   }
 }

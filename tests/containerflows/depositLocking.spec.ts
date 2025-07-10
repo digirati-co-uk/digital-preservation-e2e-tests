@@ -131,11 +131,12 @@ test.describe('Locking and unlocking a deposit', () => {
         }
       });
       // Leave soft for now - failing - seem to be able to do this
-      expect.soft(depositWithText.status()).toBe(409);
+      //Bug 95186 has been raised for this
+      expect.soft(depositWithText.status(), 'FAILING DUE TO BUG: We get the correct response code from the API').toBe(409);
 
       // try to get our own lock
       const lockResp2 = await presentationApiContext.post(lockUri);
-      expect.soft(lockResp2.status()).toBe(409); // because still locked by another
+      expect.soft(lockResp2.status(), 'FAILING DUE TO BUG: We get the correct response code from the API').toBe(409); // because still locked by another
 
       // we need to force it
       const forceLockUri = `${depositAPIURL}/lock?force=true`;

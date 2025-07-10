@@ -49,9 +49,10 @@ export class ArchivalGroupPage {
   readonly resourcesTableRows : Locator;
   readonly metadataFolderInTable: Locator;
   readonly objectsFolderInTable : Locator;
+  readonly subfolderFolderInTable: Locator;
   readonly metsRowInTable : Locator;
   readonly goToArchivalGroupButton : Locator;
-  readonly objectsPageTitle : Locator;
+  readonly subFolderPageTitle : Locator;
   readonly createNewDepositModalButton : Locator;
   readonly copyFilesFromS3Checkbox : Locator;
 
@@ -113,9 +114,10 @@ export class ArchivalGroupPage {
     this.resourcesTableRows = page.getByRole('table', {name: 'table-resources'}).locator('tbody tr');
     this.metadataFolderInTable = this.resourcesTableRows.nth(0).getByLabel('td-path');
     this.objectsFolderInTable = this.resourcesTableRows.nth(1).getByLabel('td-path');
+    this.subfolderFolderInTable = this.resourcesTableRows.nth(0).getByLabel('td-path');
     this.metsRowInTable = this.resourcesTableRows.nth(2).getByLabel('td-path');
     this.goToArchivalGroupButton = page.getByRole('link', {name: 'Go to Archival Group'});
-    this.objectsPageTitle = page.getByRole('heading', {name: this.depositPage.objectsFolderName});
+    this.subFolderPageTitle = page.getByRole('heading', {name: this.depositPage.newTestFolderTitle});
     this.createNewDepositModalButton = page.getByRole('button', {name: 'Create New Deposit'});
     this.copyFilesFromS3Checkbox = page.getByRole('dialog').getByRole('checkbox');
 

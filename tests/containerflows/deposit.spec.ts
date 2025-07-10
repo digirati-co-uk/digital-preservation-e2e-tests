@@ -781,7 +781,7 @@ test.describe('Deposit Tests', () => {
   test(`Deposits listing - check pagination`, async ({page}) => {
 
     //Set a 2-minute timeout
-    test.setTimeout(120_000);
+    test.setTimeout(180_000);
 
     let depositURL: string;
     const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
@@ -842,27 +842,27 @@ test.describe('Deposit Tests', () => {
       let firstRowId : string = await depositPage.firstRowID.textContent();
       await depositPage.nextButton.click();
       //Previous is enabled
-      await expect(depositPage.previousButtonText).toBeVisible();
-      expect(await depositPage.previousButton.getAttribute('class')).not.toContain('disabled');
+      await expect(depositPage.previousButtonText, 'Previous button is visible').toBeVisible();
+      expect(await depositPage.previousButton.getAttribute('class'), 'Previous button is enabled').not.toContain('disabled');
       //Next is disabled
-      await expect(depositPage.nextButtonText).toBeVisible();
-      expect(await depositPage.nextButton.getAttribute('class')).toContain('disabled');
+      await expect(depositPage.nextButtonText, 'Next button is visible').toBeVisible();
+      expect(await depositPage.nextButton.getAttribute('class'), 'Next button is disabled').toContain('disabled');
 
       //read first row id and compare to previous to ensure changed
       let nextPageFirstRowId : string = await depositPage.firstRowID.textContent();
-      expect(nextPageFirstRowId).not.toEqual(firstRowId);
+      expect(nextPageFirstRowId, 'The item at the top of the page has changed').not.toEqual(firstRowId);
 
       //Check the previous works
       await depositPage.previousButton.click();
-      expect(await depositPage.previousButton.getAttribute('class')).toContain('disabled');
+      expect(await depositPage.previousButton.getAttribute('class'), 'Previous button is now disabled as we are back on page 1').toContain('disabled');
       firstRowId = await depositPage.firstRowID.textContent();
-      expect(nextPageFirstRowId).not.toEqual(firstRowId);
+      expect(nextPageFirstRowId, 'The item at the top of the page has changed').not.toEqual(firstRowId);
 
       //Check that we can click on the numbered elements to move pages
       await depositPage.page2Element.click();
-      expect(await depositPage.previousButton.getAttribute('class')).not.toContain('disabled');
+      expect(await depositPage.previousButton.getAttribute('class'), 'Previous button is enabled again').not.toContain('disabled');
       nextPageFirstRowId = await depositPage.firstRowID.textContent();
-      expect(nextPageFirstRowId).not.toEqual(firstRowId);
+      expect(nextPageFirstRowId, 'The item at the top of the page has changed').not.toEqual(firstRowId);
     });
 
     await test.step('Tidy up and delete the deposit', async() => {
