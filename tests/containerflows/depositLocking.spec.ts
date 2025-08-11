@@ -131,7 +131,7 @@ test.describe('Locking and unlocking a deposit', () => {
         }
       });
       // Leave soft for now - failing - seem to be able to do this
-      //Bug 95186 has been raised for this
+      //TODO Bug 95186 has been raised for this
       expect.soft(depositWithText.status(), 'FAILING DUE TO BUG: We get the correct response code from the API').toBe(409);
 
       // try to get our own lock

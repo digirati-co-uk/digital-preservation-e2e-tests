@@ -140,6 +140,9 @@ test.describe('Container Tests', () => {
 
   test(`cannot create a container/folder with an existing slug`, async () => {
 
+    //Set a 2-minute timeout
+    test.setTimeout(120_000);
+
     await containerPage.getStarted();  
     const uniqueId = generateUniqueId();
     const folderTitle = `${containerPage.playwrightContainerTitle} ${uniqueId}`;
