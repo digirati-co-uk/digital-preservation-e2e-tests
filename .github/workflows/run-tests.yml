@@ -7,7 +7,7 @@ on:
   schedule:
     # * is a special character in YAML so you have to quote this string
     # Mon-Fri 8am utc, 5pm utc
-    - cron: '0 8,17 * * 1-5'
+    - cron: '0 8 * * 1-5'
   workflow_dispatch: {}
 
 permissions:

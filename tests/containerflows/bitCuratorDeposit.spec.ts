@@ -107,6 +107,16 @@ test.describe('BitCurator Deposit Tests', () => {
       await depositPage.checkFileNotPresentInMETS(metsXML, depositPage.bitCuratorFileFiveName, depositPage.bitCuratorFileFiveFullPath);
     });
 
+    await test.step('Verify the metadata folder and its child folders cannot have files added to them', async() => {
+      //Check that you can't create a folder or upload a file into the metadata folder
+      await expect(depositPage.uploadFileToMetadataFolder, 'There is no upload file button in the metadata folder').not.toBeVisible();
+      await expect(depositPage.createFolderWithinMetadataFolder, 'There is no create folder button in the metadata folder').not.toBeVisible();
+
+      //Check a subitem as well which had previously been showing the icons
+      await expect(depositPage.uploadFileToBrunnhildeFolder, 'There is no upload file button in the brunnhilde folder').not.toBeVisible();
+      await expect(depositPage.createFolderWithinBrunnhildeFolder, 'There is no create folder button in the brunnhilde folder').not.toBeVisible();
+    });
+
     await test.step('Select all non-Mets, verify existence in the METS file', async() => {
 
       //Select all Non Mets, check it's selected the right things
