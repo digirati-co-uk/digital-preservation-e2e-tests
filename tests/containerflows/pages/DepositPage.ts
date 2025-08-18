@@ -297,8 +297,8 @@ export class DepositPage {
     this.runImportButton = page.getByRole('button', {name: 'Run Import (Preserve)'});
     this.filesNotInMetsError = page.getByText('Unprocessable: Could not find file ');
     this.noCurrentImportJobsText = page.getByText('There are no submitted import jobs for this Deposit');
-    this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.');
-    this.depositNoFiles = page.getByText('No jobs can be run as there are no valid files in the Deposit.');
+    this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.').first();
+    this.depositNoFiles = page.getByText('No jobs can be run as there are no valid files in the Deposit.').first();
     this.inDepositOnlyText = 'Deposit';
     this.inBothText = 'Both';
     this.inMETSOnlyText = 'Mets';

@@ -66,6 +66,13 @@ export class ArchivalGroupPage {
   readonly digestField : Locator;
   readonly contentField : Locator;
 
+  //Versions page
+  readonly versionsPageHeader: Locator;
+  readonly versionsTableRows: Locator;
+  readonly versionFilesTableRows: Locator;
+  readonly newDepositFromVersion1: Locator;
+  readonly exportVersionButton: Locator;
+
   //<small>Created by: <a class="dlip-agent" href="/agents/zz_libplaywrighttest@leeds.ac.uk">zz_libplaywrighttest@leeds.ac.uk</a> | Last modified by: <a class="dlip-agent" href="/agents/zz_libplaywrighttest@leeds.ac.uk">zz_libplaywrighttest@leeds.ac.uk</a></small>
 
   constructor(page: Page) {
@@ -130,6 +137,13 @@ export class ArchivalGroupPage {
     this.sizeField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Size'})}).getByRole('cell');
     this.digestField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Digest'})}).getByRole('cell');
     this.contentField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Content', exact: true})}).getByRole('cell');
+
+    //Versions page
+    this.versionsPageHeader = page.getByRole('heading', {name: 'Version v2 of'});
+    this.versionsTableRows = page.getByRole('table', {name: 'table-versions'}).getByRole('row');
+    this.versionFilesTableRows = page.getByRole('table', {name: 'table-version-files'}).getByRole('row');
+    this.newDepositFromVersion1 = page.getByRole('button', { name: 'New Deposit from v1' });
+    this.exportVersionButton= page.getByRole('button', { name: 'Export version to Deposit' });
   }
 
   async checkModifiedBinariesFoldersEmpty(){

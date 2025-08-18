@@ -499,12 +499,80 @@ test.describe('Archival Group Tests', () => {
         await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
         await checkMetsForTheTestFiles(context, metsXML, false, archivalGroupPage.depositPage.testImageLocationFullPath, archivalGroupPage.depositPage.testWordDocLocationFullPath);
 
+        //This basically allows a v2 that is empty - but yet the UI would prevent us from creating a v1 that was empty
+        //I've raised an improvement ticket for this
         //Check diff import job deleted 2 files and patches the mets
         await checkTheFilesWillBeRemovedFromImportJob(page, archivalGroupPage.depositPage.testImageLocationFullPath, archivalGroupPage.depositPage.testWordDocLocationFullPath);
 
-        //TODO Raise with Tom, other than deleting the deposit, there is no way to reset the files after deletion
+      });
+
+      await test.step('Create a further Archival group version from the deposit', async () => {
+
+        //Recreate the sub folder that we just deleted
+        await archivalGroupPage.depositPage.createASubFolder(page, archivalGroupPage.depositPage.createFolderWithinObjectsFolder, archivalGroupPage.depositPage.newTestFolderTitle, archivalGroupPage.depositPage.newTestFolderSlug);
+
+        //Add a new file to the deposit which we did not have in the first deposit, and run the import job
+        await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testPdfDocLocation, false, archivalGroupPage.depositPage.uploadFileToTestFolder);
+        await archivalGroupPage.depositPage.createDiffImportJobButton.click();
+        await archivalGroupPage.runImportPreserveButton.click();
+        //Wait for the job to change to completed
+        await archivalGroupPage.allowJobToComplete();
+
+        //Follow the archival group link
+        await archivalGroupPage.diffArchivalGroup.click();
+        archivalGroupURL = `${archivalGroupPage.navigationPage.baseBrowsePath}/${archivalGroupString}`;
+        await expect(page, 'The URL is correct').toHaveURL(archivalGroupURL);
+
+        //Click on the version button to see the version listing
+        await archivalGroupPage.versionsButton.click();
+
+        //Await the header row to ensure the new page has loaded
+        await expect(archivalGroupPage.versionsPageHeader).toBeVisible();
+        //Get the version table rows
+        let versionsTableRows: Locator[] = await archivalGroupPage.versionsTableRows.all();
+        //Remove the header row
+        versionsTableRows.shift();
+        expect(versionsTableRows.length).toBe(2);
+
+        //Check that we have a v2 row
+        await expect(getVersionNumberFromRow(versionsTableRows[0])).toHaveText('v2');
+        await expect(getVersionInfoFromRow(versionsTableRows[0])).toHaveText('Currently viewing Latest (head) version');
+
+        //Check that the correct files display in the files table
+        let versionFileRows: Locator[] = await archivalGroupPage.versionFilesTableRows.all();
+        //Remove the header row
+        versionFileRows.shift();
+        expect(versionFileRows.length).toBe(2);
+
+        //Check we have a v1 row
+        await getVersionNumberFromRow(versionsTableRows[1]).getByRole('link').click();
+        await expect(getVersionNumberFromRow(versionsTableRows[1])).toHaveText('v1');
+        await expect(getVersionInfoFromRow(versionsTableRows[1])).toHaveText('Currently viewing');
+        await expect(getVersionInfoFromRow(versionsTableRows[0])).toHaveText('Latest (head) version');
+
+        //Check that the correct files display in the files table
+        versionFileRows = await archivalGroupPage.versionFilesTableRows.all();
+        //Remove the header row
+        versionFileRows.shift();
+        expect(versionFileRows.length).toBe(3);
+
+        //Create a new deposit from the version 1 archival group
+        await archivalGroupPage.newDepositFromVersion1.click();
+        await archivalGroupPage.exportVersionButton.click();
+
+        //Initially the page will contain a message stating that it is exporting files to the Deposit.
+        //This isn't guaranteed though, so don't check for the message, just refresh the page just in case
+        //Need to pause then refresh to load the files
+        await page.waitForTimeout(3_000);
+        await page.reload();
+
+        //Check that it's the 2 files from the original deposit that are visible
+        await expect(archivalGroupPage.depositPage.newTestImageFileInTable, 'We see the file in the Deposits table').toBeVisible();
+        await expect(archivalGroupPage.depositPage.newTestWordFileInTable, 'We see the file in the Deposits table').toBeVisible();
+        await expect(archivalGroupPage.depositPage.newTestPdfFileInTable, 'We DO NOT see the file in the Deposits table').not.toBeVisible();
+
+
         //Now go back and delete the deposit to tidy up
-        await page.goBack();
         await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
       });
     });
@@ -547,6 +615,14 @@ test.describe('Archival Group Tests', () => {
     await expect(archivalGroupPage.diffBinariesToAdd, 'There are no binaries to add').toBeEmpty();
     await expect(archivalGroupPage.diffBinariesToDelete, 'There are no binaries to delete').toBeEmpty();
     await page.goBack();
+  }
+
+  function getVersionNumberFromRow(row: Locator) : Locator{
+    return row.getByRole('cell', {name: 'td-ocfl-version'});
+  }
+
+  function getVersionInfoFromRow(row: Locator) : Locator{
+    return row.getByRole('cell', {name: 'td-version-info'});
   }
 
 });
