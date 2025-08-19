@@ -117,7 +117,7 @@ test.describe('BitCurator Deposit Tests', () => {
       await expect(depositPage.createFolderWithinBrunnhildeFolder, 'There is no create folder button in the brunnhilde folder').not.toBeVisible();
     });
 
-    await test.step('Select all non-Mets, verify existence in the METS file', async() => {
+    await test.step('Select all non-Mets, add to METS, verify existence in the METS file', async() => {
 
       //Select all Non Mets, check it's selected the right things
       await depositPage.actionsMenu.click();

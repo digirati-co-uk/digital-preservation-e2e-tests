@@ -26,6 +26,8 @@ export class DepositPage {
   readonly testImageWithInvalidCharsLocationTranslated : string;
   readonly newTestFolderTitle : string;
   readonly newTestFolderSlug : string;
+  readonly newTestFolderTitle2 : string;
+  readonly newTestFolderSlug2 : string;
   readonly folder2FullPath : string;
   readonly folder3FullPath : string;
   readonly nestedImageFullPath : string;
@@ -35,6 +37,7 @@ export class DepositPage {
   readonly testInvalidArchivalURI : string;
   readonly invalidURIMadeValid: string;
   readonly testFileLocation : string;
+  readonly secondTestFileLocation : string;
   readonly testValidArchivalURI : string;
   readonly testArchivalGroupName : string;
   readonly testDepositNote : string;
@@ -88,7 +91,9 @@ export class DepositPage {
   readonly createFolderWithinBrunnhildeFolder: Locator;
   readonly metsFile : Locator;
   readonly newTestFolderInTable : Locator;
+  readonly secondNewTestFolderInTable : Locator;
   readonly uploadFileToTestFolder : Locator;
+  readonly uploadFileToSecondTestFolder : Locator;
   readonly deleteTestFolder : Locator;
   readonly newTestImageFileInTable : Locator;
   readonly newTestImageFileTranslatedCharsInTable : Locator;
@@ -267,7 +272,6 @@ export class DepositPage {
     //They will be for now though.
     this.depositsListingURL = '/deposits?pageSize=100';
     this.depositsURL = /deposits\/\w{12}/;
-    this.testFileLocation = '../../../test-data/deposit/objects/New-test-folder-inside-objects/';
     this.objectsFolderName = 'objects';
     this.metadataFolderName = 'metadata';
     this.brunnhildeFolderName = 'brunnhilde';
@@ -282,7 +286,11 @@ export class DepositPage {
     this.testWordDocLocation = 'test_word_document.docx';
     this.testPdfDocLocation = 'test_pdf_document.pdf';
     this.newTestFolderTitle = 'New test folder inside objects';
+    this.newTestFolderTitle2 = 'Second test folder inside objects';
     this.newTestFolderSlug = this.objectsFolderName + '/new-test-folder-inside-objects';
+    this.newTestFolderSlug2 = this.objectsFolderName + '/second-test-folder-inside-objects';
+    this.testFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug}/`;
+    this.secondTestFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug2}/`;
     this.testImageLocationFullPath = this.newTestFolderSlug+'/'+this.testImageLocation;
     this.testWordDocLocationFullPath = this.newTestFolderSlug+'/'+this.testWordDocLocation;
     this.testPdfDocLocationFullPath = this.newTestFolderSlug+'/'+this.testPdfDocLocation;
@@ -354,7 +362,9 @@ export class DepositPage {
     //Locators specific to the test folders / files
     this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocationTranslated}"]`);
     this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
+    this.secondNewTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug2}"]`);
     this.uploadFileToTestFolder = this.newTestFolderInTable.locator(this.uploadFileIcon);
+    this.uploadFileToSecondTestFolder = this.secondNewTestFolderInTable.locator(this.uploadFileIcon);
     this.deleteTestFolder = this.newTestFolderInTable.locator(this.fileFolderCheckbox);
 
     //Locators for test files within the new test folder
