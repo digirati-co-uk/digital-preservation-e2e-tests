@@ -259,6 +259,8 @@ export class DepositPage {
   readonly bitCuratorFileFourChecksum: string;
   readonly bitCuratorDepositFileSizeTotals: Locator;
   readonly bitCuratorDepositFilesTotals: Locator;
+  readonly fileToDeleteName: string;
+  readonly fileToDeleteLocator: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -495,7 +497,7 @@ export class DepositPage {
     //BitCurator test specific Locators
     this.bitCuratorFileOneName = 'metadata';
     this.bitCuratorFileTwoName = 'nyc';
-      this.bitCuratorFileThreeName = 'DSCF1044.JPG';
+    this.bitCuratorFileThreeName = 'DSCF1044.JPG';
     this.bitCuratorFileFourName = 'warteck.jpg';
     this.bitCuratorFileFiveName = 'mimetypes.csv';
     this.bitCuratorFileOneFullPath = this.bitCuratorFileOneName;
@@ -518,8 +520,10 @@ export class DepositPage {
     this.checkSumType = 'SHA256';
     this.bitCuratorFileThreeChecksum = 'e2e9f06f8180d1f101eb5e02f97b70bc395750e6ffdecf045db43605acb50682';
     this.bitCuratorFileFourChecksum = '243c32394db4879c2fee146a0175ad5d402ed151656e7fb5ea580d04e2d4a6db';
-    this.bitCuratorDepositFileSizeTotals = page.getByText('49.8 MB in Deposit, 49.8 MB in METS, 49.8 MB Overall.');
-    this.bitCuratorDepositFilesTotals = page.getByText('16 files in 6 directories');
+    this.bitCuratorDepositFileSizeTotals = page.getByText('45.6 MB in Deposit, 45.6 MB in METS, 45.6 MB Overall.');
+    this.bitCuratorDepositFilesTotals = page.getByText('15 files in 6 directories');
+    this.fileToDeleteName = 'IMAGE-2.tiff';
+    this.fileToDeleteLocator = page.getByRole('row').filter({has: page.getByRole('cell').filter({ hasText: this.fileToDeleteName })});
   }
 
   async goto() {
