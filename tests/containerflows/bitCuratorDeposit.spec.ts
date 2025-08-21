@@ -117,7 +117,11 @@ test.describe('BitCurator Deposit Tests', () => {
       await expect(depositPage.createFolderWithinBrunnhildeFolder, 'There is no create folder button in the brunnhilde folder').not.toBeVisible();
     });
 
-    await test.step('Select all non-Mets, verify existence in the METS file', async() => {
+    await test.step('Verify we can delete a file from the objects folder', async() => {
+      await depositPage.deleteFile(depositPage.fileToDeleteLocator, depositPage.fileToDeleteName);
+    });
+
+    await test.step('Select all non-Mets, add to METS, verify existence in the METS file', async() => {
 
       //Select all Non Mets, check it's selected the right things
       await depositPage.actionsMenu.click();
@@ -178,7 +182,7 @@ test.describe('BitCurator Deposit Tests', () => {
     await test.step('Check that we can now run an import job', async() => {
       await depositPage.createDiffImportJobButton.click();
       //Check the 15 files are in the list, plus the METS file
-      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are 16 items in the Binaries to add').toHaveCount(16);
+      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), '5items in the Binaries to add').toHaveCount(15);
       await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.bitCuratorFileThreeName);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.bitCuratorFileFourName);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.bitCuratorFileFiveName);

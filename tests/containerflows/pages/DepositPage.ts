@@ -26,6 +26,8 @@ export class DepositPage {
   readonly testImageWithInvalidCharsLocationTranslated : string;
   readonly newTestFolderTitle : string;
   readonly newTestFolderSlug : string;
+  readonly newTestFolderTitle2 : string;
+  readonly newTestFolderSlug2 : string;
   readonly folder2FullPath : string;
   readonly folder3FullPath : string;
   readonly nestedImageFullPath : string;
@@ -35,6 +37,7 @@ export class DepositPage {
   readonly testInvalidArchivalURI : string;
   readonly invalidURIMadeValid: string;
   readonly testFileLocation : string;
+  readonly secondTestFileLocation : string;
   readonly testValidArchivalURI : string;
   readonly testArchivalGroupName : string;
   readonly testDepositNote : string;
@@ -88,7 +91,9 @@ export class DepositPage {
   readonly createFolderWithinBrunnhildeFolder: Locator;
   readonly metsFile : Locator;
   readonly newTestFolderInTable : Locator;
+  readonly secondNewTestFolderInTable : Locator;
   readonly uploadFileToTestFolder : Locator;
+  readonly uploadFileToSecondTestFolder : Locator;
   readonly deleteTestFolder : Locator;
   readonly newTestImageFileInTable : Locator;
   readonly newTestImageFileTranslatedCharsInTable : Locator;
@@ -254,6 +259,8 @@ export class DepositPage {
   readonly bitCuratorFileFourChecksum: string;
   readonly bitCuratorDepositFileSizeTotals: Locator;
   readonly bitCuratorDepositFilesTotals: Locator;
+  readonly fileToDeleteName: string;
+  readonly fileToDeleteLocator: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -267,7 +274,6 @@ export class DepositPage {
     //They will be for now though.
     this.depositsListingURL = '/deposits?pageSize=100';
     this.depositsURL = /deposits\/\w{12}/;
-    this.testFileLocation = '../../../test-data/deposit/objects/New-test-folder-inside-objects/';
     this.objectsFolderName = 'objects';
     this.metadataFolderName = 'metadata';
     this.brunnhildeFolderName = 'brunnhilde';
@@ -282,7 +288,11 @@ export class DepositPage {
     this.testWordDocLocation = 'test_word_document.docx';
     this.testPdfDocLocation = 'test_pdf_document.pdf';
     this.newTestFolderTitle = 'New test folder inside objects';
+    this.newTestFolderTitle2 = 'Second test folder inside objects';
     this.newTestFolderSlug = this.objectsFolderName + '/new-test-folder-inside-objects';
+    this.newTestFolderSlug2 = this.objectsFolderName + '/second-test-folder-inside-objects';
+    this.testFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug}/`;
+    this.secondTestFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug2}/`;
     this.testImageLocationFullPath = this.newTestFolderSlug+'/'+this.testImageLocation;
     this.testWordDocLocationFullPath = this.newTestFolderSlug+'/'+this.testWordDocLocation;
     this.testPdfDocLocationFullPath = this.newTestFolderSlug+'/'+this.testPdfDocLocation;
@@ -297,8 +307,8 @@ export class DepositPage {
     this.runImportButton = page.getByRole('button', {name: 'Run Import (Preserve)'});
     this.filesNotInMetsError = page.getByText('Unprocessable: Could not find file ');
     this.noCurrentImportJobsText = page.getByText('There are no submitted import jobs for this Deposit');
-    this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.');
-    this.depositNoFiles = page.getByText('No jobs can be run as there are no valid files in the Deposit.');
+    this.depositNotActiveText = page.getByText('No jobs can be run as this deposit is no longer active.').first();
+    this.depositNoFiles = page.getByText('No jobs can be run as there are no valid files in the Deposit.').first();
     this.inDepositOnlyText = 'Deposit';
     this.inBothText = 'Both';
     this.inMETSOnlyText = 'Mets';
@@ -354,7 +364,9 @@ export class DepositPage {
     //Locators specific to the test folders / files
     this.newTestImageFileTranslatedCharsInTable = page.locator(`[data-type="file"][data-path="${this.objectsFolderName}/${this.testImageWithInvalidCharsLocationTranslated}"]`);
     this.newTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug}"]`);
+    this.secondNewTestFolderInTable = page.locator(`[data-type="directory"][data-path="${this.newTestFolderSlug2}"]`);
     this.uploadFileToTestFolder = this.newTestFolderInTable.locator(this.uploadFileIcon);
+    this.uploadFileToSecondTestFolder = this.secondNewTestFolderInTable.locator(this.uploadFileIcon);
     this.deleteTestFolder = this.newTestFolderInTable.locator(this.fileFolderCheckbox);
 
     //Locators for test files within the new test folder
@@ -485,7 +497,7 @@ export class DepositPage {
     //BitCurator test specific Locators
     this.bitCuratorFileOneName = 'metadata';
     this.bitCuratorFileTwoName = 'nyc';
-      this.bitCuratorFileThreeName = 'DSCF1044.JPG';
+    this.bitCuratorFileThreeName = 'DSCF1044.JPG';
     this.bitCuratorFileFourName = 'warteck.jpg';
     this.bitCuratorFileFiveName = 'mimetypes.csv';
     this.bitCuratorFileOneFullPath = this.bitCuratorFileOneName;
@@ -508,8 +520,10 @@ export class DepositPage {
     this.checkSumType = 'SHA256';
     this.bitCuratorFileThreeChecksum = 'e2e9f06f8180d1f101eb5e02f97b70bc395750e6ffdecf045db43605acb50682';
     this.bitCuratorFileFourChecksum = '243c32394db4879c2fee146a0175ad5d402ed151656e7fb5ea580d04e2d4a6db';
-    this.bitCuratorDepositFileSizeTotals = page.getByText('49.8 MB in Deposit, 49.8 MB in METS, 49.8 MB Overall.');
-    this.bitCuratorDepositFilesTotals = page.getByText('16 files in 6 directories');
+    this.bitCuratorDepositFileSizeTotals = page.getByText('45.6 MB in Deposit, 45.6 MB in METS, 45.6 MB Overall.');
+    this.bitCuratorDepositFilesTotals = page.getByText('15 files in 6 directories');
+    this.fileToDeleteName = 'IMAGE-2.tiff';
+    this.fileToDeleteLocator = page.getByRole('row').filter({has: page.getByRole('cell').filter({ hasText: this.fileToDeleteName })});
   }
 
   async goto() {
