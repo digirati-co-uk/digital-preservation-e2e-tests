@@ -191,11 +191,11 @@ test.describe('BitCurator Deposit Tests', () => {
       await page.goBack();
     });
 
-    // await test.step('Tidy up and delete the Deposit', async() => {
-    //   //Navigate back into the first deposit in order to delete it
-    //   await page.goto(depositURL);
-    //   //Tidy up
-    //   await depositPage.deleteTheCurrentDeposit();
-    // });
+    await test.step('Tidy up and delete the Deposit', async() => {
+      //Navigate back into the first deposit in order to delete it
+      await page.goto(depositURL);
+      //Tidy up
+      await depositPage.deleteTheCurrentDeposit();
+    });
   });
 });
