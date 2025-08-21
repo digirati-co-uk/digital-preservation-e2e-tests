@@ -102,7 +102,10 @@ test.describe('Locking and unlocking a deposit', () => {
       await page.goto(depositURL);
 
       //Check that we cannot delete the Deposit
-      //TODO ONCE FIXED
+      await depositPage.deleteTheCurrentDeposit();
+      await expect(page, 'We have remained on the deposit page').toHaveURL(depositURL);
+      await expect(depositPage.alertMessage.filter({hasText: 'Conflict: Deposit is locked by'}), 'The banner alerting us the Deposit is locked is shown').toBeVisible();
+
 
       //Check that we cannot tick files, or upload files
       await expect(depositPage.testImageCheckbox, 'The checkbox is hidden').toBeHidden();
@@ -125,18 +128,17 @@ test.describe('Locking and unlocking a deposit', () => {
       await depositPage.lockButton.click();
       await expect(depositPage.alertMessage, 'The banner alerting us the Deposit is locked is shown').toContainText('Deposit locked')
 
+      //Check we cannot update the submission text if the deposit is locked by another user
       let depositWithText = await presentationApiContext.patch(depositAPIURL, {
         data: {
           submissionText: "This update should fail"
         }
       });
-      // Leave soft for now - failing - seem to be able to do this
-      //TODO Bug 95186 has been raised for this
-      expect.soft(depositWithText.status(), 'FAILING DUE TO BUG: We get the correct response code from the API').toBe(409);
+      expect(depositWithText.status(), 'FAILING DUE TO BUG: We get the correct response code from the API').toBe(409);
 
-      // try to get our own lock
+      // try to get our own , should get a 409 because still locked by another
       const lockResp2 = await presentationApiContext.post(lockUri);
-      expect.soft(lockResp2.status(), 'FAILING DUE TO BUG: We get the correct response code from the API').toBe(409); // because still locked by another
+      expect(lockResp2.status(), 'FAILING DUE TO BUG: We get the correct response code from the API').toBe(409);
 
       // we need to force it
       const forceLockUri = `${depositAPIURL}/lock?force=true`;
