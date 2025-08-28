@@ -139,7 +139,7 @@ export class ArchivalGroupPage {
     this.contentField = this.page.getByRole('row').filter({has: this.page.getByRole('rowheader', {name: 'Content', exact: true})}).getByRole('cell');
 
     //Versions page
-    this.versionsPageHeader = page.getByRole('heading', {name: 'Version v2 of'});
+    this.versionsPageHeader = page.getByRole('heading', {name: this.depositPage.testArchivalGroupName});
     this.versionsTableRows = page.getByRole('table', {name: 'table-versions'}).getByRole('row');
     this.versionFilesTableRows = page.getByRole('table', {name: 'table-version-files'}).getByRole('row');
     this.newDepositFromVersion1 = page.getByRole('button', { name: 'New Deposit from v1' });
