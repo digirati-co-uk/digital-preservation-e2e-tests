@@ -18,8 +18,8 @@ test.describe('Archival Group Tests', () => {
 
     test(`can create an Archival Group from a Deposit, ${useBagitLayout?'':'NOT'} in Bagit layout`, async ({page, context}) => {
 
-      //Set a 5-minute timeout
-      test.setTimeout(300_000);
+      //Set a 10-minute timeout
+      test.setTimeout(600_000);
 
       //Set up the METS file listeners to intercept any requests to the METS page to grab the XML
       let metsXML: Document;
@@ -67,7 +67,7 @@ test.describe('Archival Group Tests', () => {
         await archivalGroupPage.depositPage.modalArchivalSlug.clear();
         await archivalGroupPage.depositPage.modalArchivalSlug.click();
         await archivalGroupPage.depositPage.modalArchivalSlug.fill(archivalGroupString);
-        if(useBagitLayout) {
+        if (useBagitLayout) {
           await archivalGroupPage.depositPage.useBagitLayout.check();
         }
         await archivalGroupPage.depositPage.modalCreateNewDepositButton.click();
@@ -93,10 +93,9 @@ test.describe('Archival Group Tests', () => {
         await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testImageLocation, false, archivalGroupPage.depositPage.uploadFileToTestFolder);
         await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testWordDocLocation, false, archivalGroupPage.depositPage.uploadFileToTestFolder);
 
-        objectsFolderFullPath = objectsFolderFullPath + archivalGroupString ;
+        objectsFolderFullPath = objectsFolderFullPath + archivalGroupString;
         testImageFileFullPath = objectsFolderFullPath + '/' + archivalGroupPage.depositPage.newTestFolderSlug + '/' + archivalGroupPage.depositPage.testImageLocation;
         testWordFileFullPath = objectsFolderFullPath + '/' + archivalGroupPage.depositPage.newTestFolderSlug + '/' + archivalGroupPage.depositPage.testWordDocLocation;
-        console.log(testImageFileFullPath);
       });
 
       await test.step('Add rights statement and access restrictions', async () => {
@@ -175,7 +174,7 @@ test.describe('Archival Group Tests', () => {
         await expect(archivalGroupPage.diffArchivalGroup, 'The Archival Group slug is correct').toHaveText(`${archivalGroupPage.navigationPage.basePath}/${archivalGroupString}`);
         await expect(archivalGroupPage.diffArchivalGroup.getByRole('link'), 'The Archival Group slug link is correct').toHaveAttribute('href', `${archivalGroupPage.navigationPage.baseBrowsePath}/${archivalGroupString}`);
 
-        await expect(archivalGroupPage.diffDateBegun, 'Date Begun is empty').toBeEmpty();
+        await expect.soft(archivalGroupPage.diffDateBegun, 'Date Begun is empty').toBeEmpty();
         await expect(archivalGroupPage.diffDateFinished, 'Date Finished is empty').toBeEmpty();
         await expect(archivalGroupPage.diffSourceVersion, 'There is no diffSourceVersion').toHaveText('(none)');
         await expect(archivalGroupPage.diffNewVersion, 'There is no diffNewVersion').toHaveText('...');
@@ -416,7 +415,6 @@ test.describe('Archival Group Tests', () => {
         //Check diff import job deleted 2 files and patches the mets
         await checkTheFilesWillBeRemovedFromImportJob(page, archivalGroupPage.depositPage.testImageLocationFullPath, archivalGroupPage.depositPage.testWordDocLocationFullPath);
 
-        //TODO Raise with Tom, other than deleting the deposit, there is no way to reset the files after deletion. Is that ok?
         //Now go back and delete the deposit to tidy up
         await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
       });
@@ -513,7 +511,8 @@ test.describe('Archival Group Tests', () => {
         await archivalGroupPage.depositPage.openMetsFileInTab(context, archivalGroupPage.depositPage.metsFile.getByRole('link'));
         await checkMetsForTheTestFiles(context, metsXML, false, archivalGroupPage.depositPage.testImageLocationFullPath, archivalGroupPage.depositPage.testWordDocLocationFullPath);
 
-        //This basically allows a v2 that is empty - but yet the UI would prevent us from creating a v1 that was empty
+        //This basically allows a v2 that is empty - but yet the UI would prevent us from
+        //creating a v1 that was empty
         //I've raised an improvement ticket for this
         //Check diff import job deleted 2 files and patches the mets
         await checkTheFilesWillBeRemovedFromImportJob(page, archivalGroupPage.depositPage.testImageLocationFullPath, archivalGroupPage.depositPage.testWordDocLocationFullPath);
@@ -522,8 +521,9 @@ test.describe('Archival Group Tests', () => {
 
       await test.step('Create a further Archival group version from the deposit', async () => {
 
-        //Recreate the sub folder that we just deleted
+        //Recreate the sub folders that we just deleted
         await archivalGroupPage.depositPage.createASubFolder(page, archivalGroupPage.depositPage.createFolderWithinObjectsFolder, archivalGroupPage.depositPage.newTestFolderTitle, archivalGroupPage.depositPage.newTestFolderSlug);
+        await archivalGroupPage.depositPage.createASubFolder(page, archivalGroupPage.depositPage.createFolderWithinObjectsFolder, archivalGroupPage.depositPage.newTestFolderTitle2, archivalGroupPage.depositPage.newTestFolderSlug2);
 
         //Add a new file to the deposit which we did not have in the first deposit, and run the import job
         await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testPdfDocLocation, false, archivalGroupPage.depositPage.uploadFileToTestFolder);
@@ -541,7 +541,7 @@ test.describe('Archival Group Tests', () => {
         await archivalGroupPage.versionsButton.click();
 
         //Await the header row to ensure the new page has loaded
-        await expect(archivalGroupPage.versionsPageHeader, 'We can see the Versions Page heading').toBeVisible();
+        await expect(archivalGroupPage.versionsPageHeader, 'We can see the Versions Page heading').toContainText('Version v2 of');
         //Get the version table rows
         let versionsTableRows: Locator[] = await archivalGroupPage.versionsTableRows.all();
         //Remove the header row
@@ -560,7 +560,7 @@ test.describe('Archival Group Tests', () => {
 
         //Check we have a v1 row
         await getVersionNumberFromRow(versionsTableRows[1]).getByRole('link').click();
-        await expect(getVersionNumberFromRow(versionsTableRows[1]),'The second row contains v1').toHaveText('v1');
+        await expect(getVersionNumberFromRow(versionsTableRows[1]), 'The second row contains v1').toHaveText('v1');
         await expect(getVersionInfoFromRow(versionsTableRows[1]), 'The correct currently viewing message is displayed').toHaveText('Currently viewing');
         await expect(getVersionInfoFromRow(versionsTableRows[0]), 'The correct currently viewing message is displayed').toHaveText('Latest (head) version');
 
@@ -585,9 +585,39 @@ test.describe('Archival Group Tests', () => {
         await expect(archivalGroupPage.depositPage.newTestWordFileInTable, 'We see the file in the Deposits table').toBeVisible();
         await expect(archivalGroupPage.depositPage.newTestPdfFileInTable, 'We DO NOT see the file in the Deposits table').not.toBeVisible();
 
+      });
+      await test.step('Create a further Archival group version from the deposit with a duplicate file', async () => {
+        //Add a duplicate of a file we already have in the deposit
+        await archivalGroupPage.depositPage.uploadFile(archivalGroupPage.depositPage.testFileLocation + archivalGroupPage.depositPage.testImageLocation, false, archivalGroupPage.depositPage.uploadFileToSecondTestFolder);
+        await archivalGroupPage.depositPage.createDiffImportJobButton.click();
+        await archivalGroupPage.runImportPreserveButton.click();
+        //Wait for the job to change to completed
+        await archivalGroupPage.allowJobToComplete();
 
-        //Now go back and delete the deposit to tidy up
-        await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
+        //Follow the archival group link
+        await archivalGroupPage.diffArchivalGroup.click();
+        archivalGroupURL = `${archivalGroupPage.navigationPage.baseBrowsePath}/${archivalGroupString}`;
+        await expect(page, 'The URL is correct').toHaveURL(archivalGroupURL);
+
+        //Click on the version button to see the version listing
+        await archivalGroupPage.versionsButton.click();
+
+        //Await the header row to ensure the new page has loaded
+        await expect(archivalGroupPage.versionsPageHeader, 'We can see the Versions Page heading').toContainText('Version v3 of');
+        //Get the version table rows
+        let versionsTableRows: Locator[] = await archivalGroupPage.versionsTableRows.all();
+        //Remove the header row
+        versionsTableRows.shift();
+        expect(versionsTableRows.length).toBe(3);
+
+        //Check that the correct files display in the files table
+        let versionFileRows: Locator[] = await archivalGroupPage.versionFilesTableRows.all();
+        //Remove the header row
+        versionFileRows.shift();
+        expect(versionFileRows.length, 'There are 4 files in this version of the archival group').toBe(4);
+        let duplicateImageFileRows: Locator[] = await archivalGroupPage.versionFilesTableRows.filter({hasText: `v1/content/${archivalGroupPage.depositPage.testImageLocationFullPath}`}).all();
+        //Check we have 2 rows with the same versioned path
+        expect(duplicateImageFileRows.length, 'We have 2 rows with the same versioned path').toBe(2);
       });
     });
   }
