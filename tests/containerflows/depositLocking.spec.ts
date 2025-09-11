@@ -106,7 +106,6 @@ test.describe('Locking and unlocking a deposit', () => {
       await expect(page, 'We have remained on the deposit page').toHaveURL(depositURL);
       await expect(depositPage.alertMessage.filter({hasText: 'Conflict: Deposit is locked by'}), 'The banner alerting us the Deposit is locked is shown').toBeVisible();
 
-
       //Check that we cannot tick files, or upload files
       await expect(depositPage.testImageCheckbox, 'The checkbox is hidden').toBeHidden();
       await expect(depositPage.testWordDocCheckbox, 'The checkbox is hidden').toBeHidden();
@@ -119,9 +118,9 @@ test.describe('Locking and unlocking a deposit', () => {
       //Release the lock and check we have various UI options back
       await depositPage.releaseLockButton.click();
       await expect(depositPage.alertMessage, 'The banner alerting us the Deposit is unlocked is shown').toContainText('Lock released')
-      await expect(depositPage.testImageCheckbox, 'The checkbox is hidden').toBeVisible();
-      await expect(depositPage.testWordDocCheckbox, 'The checkbox is hidden').toBeVisible();
-      await expect(depositPage.uploadFileToTestFolder, 'There is no option to upload files').toBeVisible();
+      await expect(depositPage.testImageCheckbox, 'The checkbox is now visible').toBeVisible();
+      await expect(depositPage.testWordDocCheckbox, 'The checkbox is now visible').toBeVisible();
+      await expect(depositPage.uploadFileToTestFolder, 'There is now an option to upload files').toBeVisible();
 
       // Now lock the deposit in the UI
       await depositPage.actionsMenu.click();
@@ -134,11 +133,11 @@ test.describe('Locking and unlocking a deposit', () => {
           submissionText: "This update should fail"
         }
       });
-      expect(depositWithText.status(), 'FAILING DUE TO BUG: We get the correct response code from the API').toBe(409);
+      expect(depositWithText.status(), 'We get the correct response code from the API').toBe(409);
 
-      // try to get our own , should get a 409 because still locked by another
+      // try to get our own lock, should get a 409 because still locked by another
       const lockResp2 = await presentationApiContext.post(lockUri);
-      expect(lockResp2.status(), 'FAILING DUE TO BUG: We get the correct response code from the API').toBe(409);
+      expect(lockResp2.status(), 'We get the correct response code from the API').toBe(409);
 
       // we need to force it
       const forceLockUri = `${depositAPIURL}/lock?force=true`;
