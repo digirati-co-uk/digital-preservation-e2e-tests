@@ -596,7 +596,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.createDiffImportJobButton.click();
       //Check the 3 files are in the list, plus the METS file
       await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 4 items in the Binaries to add').toHaveCount(4);
-      //TODO reinstate await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
+      //TODO reinstate when 103922 fixed await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.testWordDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.testPdfDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
@@ -614,7 +614,7 @@ test.describe('Deposit Tests', () => {
 
       //Check that there are 3 files in the list, plus the METS file
       await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 4 items in the Binaries to add').toHaveCount(4);
-      //TODO reinstate await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
+      //TODO reinstate  when 103922 fixed await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.testWordDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.testPdfDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
