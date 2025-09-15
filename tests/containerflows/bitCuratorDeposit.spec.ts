@@ -20,7 +20,7 @@ test.describe('BitCurator Deposit Tests', () => {
     archivalGroupPage = new ArchivalGroupPage(page);
   });
 
-  test(`can create a Deposit from BitCurator output by adding files directly to the Deposit`, async ({page, context}) => {
+  test(`can create a Deposit from BitCurator output by adding files directly to the Deposit @api`, async ({page, context}) => {
 
     //Set a 2-minute timeout
     test.setTimeout(120_000);

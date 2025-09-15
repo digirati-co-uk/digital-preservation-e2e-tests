@@ -21,7 +21,7 @@ test.describe('Deposit Tests', () => {
   });
 
   for (const useBagitLayout of [true, false]) {
-    test(`can create a Deposit from the Deposits Left Hand Nav item and add folders and files, ${useBagitLayout?'':'NOT'} in Bagit layout`,
+    test(`can create a Deposit from the Deposits Left Hand Nav item and add folders and files, ${useBagitLayout?'':'NOT'} in Bagit layout @api`,
       async ({page,context}) => {
 
       //Set a 5-minute timeout
@@ -377,7 +377,7 @@ test.describe('Deposit Tests', () => {
   }
 
 
-  test(`can create a Deposit within a Container, and the slug defaults to that location. We can add files directly to the Deposit and update the METS`, async ({page, context}) => {
+  test(`can create a Deposit within a Container, and the slug defaults to that location. We can add files directly to the Deposit and update the METS  @api`, async ({page, context}) => {
 
     //Set a 2-minute timeout
     test.setTimeout(120_000);

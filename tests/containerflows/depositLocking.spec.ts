@@ -24,7 +24,7 @@ test.beforeEach('Set up POM', async ({ page }) => {
 
 test.describe('Locking and unlocking a deposit', () => {
 
-  test(`Locking and unlocking a deposit`, async ({page, context}) => {
+  test(`Locking and unlocking a deposit @api`, async ({page, context}) => {
 
     //Set a 5-minute timeout
     test.setTimeout(300_000);

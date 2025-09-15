@@ -13,7 +13,7 @@ test.describe('IIIF Builder End To End Tests', () => {
     iiifBuilderPage = new IIIFBuilderPage(page);
   });
 
-  test(`Can create a Deposit using an EMU Id`, async ({page}) => {
+  test(`Can create a Deposit using an EMU Id @api`, async ({page}) => {
 
     //This test will create a Deposit from a test EMU Id, upload
     //some files to that Deposit via AWS, and sync the Deposit via the UI.
