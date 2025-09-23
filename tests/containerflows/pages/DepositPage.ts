@@ -123,6 +123,7 @@ export class DepositPage {
   readonly selectAllNonMetsButton : Locator;
   readonly releaseLockButton: Locator;
   readonly lockButton: Locator;
+  readonly runPipelineButton: Locator;
   readonly refreshStorageButton: Locator;
   readonly deleteSelectedButton: Locator;
   readonly deleteFromMetsAndDeposit: Locator;
@@ -236,7 +237,7 @@ export class DepositPage {
   readonly bitCuratorFileTwoName: string;
   readonly bitCuratorFileThreeName: string;
   readonly bitCuratorFileFourName: string;
-  readonly bitCuratorFileFiveName: string;
+  readonly bitCuratorMetadataFileFiveName: string;
   readonly bitCuratorFileOneFullPath: string;
   readonly bitCuratorFileTwoFullPath: string;
   readonly bitCuratorFileThreeFullPath: string;
@@ -262,6 +263,14 @@ export class DepositPage {
   readonly fileToDeleteName: string;
   readonly fileToDeleteLocator: Locator;
 
+  //Pipeline table locators
+  readonly pipelineJobTable: Locator;
+  readonly pipelineJobTableFirstRow: Locator;
+  readonly pipelineJobStatus: Locator;
+  readonly testImageChecksum: string;
+  readonly testWordDocChecksum: string;
+  readonly testPdfDocChecksum: string;
+
   constructor(page: Page) {
     this.page = page;
     this.navigationPage = new NavigationPage(page);
@@ -278,7 +287,7 @@ export class DepositPage {
     this.metadataFolderName = 'metadata';
     this.brunnhildeFolderName = 'brunnhilde';
     this.metsFileName = 'mets.xml';
-    this.testImageLocation = 'test_image.jpg';
+    this.testImageLocation = 'test_image().jpg';
     this.nestedTestImageLocation = 'test_image.png';
     this.testImageFileType = 'image/jpeg';
     this.testImageFileSize = '45 KB';
@@ -393,6 +402,7 @@ export class DepositPage {
     this.selectAllNonMetsButton = page.getByRole('button', {name: 'Select all non-METS'});
     this.releaseLockButton = page.getByRole('button', {name: 'Release lock'});
     this.lockButton = page.getByRole('button', {name: 'Lock deposit'});
+    this.runPipelineButton = page.getByRole('button', {name: 'Run pipeline'});
     this.refreshStorageButton = page.getByRole('button', {name: 'Refresh storage'});
     this.deleteSelectedButton = page.getByRole('button', {name: 'Delete selected...'});
     this.deleteFromMetsAndDeposit = page.locator('#deleteFromMetsAndDeposit');
@@ -499,12 +509,12 @@ export class DepositPage {
     this.bitCuratorFileTwoName = 'nyc';
     this.bitCuratorFileThreeName = 'DSCF1044.JPG';
     this.bitCuratorFileFourName = 'warteck.jpg';
-    this.bitCuratorFileFiveName = 'mimetypes.csv';
+    this.bitCuratorMetadataFileFiveName = 'mimetypes.csv';
     this.bitCuratorFileOneFullPath = this.bitCuratorFileOneName;
     this.bitCuratorFileTwoFullPath = `objects/${this.bitCuratorFileTwoName}`;
     this.bitCuratorFileThreeFullPath = `objects/nyc/${this.bitCuratorFileThreeName}`;
     this.bitCuratorFileFourFullPath = `objects/${this.bitCuratorFileFourName}`;
-    this.bitCuratorFileFiveFullPath = `metadata/brunnhilde/csv_reports/${this.bitCuratorFileFiveName}`;
+    this.bitCuratorFileFiveFullPath = `metadata/brunnhilde/csv_reports/${this.bitCuratorMetadataFileFiveName}`;
     this.bitCuratorFileOne = page.locator(`[data-type="directory"][data-path="${this.bitCuratorFileOneFullPath}"]`);
     this.bitCuratorFileTwo = page.locator(`[data-type="directory"][data-path="${this.bitCuratorFileTwoFullPath}"]`);
     this.bitCuratorFileThree = page.locator(`[data-type="file"][data-path="${this.bitCuratorFileThreeFullPath}"]`);
@@ -524,6 +534,15 @@ export class DepositPage {
     this.bitCuratorDepositFilesTotals = page.getByText('15 files in 6 directories');
     this.fileToDeleteName = 'IMAGE-2.tiff';
     this.fileToDeleteLocator = page.getByRole('row').filter({has: page.getByRole('cell').filter({ hasText: this.fileToDeleteName })});
+
+    //Pipeline table locators
+    this.pipelineJobTable = page.getByRole('table', {name: 'table-deposit-pipeline-jobs'});
+    this.pipelineJobTableFirstRow = this.pipelineJobTable.getByRole('row').nth(1);
+    this.pipelineJobStatus = this.pipelineJobTableFirstRow.getByLabel('td-status');
+    this.testImageChecksum = '62db932f4c8b13da0bb441b21a5b90fa47758a29afa519cb03fcae9606912e82';
+    this.testWordDocChecksum = '132d77469b1653818753e0c9c6a7e6387f29042cdffcd4887387a004d9e30dff';
+    this.testPdfDocChecksum = 'b07b3df4509ddd400f18b0c078f1a40d2241eb716d0ee3b1ec7a97df18ac5305';
+
   }
 
   async goto() {

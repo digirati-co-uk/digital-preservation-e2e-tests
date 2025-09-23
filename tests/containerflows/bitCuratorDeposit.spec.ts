@@ -20,7 +20,7 @@ test.describe('BitCurator Deposit Tests', () => {
     archivalGroupPage = new ArchivalGroupPage(page);
   });
 
-  test(`can create a Deposit from BitCurator output by adding files directly to the Deposit`, async ({page, context}) => {
+  test(`can create a Deposit from BitCurator output by adding files directly to the Deposit @api`, async ({page, context}) => {
 
     //Set a 2-minute timeout
     test.setTimeout(120_000);
@@ -104,7 +104,7 @@ test.describe('BitCurator Deposit Tests', () => {
       await depositPage.checkFileNotPresentInMETS(metsXML, depositPage.bitCuratorFileTwoName, depositPage.bitCuratorFileTwoFullPath);
       await depositPage.checkFileNotPresentInMETS(metsXML, depositPage.bitCuratorFileThreeName, depositPage.bitCuratorFileThreeFullPath);
       await depositPage.checkFileNotPresentInMETS(metsXML, depositPage.bitCuratorFileFourName, depositPage.bitCuratorFileFourFullPath);
-      await depositPage.checkFileNotPresentInMETS(metsXML, depositPage.bitCuratorFileFiveName, depositPage.bitCuratorFileFiveFullPath);
+      await depositPage.checkFileNotPresentInMETS(metsXML, depositPage.bitCuratorMetadataFileFiveName, depositPage.bitCuratorFileFiveFullPath);
     });
 
     await test.step('Verify the metadata folder and its child folders cannot have files added to them', async() => {
@@ -185,7 +185,7 @@ test.describe('BitCurator Deposit Tests', () => {
       await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), '5items in the Binaries to add').toHaveCount(15);
       await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.bitCuratorFileThreeName);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.bitCuratorFileFourName);
-      await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.bitCuratorFileFiveName);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.bitCuratorMetadataFileFiveName);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
       await expect(depositPage.runImportButton, 'We can now see the button to run the Import').toBeVisible();
       await page.goBack();

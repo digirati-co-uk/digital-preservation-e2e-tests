@@ -30,7 +30,7 @@ test.describe('Container Tests', () => {
     expect(await containerPage.folderPathNameInput.inputValue(), 'The slug was replaced with a valid one').toEqual(containerPage.titleStrippedOfUpperCaseSpaces);
   });
 
-  test(`can create a container/folder with a properly formed slug and see the details displayed`, async ({page}) => {
+  test(`can create a container/folder with a properly formed slug and see the details displayed @api`, async ({page}) => {
 
     //Set a 2-minute timeout
     test.setTimeout(120_000);
