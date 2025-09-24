@@ -87,8 +87,16 @@ export default defineConfig({
 
       }
     },
-
+     {
+      name: 'loadtests_api',
+      testDir: './tests/loadtesting_api',
+      testMatch: /.*\.spec\.ts/,
+      use: {
+        baseURL: process.env.PRESERVATION_API_ENDPOINT,
+        contextOptions: {
+        ignoreHTTPSErrors: true,
+         },
+      },  
+    },
   ],
-
-
 });
