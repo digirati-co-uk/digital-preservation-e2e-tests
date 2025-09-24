@@ -1,7 +1,7 @@
 <mets:mets xmlns:mods="http://www.loc.gov/mods/v3" xmlns:premis="http://www.loc.gov/premis/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mets="http://www.loc.gov/METS/">
     <mets:metsHdr CREATEDATE="2025-04-22T10:30:15.3145077+00:00">
         <mets:agent ROLE="CREATOR" TYPE="OTHER" OTHERTYPE="SOFTWARE">
-            <mets:name>University of Leeds Digital Library Infrastructure Project</mets:name>
+            <mets:name>Created by Playwright</mets:name>
         </mets:agent>
     </mets:metsHdr>
     <mets:dmdSec ID="DMD_PHYS_ROOT">
@@ -116,8 +116,8 @@
     </mets:fileSec>
     <mets:structMap TYPE="PHYSICAL">
         <mets:div ID="PHYS_ROOT" LABEL="__ROOT" DMDID="DMD_PHYS_ROOT" TYPE="Directory">
-                <mets:div ID="PHYS_metadata" LABEL="metadata" DMDID="DMD_metadata" ADMID="ADM_metadata" TYPE="Directory"/>
-                <mets:div ID="PHYS_objects" LABEL="objects" DMDID="DMD_objects" ADMID="ADM_objects" TYPE="Directory">
+            <mets:div ID="PHYS_metadata" LABEL="metadata" DMDID="DMD_metadata" ADMID="ADM_metadata" TYPE="Directory"/>
+            <mets:div ID="PHYS_objects" LABEL="objects" DMDID="DMD_objects" ADMID="ADM_objects" TYPE="Directory">
                 <mets:div ID="PHYS_objects/new-test-folder-inside-objects" LABEL="New test folder inside objects" ADMID="ADM_objects/new-test-folder-inside-objects" TYPE="Directory">
                     <mets:div ID="PHYS_objects/new-test-folder-inside-objects/test_image().jpg" LABEL="test_image().jpg" TYPE="Item">
                         <mets:fptr FILEID="FILE_objects/new-test-folder-inside-objects/test_image().jpg"/>

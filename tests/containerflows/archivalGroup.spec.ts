@@ -155,7 +155,7 @@ test.describe('Archival Group Tests', () => {
         //Check the 2 files are in the list, and that's the only 3 things there (the 2 files, plus the mets file)
         await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 3 items in the Binaries to add').toHaveCount(3);
         //TODO soft until 103922 is fixed
-        await expect.soft(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(testImageFileFullPath);
+        await expect.soft(archivalGroupPage.diffBinariesToAdd, 'Failig due to BUG 103922: First test file to add is correct').toContainText(testImageFileFullPath);
         await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(testWordFileFullPath);
         await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
 
