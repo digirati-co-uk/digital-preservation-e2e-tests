@@ -135,6 +135,7 @@ export class DepositPage {
   readonly objectIdentifier : Locator;
   readonly modalArchivalSlug : Locator;
   readonly modalArchivalName : Locator;
+  readonly modalArchivalNote : Locator;
   readonly modalCreateNewDepositButton : Locator;
   readonly slugDisplayOnModal: Locator;
   readonly useBagitLayout: Locator;
@@ -414,6 +415,7 @@ export class DepositPage {
     this.objectIdentifier = page.locator('#objectIdentifier');
     this.modalArchivalSlug = page.locator('#archivalGroupSlug');
     this.modalArchivalName = page.locator('#archivalGroupProposedName');
+    this.modalArchivalNote = page.locator('#submissionText');
     this.slugDisplayOnModal = page.locator('#slugDisplay');
     this.useBagitLayout = page.getByRole('checkbox', {name:'use bagit layout'});
     this.usingBagitGuidance = page.getByText('This Deposit uses BagIt layout on disk/S3.');

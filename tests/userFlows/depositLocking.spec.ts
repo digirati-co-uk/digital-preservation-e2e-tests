@@ -1,6 +1,5 @@
 import {APIRequestContext, expect, Locator} from "@playwright/test";
-import {frontendBaseUrl, generateUniqueId, getS3Client, uploadFile} from "../helpers/helpers";
-import {ConfidentialClientApplication} from "@azure/msal-node";
+import {generateUniqueId} from "../helpers/helpers";
 import {Document, DOMParser} from "@xmldom/xmldom";
 import {DepositPage} from "./pages/DepositPage";
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";

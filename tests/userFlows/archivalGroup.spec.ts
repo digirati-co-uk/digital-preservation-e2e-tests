@@ -4,7 +4,6 @@ import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 import { DOMParser, Document } from '@xmldom/xmldom';
 import {checkDateIsWithinNumberOfSeconds, createdByUserName, generateUniqueId} from "../helpers/helpers";
 import {StatusCodes} from "http-status-codes";
-import {arch} from "node:os";
 
 test.describe('Archival Group Tests', () => {
 
