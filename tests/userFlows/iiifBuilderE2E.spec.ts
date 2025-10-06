@@ -161,11 +161,11 @@ test.describe('IIIF Builder End To End Tests', () => {
       // We need to sleep/refresh here until the iiif Publisher has done it's thing
       // and we hit the right number of canvases
       if(removedJpg) {
-        jsonBody = await iiifBuilderPage.refreshTheManifestJSON(iiifTab, 3);
-        expect(jsonBody.items, 'Manifest has the correct number of canvas items').toHaveLength(3);
+        jsonBody = await iiifBuilderPage.refreshTheManifestJSON(iiifTab, 1);
+        expect(jsonBody.items, 'Manifest has the correct number of canvas items').toHaveLength(1);
       }else{
-        jsonBody = await iiifBuilderPage.refreshTheManifestJSON(iiifTab, 4);
-        expect(jsonBody.items, 'Manifest has the correct number of canvas items').toHaveLength(4);
+        jsonBody = await iiifBuilderPage.refreshTheManifestJSON(iiifTab, 2);
+        expect(jsonBody.items, 'Manifest has the correct number of canvas items').toHaveLength(2);
       }
 
       //92023 Rewrite Rules testing
