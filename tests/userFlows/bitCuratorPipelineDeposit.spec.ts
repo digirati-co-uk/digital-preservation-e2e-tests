@@ -80,9 +80,7 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
 
       if (refreshStorage) {
         await test.step('Refresh storage', async () => {
-          //Refresh the storage
-          await depositPage.actionsMenu.click();
-          await depositPage.refreshStorageButton.click();
+          await depositPage.refreshStorage();
         });
       }
 

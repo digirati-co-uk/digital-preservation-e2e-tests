@@ -252,6 +252,11 @@ test.describe('Deposit Tests', () => {
         //Verify that the file was NOT uploaded, and we receive a checksum error message
         await expect(depositPage.alertMessage, 'Checksum did not match message has been displayed').toContainText('Checksum on server did not match');
         await expect(depositPage.newTestPdfFileInTable, 'We cannot see the new file in the Deposits table').not.toBeVisible();
+
+        //Refresh Storage and check that the error message is gone, and we still cannot see the file
+        await depositPage.refreshStorage();
+        await expect(depositPage.alertMessage, 'Checksum error message is no longer visible').toBeHidden();
+        await expect(depositPage.newTestPdfFileInTable, 'We cannot see the new file in the Deposits table').not.toBeVisible();
       });
 
       await test.step('We can create a file without giving it a name, and it appears in the METS file', async () => {

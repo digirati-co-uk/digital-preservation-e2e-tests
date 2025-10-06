@@ -891,4 +891,10 @@ export class DepositPage {
     }
     await expect(this.page.getByRole('dialog')).not.toBeVisible();
   }
+
+  async refreshStorage(){
+    //Refresh the storage
+    await this.actionsMenu.click();
+    await this.refreshStorageButton.click();
+  }
 }
