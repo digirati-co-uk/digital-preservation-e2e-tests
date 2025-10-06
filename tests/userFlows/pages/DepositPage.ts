@@ -124,6 +124,7 @@ export class DepositPage {
   readonly releaseLockButton: Locator;
   readonly lockButton: Locator;
   readonly runPipelineButton: Locator;
+  readonly cancelPipelineButton: Locator;
   readonly refreshStorageButton: Locator;
   readonly deleteSelectedButton: Locator;
   readonly deleteFromMetsAndDeposit: Locator;
@@ -404,6 +405,7 @@ export class DepositPage {
     this.releaseLockButton = page.getByRole('button', {name: 'Release lock'});
     this.lockButton = page.getByRole('button', {name: 'Lock deposit'});
     this.runPipelineButton = page.getByRole('button', {name: 'Run pipeline'});
+    this.cancelPipelineButton = page.getByRole('button', {name: 'Stop pipeline run'});
     this.refreshStorageButton = page.getByRole('button', {name: 'Refresh storage'});
     this.deleteSelectedButton = page.getByRole('button', {name: 'Delete selected...'});
     this.deleteFromMetsAndDeposit = page.locator('#deleteFromMetsAndDeposit');
