@@ -2,11 +2,8 @@ import {expect, Locator} from "@playwright/test";
 import { DepositPage } from './pages/DepositPage';
 import {presentationApiContext, test} from '../../fixture';
 import {
-  checkDateIsWithinNumberOfSeconds, checkForFileInS3,
-  createdByUserName, frontendBaseUrl,
   generateUniqueId
 } from "../helpers/helpers";
-import * as path from 'path';
 import { DOMParser, Document } from '@xmldom/xmldom';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 

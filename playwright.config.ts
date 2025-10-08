@@ -19,7 +19,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 0 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter:
     process.env.CI ?
@@ -59,7 +59,7 @@ export default defineConfig({
     {
       dependencies: ['frontend-setup'],
       name: 'frontendtests',
-      testDir: './tests/containerflows',
+      testDir: './tests/userFlows',
       testMatch: /.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
@@ -70,7 +70,7 @@ export default defineConfig({
     {
       dependencies: ['frontend-setup'],
       name: 'frontendtestsnoapi',
-      testDir: './tests/containerflows',
+      testDir: './tests/userFlows',
       grepInvert: /@api/,
       testMatch: /.*\.spec\.ts/,
       use: {
@@ -82,7 +82,7 @@ export default defineConfig({
     {
       dependencies: ['frontend-setup'],
       name: 'frontendtestswithapi',
-      testDir: './tests/containerflows',
+      testDir: './tests/userFlows',
       grep: /@api/,
       testMatch: /.*\.spec\.ts/,
       use: {

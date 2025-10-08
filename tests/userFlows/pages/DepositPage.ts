@@ -124,6 +124,7 @@ export class DepositPage {
   readonly releaseLockButton: Locator;
   readonly lockButton: Locator;
   readonly runPipelineButton: Locator;
+  readonly cancelPipelineButton: Locator;
   readonly refreshStorageButton: Locator;
   readonly deleteSelectedButton: Locator;
   readonly deleteFromMetsAndDeposit: Locator;
@@ -135,6 +136,7 @@ export class DepositPage {
   readonly objectIdentifier : Locator;
   readonly modalArchivalSlug : Locator;
   readonly modalArchivalName : Locator;
+  readonly modalArchivalNote : Locator;
   readonly modalCreateNewDepositButton : Locator;
   readonly slugDisplayOnModal: Locator;
   readonly useBagitLayout: Locator;
@@ -403,6 +405,7 @@ export class DepositPage {
     this.releaseLockButton = page.getByRole('button', {name: 'Release lock'});
     this.lockButton = page.getByRole('button', {name: 'Lock deposit'});
     this.runPipelineButton = page.getByRole('button', {name: 'Run pipeline'});
+    this.cancelPipelineButton = page.getByRole('button', {name: 'Stop pipeline run'});
     this.refreshStorageButton = page.getByRole('button', {name: 'Refresh storage'});
     this.deleteSelectedButton = page.getByRole('button', {name: 'Delete selected...'});
     this.deleteFromMetsAndDeposit = page.locator('#deleteFromMetsAndDeposit');
@@ -414,6 +417,7 @@ export class DepositPage {
     this.objectIdentifier = page.locator('#objectIdentifier');
     this.modalArchivalSlug = page.locator('#archivalGroupSlug');
     this.modalArchivalName = page.locator('#archivalGroupProposedName');
+    this.modalArchivalNote = page.locator('#submissionText');
     this.slugDisplayOnModal = page.locator('#slugDisplay');
     this.useBagitLayout = page.getByRole('checkbox', {name:'use bagit layout'});
     this.usingBagitGuidance = page.getByText('This Deposit uses BagIt layout on disk/S3.');
@@ -888,5 +892,11 @@ export class DepositPage {
       await this.closeAccessConditionsAndRightsButton.click();
     }
     await expect(this.page.getByRole('dialog')).not.toBeVisible();
+  }
+
+  async refreshStorage(){
+    //Refresh the storage
+    await this.actionsMenu.click();
+    await this.refreshStorageButton.click();
   }
 }

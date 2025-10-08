@@ -252,6 +252,11 @@ test.describe('Deposit Tests', () => {
         //Verify that the file was NOT uploaded, and we receive a checksum error message
         await expect(depositPage.alertMessage, 'Checksum did not match message has been displayed').toContainText('Checksum on server did not match');
         await expect(depositPage.newTestPdfFileInTable, 'We cannot see the new file in the Deposits table').not.toBeVisible();
+
+        //Refresh Storage and check that the error message is gone, and we still cannot see the file
+        await depositPage.refreshStorage();
+        await expect(depositPage.alertMessage, 'Checksum error message is no longer visible').toBeHidden();
+        await expect(depositPage.newTestPdfFileInTable, 'We cannot see the new file in the Deposits table').not.toBeVisible();
       });
 
       await test.step('We can create a file without giving it a name, and it appears in the METS file', async () => {
@@ -596,7 +601,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.createDiffImportJobButton.click();
       //Check the 3 files are in the list, plus the METS file
       await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 4 items in the Binaries to add').toHaveCount(4);
-      //TODO reinstate when 103922 fixed await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.testWordDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.testPdfDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
@@ -614,7 +619,7 @@ test.describe('Deposit Tests', () => {
 
       //Check that there are 3 files in the list, plus the METS file
       await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 4 items in the Binaries to add').toHaveCount(4);
-      //TODO reinstate  when 103922 fixed await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.testWordDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.testPdfDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
@@ -709,7 +714,7 @@ test.describe('Deposit Tests', () => {
       await depositPage.createDiffImportJobButton.click();
       //Check the 3 files are in the list, plus the METS file
       await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 4 items in the Binaries to add').toHaveCount(4);
-      //TODO reinstate when 103922 fixed await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.testWordDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.testPdfDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);

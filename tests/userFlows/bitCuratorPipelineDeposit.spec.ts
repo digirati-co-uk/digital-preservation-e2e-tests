@@ -15,7 +15,7 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
     depositPage = new DepositPage(page);
   });
   for (const refreshStorage of [true, false]) {
-    test(`can create an Archival Group from a Deposit, NOT in Bagit layout, ${refreshStorage?'WITH':'WITHOUT'} refresh of storage @api`, async ({page, context}) => {
+    test(`can run the BitCurator pipeline, NOT in Bagit layout, ${refreshStorage?'WITH':'WITHOUT'} refresh of storage @api`, async ({page, context}) => {
 
       //Set a 10-minute timeout
       test.setTimeout(600_000);
@@ -80,15 +80,14 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
 
       if (refreshStorage) {
         await test.step('Refresh storage', async () => {
-          //Refresh the storage
-          await depositPage.actionsMenu.click();
-          await depositPage.refreshStorageButton.click();
+          await depositPage.refreshStorage();
         });
       }
 
       await test.step('Kick off the pipeline and await it finishing', async () => {
         //Start the pipeline
         await depositPage.actionsMenu.click();
+        await expect(depositPage.cancelPipelineButton, 'The button to stop the pipeline run should be disabled initially').toBeDisabled();
         await depositPage.runPipelineButton.click();
 
         //Test for 'Deposit locked and pipeline running' alert banner
@@ -105,6 +104,8 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
         await expect(depositPage.runPipelineButton, 'The Run Pipeline button is disabled').toBeDisabled();
         await expect(depositPage.deleteSelectedButton, 'The Delete Selected button is disabled').toBeDisabled();
         await expect(depositPage.refreshStorageButton, 'The Refresh Storage button is disabled').toBeDisabled();
+        //Check the stop pipeline button is ENABLED
+        await expect(depositPage.cancelPipelineButton, 'The button to stop the pipeline run should be enabled now').toBeEnabled();
 
         //Check that you cannot run the import job while the pipeline is running
         await expect(depositPage.createDiffImportJobButton, 'Cannot run an import job while the pipeline is running').toContainClass('disabled');
@@ -242,53 +243,86 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
       });
     });
   }
+
+  test(`can cancel the BitCurator pipeline run @api`, async ({page, context}) => {
+
+    //Set a 2-minute timeout
+    test.setTimeout(120_000);
+
+    let archivalGroupString: string = depositPage.testValidArchivalURI + generateUniqueId();
+    let depositId, depositURL: string;
+    let objectsFolderFullPath: string = archivalGroupPage.navigationPage.basePath + '/';
+    let testImageFileFullPath: string = archivalGroupPage.navigationPage.basePath + '/';
+    let testWordFileFullPath: string = archivalGroupPage.navigationPage.basePath + '/';
+    let archivalGroupURL: string;
+
+    await test.step('Create a Deposit from within the structure to ensure archival group already set', async () => {
+      await depositPage.getStarted();
+      await depositPage.newDepositButton.click();
+
+      await depositPage.modalArchivalSlug.fill(archivalGroupString);
+      await depositPage.modalCreateNewDepositButton.click();
+      await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(depositPage.depositsURL);
+      depositURL = page.url();
+      depositId = depositURL.substring(depositURL.lastIndexOf('/') + 1);
+    });
+
+    await test.step('Add a name and some files to the Deposit', async () => {
+      await depositPage.archivalGroupNameInput.fill(depositPage.testArchivalGroupName);
+      await depositPage.updateArchivalPropertiesButton.click();
+      await expect(depositPage.alertMessage, 'Successful update message is shown').toContainText('Deposit successfully updated');
+      //Create some new sub folders
+      await depositPage.createASubFolder(page, depositPage.createFolderWithinObjectsFolder, depositPage.newTestFolderTitle, depositPage.newTestFolderSlug);
+
+      //Add some files to the new folder
+      await depositPage.uploadFile(depositPage.testFileLocation + depositPage.testImageLocation, false, depositPage.uploadFileToTestFolder);
+      await depositPage.uploadFile(depositPage.testFileLocation + depositPage.testWordDocLocation, false, depositPage.uploadFileToTestFolder);
+
+      objectsFolderFullPath = objectsFolderFullPath + archivalGroupString;
+      testImageFileFullPath = objectsFolderFullPath + '/' + depositPage.newTestFolderSlug + '/' + depositPage.testImageLocation;
+      testWordFileFullPath = objectsFolderFullPath + '/' + depositPage.newTestFolderSlug + '/' + depositPage.testWordDocLocation;
+    });
+
+    await test.step('Add a file directly in s3', async () => {
+      let files = [
+        `${depositPage.newTestFolderSlug}/${depositPage.testPdfDocLocation}`,
+      ];
+      await depositPage.uploadFilesToDepositS3Bucket(files, depositURL, 'test-data/deposit/', false);
+    });
+
+    await test.step('Kick off the pipeline and then cancel it', async () => {
+      //Start the pipeline
+      await depositPage.actionsMenu.click();
+      await depositPage.runPipelineButton.click();
+
+      //Test for 'Deposit locked and pipeline running' alert banner
+      await expect(depositPage.alertMessage, 'We see the Deposit Locked message').toContainText('Deposit locked and pipeline run message sent.');
+
+      //Now click the stop pipeline button
+      await depositPage.actionsMenu.click();
+      await depositPage.cancelPipelineButton.click();
+      await expect(depositPage.pipelineJobStatus, 'The Status of the diff is correct').toHaveText('completedWithErrors');
+
+      //There should be a banner stating we cancelled the job
+      await expect(depositPage.alertMessage, 'We see the Pipeline cancelled banner').toContainText('Force complete of pipeline succeeded and lock released');
+
+      //Check the deposit is now unlocked
+      await depositPage.actionsMenu.click();
+      await expect(depositPage.releaseLockButton).not.toBeVisible();
+      await expect(depositPage.lockButton).toBeVisible();
+      await depositPage.actionsMenu.click();
+    });
+
+    await test.step('Delete the deposit', async () => {
+      await depositPage.deleteTheCurrentDeposit();
+    });
+  });
+
   async function checkMetsForTheTestFiles(context: BrowserContext, metsXML: Document, shouldExist: boolean, file1Location: string, file2Location: string){
     //Validate that we have/don't have (based on shouldExist) an amdSec with each new file
     await depositPage.checkAmdSecExists(metsXML, file1Location, shouldExist);
     await depositPage.checkAmdSecExists(metsXML, file2Location, shouldExist);
   }
-
-  async function checkAllTheFiles(allCheckBoxes: Locator[]){
-    for (const currentCheckBox of allCheckBoxes){
-      await currentCheckBox.click();
-    }
-  }
-
-  async function checkTheFilesWillBeRemovedFromImportJob(page: Page, file1Location: string, file2Location: string){
-    //Check diff import job deleted 2 files and patches the mets
-    await depositPage.createDiffImportJobButton.click();
-    await expect(archivalGroupPage.diffBinariesToDelete, 'There are files in the delete section').not.toBeEmpty();
-    await expect(archivalGroupPage.diffBinariesToDelete, 'First test file to remove is correct').toContainText(file1Location);
-    await expect(archivalGroupPage.diffBinariesToDelete, 'Second test file to remove is correct').toContainText(file2Location);
-    await expect(archivalGroupPage.diffBinariesToPatch, 'METS file will be amended').toContainText(depositPage.metsFileName);
-    await page.goBack();
-  }
-
-  async function deleteFromDeposit(deleteOption: Locator){
-    await depositPage.actionsMenu.click();
-    await depositPage.deleteSelectedButton.click();
-    await deleteOption.click();
-    await depositPage.deleteItemModalButton.click();
-  }
-
-  async function verifyDiffImportJobHasNoUpdates(page: Page){
-    //Verify create diff import job has nothing in it
-    await depositPage.createDiffImportJobButton.click();
-    await expect(archivalGroupPage.diffContainersToAdd, 'There are no containers to add').toBeEmpty();
-    await expect(archivalGroupPage.diffContainersToDelete, 'There are no containers to delete').toBeEmpty();
-    await expect(archivalGroupPage.diffBinariesToAdd, 'There are no binaries to add').toBeEmpty();
-    await expect(archivalGroupPage.diffBinariesToDelete, 'There are no binaries to delete').toBeEmpty();
-    await page.goBack();
-  }
-
-  function getVersionNumberFromRow(row: Locator) : Locator{
-    return row.getByRole('cell', {name: 'td-ocfl-version'});
-  }
-
-  function getVersionInfoFromRow(row: Locator) : Locator{
-    return row.getByRole('cell', {name: 'td-version-info'});
-  }
-
 });
 
 
