@@ -290,7 +290,7 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
            console.log(`seems good : ${file},  AmdCheck: ${AmdCheck}, SecCheck: ${SecCheck}`);          
         });
 
-    console.log(`################ Archival Group Checks ####################`);
+        console.log(`################ Archival Group Checks ####################`);
 
 
        const archival_files =  digitalObject.storageMap.files;
