@@ -80,6 +80,18 @@ export default defineConfig({
       },
     },
     {
+      dependencies: ['frontend-setup'],
+      name: 'frontendtestswithapi',
+      testDir: './tests/containerflows',
+      grep: /@api/,
+      testMatch: /.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.FRONTEND_BASE_URL,
+        storageState: frontendSessionFile,
+      },
+    },
+    {
       name: 'api_tests',
       testDir: './tests/apiTests',
       testMatch: /.*\.spec\.ts/,

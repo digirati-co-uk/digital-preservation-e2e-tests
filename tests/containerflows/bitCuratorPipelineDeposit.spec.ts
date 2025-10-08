@@ -92,7 +92,7 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
         await depositPage.runPipelineButton.click();
 
         //Test for 'Deposit locked and pipeline running' alert banner
-        await expect(depositPage.alertMessage, 'We see the Deposit Locked message').toContainText('Deposit locked and pipeline running');
+        await expect(depositPage.alertMessage, 'We see the Deposit Locked message').toContainText('Deposit locked and pipeline run message sent.');
 
         //Check the deposit is locked by checking that there is a menu option to release the lock
         await depositPage.actionsMenu.click();
@@ -124,7 +124,7 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
         let pipelineCompleted: boolean = false;
         while (!pipelineCompleted) {
           //Wait for a few seconds before reloading to give the job time to complete
-          await page.waitForTimeout(5_000);
+          await page.waitForTimeout(1_000);
           await page.goto(page.url());
 
           await expect(depositPage.pipelineJobStatus, 'The Status of the diff is visible').toBeVisible();

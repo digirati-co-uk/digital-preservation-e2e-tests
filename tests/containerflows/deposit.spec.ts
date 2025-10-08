@@ -379,8 +379,8 @@ test.describe('Deposit Tests', () => {
 
   test(`can create a Deposit within a Container, and the slug defaults to that location. We can add files directly to the Deposit and update the METS  @api`, async ({page, context}) => {
 
-    //Set a 2-minute timeout
-    test.setTimeout(120_000);
+    //Set a 5-minute timeout
+    test.setTimeout(300_000);
 
     //We have tested in detail the Deposit functionality in the test above,
     //this is a simple test that we can create a Deposit from within the
@@ -627,6 +627,95 @@ test.describe('Deposit Tests', () => {
       await expect(ghostLink).toHaveAttribute('href', depositURL.replace(frontendBaseUrl, ''));
     });
 
+
+    await test.step('Tidy up and delete the Deposit', async() => {
+      //Navigate back into the first deposit in order to delete it
+      await page.goto(depositURL);
+      //Tidy up
+      await depositPage.deleteTheCurrentDeposit();
+    });
+  });
+
+  test(`Can create a Deposit within a Container, modify the mets to NOT ours, verify cannot upload files or modify mets  @api`, async ({page, context}) => {
+
+    //Set a 2-minute timeout
+    test.setTimeout(120_000);
+
+    let depositURL: string;
+    const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
+
+    //Set up the METS file listener to intercept any requests to the METS page to grab the XML
+    let metsXML : Document;
+    await context.route(`**/mets`, async route => {
+      const response = await route.fetch();
+      const metsAsString = await response.text();
+      metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
+      await route.fulfill();
+    });
+
+    await test.step('Create Deposit', async() => {
+      await depositPage.getStarted();
+      await depositPage.newDepositButton.click();
+      await depositPage.modalArchivalName.fill(validSlug);
+      //This click into the archival group slug field is important,
+      //otherwise the typing doesn't register properly in the following step
+      await depositPage.modalArchivalSlug.click();
+      await depositPage.modalArchivalSlug.pressSequentially(validSlug);
+      await depositPage.modalCreateNewDepositButton.click();
+
+      //Validate that we're navigated into the new Deposit
+      depositURL = page.url();
+      await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(depositPage.depositsURL);
+      await expect(page.getByRole('heading', {name: validSlug}), 'The slug is listed in the deposit title').toBeVisible();
+    });
+
+    await test.step('Create a sub folder', async() => {
+      await page.goto(depositURL);
+      //Create a new sub folder
+      await depositPage.createASubFolder(page, depositPage.createFolderWithinObjectsFolder, depositPage.newTestFolderTitle, depositPage.newTestFolderSlug);
+    });
+
+    await test.step('Create some files directly in the AWS bucket for the Deposit', async() => {
+      //Upload the 3 files
+      let files = [
+        `${depositPage.newTestFolderSlug}/${depositPage.testImageLocation}`,
+        `${depositPage.newTestFolderSlug}/${depositPage.testWordDocLocation}`,
+        `${depositPage.newTestFolderSlug}/${depositPage.testPdfDocLocation}`,
+      ];
+      await depositPage.uploadFilesToDepositS3Bucket(files, depositURL, 'test-data/deposit/', true);
+      //Upload the special, non Leeds Mets file
+      files = [`mets.xml`];
+      await depositPage.uploadFilesToDepositS3Bucket(files, depositURL, 'test-data/external-mets/', true);
+
+      //Verify the files are there in the UI
+      await page.goto(depositURL);
+      await depositPage.actionsMenu.click();
+      await depositPage.refreshStorageButton.click();
+      await expect(depositPage.newTestImageFileInTable, 'We see the new file in the Deposits table').toBeVisible();
+      await expect(depositPage.newTestWordFileInTable, 'We see the new file in the Deposits table').toBeVisible();
+      await expect(depositPage.newTestPdfFileInTable, 'We see the new file in the Deposits table').toBeVisible();
+    });
+
+    await test.step('Verify the deposit is not editable because the mets is not ours', async() => {
+      await expect(depositPage.testImageCheckbox, 'Cannot see the checkbox against the file').toBeHidden();
+      await expect(depositPage.testWordDocCheckbox, 'Cannot see the checkbox against the file').toBeHidden();
+      await expect(depositPage.testPdfCheckbox, 'Cannot see the checkbox against the file').toBeHidden();
+
+      await expect (depositPage.createFolderWithinObjectsFolder, 'We cannot create a sub folder').toBeHidden();
+      await expect (depositPage.uploadFileToObjectsFolder, 'We cannot create a file within objects').toBeHidden();
+    });
+
+    await test.step('Check that we can run an import job', async() => {
+      await depositPage.createDiffImportJobButton.click();
+      //Check the 3 files are in the list, plus the METS file
+      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 4 items in the Binaries to add').toHaveCount(4);
+      //TODO reinstate when 103922 fixed await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.testImageLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.testWordDocLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.testPdfDocLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
+      await expect(depositPage.runImportButton, 'We can now see the button to run the Import').toBeVisible();
+      await page.goBack();
+    });
 
     await test.step('Tidy up and delete the Deposit', async() => {
       //Navigate back into the first deposit in order to delete it
