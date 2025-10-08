@@ -288,7 +288,7 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
            await expect(AmdCheck.length).not.toBe(0);
            await expect(SecCheck.length).not.toBe(0);
            console.log(`seems good : ${file},  AmdCheck: ${AmdCheck}, SecCheck: ${SecCheck}`);          
-    });
+        });
 
     console.log(`################ Archival Group Checks ####################`);
 
