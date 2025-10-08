@@ -309,7 +309,7 @@ test.describe('Create a NATIVE (our own METS) deposit and put some files in it',
      
     });
 
-    });
+});
 
 
 
