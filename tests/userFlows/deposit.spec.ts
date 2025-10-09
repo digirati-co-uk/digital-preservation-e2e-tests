@@ -231,7 +231,7 @@ test.describe('Deposit Tests', () => {
         await depositPage.uploadFileToTestFolder.click();
 
         //Select a file to upload
-        await depositPage.fileUploadWidget.setInputFiles(path.join(__dirname, '../../test-data/deposit/objects/New-test-folder-inside-objects/' + depositPage.testPdfDocLocation));
+        await depositPage.fileUploadWidget.setInputFiles(path.join(__dirname, '../../test-data/deposit/objects/new-test-folder-inside-objects/' + depositPage.testPdfDocLocation));
 
         //Read the checksum value
         const checksum: string = await depositPage.checksumField.inputValue();
