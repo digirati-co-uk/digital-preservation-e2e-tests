@@ -57,7 +57,12 @@ jobs:
           API_CLIENT_SECRET: ${{secrets.API_CLIENT_SECRET}}
           API_TENANT_ID: ${{secrets.API_TENANT_ID}}
           GITHUB_REPORT_OUTPUT: 'https://d1o8q7gs2alph4.cloudfront.net/${{github.repository}}/${{ github.head_ref || github.ref_name }}/index.html'
-
+          LEEDS_DOMAIN: ${{vars.LEEDS_DOMAIN}}
+          AWS_PROFILE: ${{secrets.AWS_PROFILE}}
+          PRESERVATION_API_ENDPOINT: ${{vars.PRESERVATION_API_ENDPOINT}}
+          PRESERVATION_API_ENDPOINT_NOT_REWRITTEN: ${{vars.PRESERVATION_API_ENDPOINT_NOT_REWRITTEN}}
+          LEEDS_DLCS_CUSTOMER: ${{vars.LEEDS_DLCS_CUSTOMER}}
+          STORAGE_API_ENDPOINT: ${{vars.STORAGE_API_ENDPOINT}}
 
       - uses: actions/upload-artifact@v4
         if: always()

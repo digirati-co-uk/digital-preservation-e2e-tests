@@ -300,7 +300,7 @@ export class DepositPage {
     this.testPdfDocLocation = 'test_pdf_document.pdf';
     this.newTestFolderTitle = 'New test folder inside objects';
     this.newTestFolderTitle2 = 'Second test folder inside objects';
-    this.newTestFolderSlug = this.objectsFolderName + '/new-test-folder-inside-objects';
+    this.newTestFolderSlug = this.objectsFolderName + `/new-test-folder-inside-objects`;
     this.newTestFolderSlug2 = this.objectsFolderName + '/second-test-folder-inside-objects';
     this.testFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug}/`;
     this.secondTestFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug2}/`;
