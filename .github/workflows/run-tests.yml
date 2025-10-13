@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   e2e-tests:
-    runs-on: dliprunner2core8ramStaticIP
+    runs-on: bladerunner
     environment: development
     permissions:
       id-token: write
