@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   e2e-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64 ]
     environment: development
     permissions:
       id-token: write
