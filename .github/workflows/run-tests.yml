@@ -31,7 +31,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.S3_IAM_ROLE }}
           aws-region: eu-west-1
-          role-session-name: default
+          output-credentials: true
 
       - name: Install Node.js
         uses: actions/setup-node@v4
