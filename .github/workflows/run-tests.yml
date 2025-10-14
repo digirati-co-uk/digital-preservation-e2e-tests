@@ -45,7 +45,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
-        run: npx playwright test --project=frontendtestsnoapi
+        run: npx playwright test --project=frontendtestswithapi
         env:
           CI: 'true'
           FRONTEND_BASE_URL: ${{vars.FRONTEND_BASE_URL}}
