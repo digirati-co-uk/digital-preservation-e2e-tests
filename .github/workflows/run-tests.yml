@@ -27,10 +27,11 @@ jobs:
         uses: actions/checkout@v3
 
       - id: configure-aws-creds
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
           role-to-assume: ${{ secrets.S3_IAM_ROLE }}
           aws-region: eu-west-1
+          role-session-name: default
 
       - name: Install Node.js
         uses: actions/setup-node@v4
