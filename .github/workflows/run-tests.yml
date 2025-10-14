@@ -37,7 +37,7 @@ jobs:
       - name: Verify AWS credentials
         run: |
               aws sts get-caller-identity  
-              aws s3 ls
+              aws s3 ls dlip-pres-dev-deposits
 
         
       - name: Install Node.js
