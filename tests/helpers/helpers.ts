@@ -27,19 +27,19 @@ export function checkDateIsWithinNumberOfSeconds(dateToValidate: string, seconds
 
 export function getS3Client() {
 
-  return new S3Client();
-
-  if(process.env.AWS_PROFILE != null) {
+  if(process.env.AWS_PROFILE != null && process.env.AWS_PROFILE.length > 0){ {
     return new S3Client({
       region: "eu-west-1",
       credentials: fromIni({profile: process.env.AWS_PROFILE})
     });
   }else{
-    return new S3Client({
-      region: "eu-west-1",
-    });
+    return new S3Client();
   }
 }
+
+
+
+ 
 
 // This isn't using any of the custom Leeds API at all.
 // All file transfer is done using AWS APIs, into S3 buckets.
