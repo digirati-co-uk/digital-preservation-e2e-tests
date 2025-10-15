@@ -27,7 +27,7 @@ export function checkDateIsWithinNumberOfSeconds(dateToValidate: string, seconds
 
 export function getS3Client() {
 
-  if(process.env.AWS_PROFILE != null && process.env.AWS_PROFILE.length > 0){ {
+  if(process.env.AWS_PROFILE as string) {
     return new S3Client({
       region: "eu-west-1",
       credentials: fromIni({profile: process.env.AWS_PROFILE})
