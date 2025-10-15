@@ -33,13 +33,7 @@ jobs:
           aws-region: eu-west-1
           role-session-name: 'default'
           output-credentials: true
-
-      - name: Verify AWS credentials
-        run: |
-              aws sts get-caller-identity  
-              aws s3 ls dlip-pres-dev-deposits
-
-        
+              
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
