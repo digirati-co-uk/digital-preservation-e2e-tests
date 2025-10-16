@@ -98,7 +98,6 @@ test.describe('Archival Group Tests', () => {
       });
 
       await test.step('Add rights statement and access restrictions', async () => {
-
         //set them, but then cancel
         await archivalGroupPage.depositPage.setAccessConditionsAndRights(archivalGroupPage.depositPage.selectedAccessConditions, archivalGroupPage.depositPage.selectedRightsOption, false);
         await expect(archivalGroupPage.depositPage.objectsFolder, 'Access Restrictions are not displayed').not.toContainText(archivalGroupPage.depositPage.selectedAccessConditions[0]);
