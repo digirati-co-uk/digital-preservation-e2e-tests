@@ -23,7 +23,7 @@
     "status": "^0.0.13"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0",
+    "@playwright/test": "^1.56.1",
     "@types/node": "^22.7.0"
   }
 }
