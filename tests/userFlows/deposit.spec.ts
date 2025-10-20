@@ -34,6 +34,7 @@ test.describe('Deposit Tests', () => {
       await context.route(`**/mets`, async route => {
         const response = await route.fetch();
         const metsAsString = await response.text();
+        console.log(metsAsString);
         metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
         await route.fulfill();
       });
@@ -110,7 +111,8 @@ test.describe('Deposit Tests', () => {
         await page.waitForTimeout(1_000);
 
         //Use a valid URI this time
-        await depositPage.archivalGroupInput.fill(depositPage.navigationPage.basePath + '/' + depositPage.testValidArchivalURI);
+        const validSlug : string = depositPage.testValidArchivalURI+generateUniqueId();
+        await depositPage.archivalGroupInput.fill(depositPage.navigationPage.basePath + '/' + validSlug);
         await depositPage.archivalGroupNameInput.fill(depositPage.testArchivalGroupName);
         await depositPage.archivalGroupDepositNoteInput.fill(depositPage.testDepositNote);
 
@@ -123,14 +125,14 @@ test.describe('Deposit Tests', () => {
 
         //Check that the archival group name and URI are shown on the listing page
         await expect(page.getByRole('row').filter({has: depositPage.depositLinkInTable(depositId)}).getByText(depositPage.testArchivalGroupName), 'The deposit has a name in the table').toBeVisible();
-        await expect(page.getByRole('row').filter({has: depositPage.depositLinkInTable(depositId)}).getByText(depositPage.testValidArchivalURI), 'The deposit has a URI in the table').toBeVisible();
+        await expect(page.getByRole('row').filter({has: depositPage.depositLinkInTable(depositId)}).getByText(validSlug), 'The deposit has a URI in the table').toBeVisible();
 
         //navigate back to ensure the values have persisted
         await depositPage.depositLinkInTable(depositId).click();
         await expect(depositPage.archivalGroupNameInput, 'The Archival Group Name is correct').toHaveValue(depositPage.testArchivalGroupName);
         await expect(depositPage.archivalGroupDepositNoteInput, 'The archival group Note is correct').toHaveValue(depositPage.testDepositNote);
 
-        await expect(depositPage.archivalGroupInput, 'The archival group URI is correct').toHaveValue(depositPage.navigationPage.basePath + '/' + depositPage.testValidArchivalURI);
+        await expect(depositPage.archivalGroupInput, 'The archival group URI is correct').toHaveValue(depositPage.navigationPage.basePath + '/' + validSlug);
 
         //Check that the modified date no longer matches the created date
         const depositCreatedDate = await depositPage.depositCreatedDate.textContent();
