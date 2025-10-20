@@ -34,7 +34,6 @@ test.describe('Deposit Tests', () => {
       await context.route(`**/mets`, async route => {
         const response = await route.fetch();
         const metsAsString = await response.text();
-        console.log(metsAsString);
         metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
         await route.fulfill();
       });
