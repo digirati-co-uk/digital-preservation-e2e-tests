@@ -230,4 +230,11 @@ test.describe('IIIF Builder End To End Tests', () => {
     }
   });
 
+  test.afterEach('Ensure deposits cleaned up after failure', async ({ page }) => {
+    //Navigate to the deposits listings page
+
+    //If there is a deposit was the test pid in the table, click on it, and delete it
+
+    //Repeat for the second test pid
+  });
 });
