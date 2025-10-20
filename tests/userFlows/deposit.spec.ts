@@ -257,7 +257,8 @@ test.describe('Deposit Tests', () => {
 
         //Refresh Storage and check that the error message is gone, and we still cannot see the file
         await depositPage.refreshStorage();
-        await expect(depositPage.alertMessage, 'Checksum error message is no longer visible').toBeHidden();
+        await expect(depositPage.actionsMenu, 'The page has reloaded').toBeVisible();
+        await expect(depositPage.alertMessage, 'Checksum error message is no longer visible').not.toContainText('Checksum did not match message has been displayed');
         await expect(depositPage.newTestPdfFileInTable, 'We cannot see the new file in the Deposits table').not.toBeVisible();
       });
 
