@@ -34,7 +34,6 @@ test.describe('Deposit Tests', () => {
       await context.route(`**/mets`, async route => {
         const response = await route.fetch();
         const metsAsString = await response.text();
-        console.log(metsAsString);
         metsXML = new DOMParser().parseFromString(metsAsString, 'text/xml');
         await route.fulfill();
       });
@@ -383,7 +382,6 @@ test.describe('Deposit Tests', () => {
       });
     });
   }
-
 
   test(`can create a Deposit within a Container, and the slug defaults to that location. We can add files directly to the Deposit and update the METS  @api`, async ({page, context}) => {
 

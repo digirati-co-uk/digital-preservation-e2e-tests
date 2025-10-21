@@ -9,6 +9,8 @@ export class IIIFBuilderPage {
   readonly iiifManifestLink : string;
   readonly fullPathOfIRN: string;
   readonly archivalGroupHeader: Locator;
+  readonly linkTo1000001Deposit: Locator;
+  readonly linkTo1000008Deposit: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -18,6 +20,9 @@ export class IIIFBuilderPage {
     this.iiifManifestLink = 'IIIF Manifest Link';
     this.fullPathOfIRN = `/browse/cc/${this.irnForArchivalGroup}`;
     this.archivalGroupHeader = this.page.getByRole('heading', {name: 'UAT Test 8'});
+    this.linkTo1000001Deposit = page.getByRole('row').filter({has: page.getByLabel('ag-name').filter({hasText: this.irnForDepositHeading}) }).getByLabel('td-id').getByRole('link');
+    this.linkTo1000008Deposit = page.getByRole('row').filter({has: page.getByLabel('ag-path').filter({hasText: this.irnForArchivalGroup}) }).getByLabel('td-id').getByRole('link');
+
 
   }
   async refreshTheManifestJSON(page : Page, expectedItems: number){

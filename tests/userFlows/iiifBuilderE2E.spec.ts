@@ -68,7 +68,7 @@ test.describe('IIIF Builder End To End Tests', () => {
       await archivalGroupPage.depositPage.createDiffImportJobButton.click();
       //Check the 3 files are in the list, plus the METS file
       await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), 'There are only 4 items in the Binaries to add').toHaveCount(4);
-      await expect.soft(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(archivalGroupPage.depositPage.testImageLocation);
+      await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(archivalGroupPage.depositPage.testImageLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(archivalGroupPage.depositPage.testWordDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(archivalGroupPage.depositPage.testPdfDocLocation);
       await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
@@ -77,7 +77,7 @@ test.describe('IIIF Builder End To End Tests', () => {
     });
 
     await test.step('Tidy up and delete the deposit', async() => {
-      //Navigate back into the first deposit in order to delete it
+      //Navigate back into the deposit in order to delete it
       await page.goto(depositURL);
       //Tidy up
       await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
@@ -232,9 +232,25 @@ test.describe('IIIF Builder End To End Tests', () => {
 
   test.afterEach('Ensure deposits cleaned up after failure', async ({ page }) => {
     //Navigate to the deposits listings page
+    await page.goto('/');
+    await archivalGroupPage.depositPage.navigationPage.depositMenuOption.click();
+    await expect(archivalGroupPage.depositPage.allRowsArchivalGroup.first(), 'Deposits table has loaded').toBeVisible();
 
     //If there is a deposit was the test pid in the table, click on it, and delete it
+    if(await iiifBuilderPage.linkTo1000001Deposit.isVisible()){
+      await iiifBuilderPage.linkTo1000001Deposit.click();
+      await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
+    }
+
+    //Navigate to the deposits listings page
+    await page.goto('/');
+    await archivalGroupPage.depositPage.navigationPage.depositMenuOption.click();
+    await expect(archivalGroupPage.depositPage.allRowsArchivalGroup.first(), 'Deposits table has loaded').toBeVisible();
 
     //Repeat for the second test pid
+    if(await iiifBuilderPage.linkTo1000008Deposit.isVisible()){
+      await iiifBuilderPage.linkTo1000008Deposit.click();
+      await archivalGroupPage.depositPage.deleteTheCurrentDeposit();
+    }
   });
 });
