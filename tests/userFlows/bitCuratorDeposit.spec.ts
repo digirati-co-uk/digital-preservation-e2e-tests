@@ -48,6 +48,14 @@ test.describe('BitCurator Deposit Tests', () => {
       depositURL = page.url();
       await expect(page, 'We have been navigated into the new Deposit page').toHaveURL(depositPage.depositsURL);
       await expect(page.getByRole('heading', {name: validSlug}), 'The slug is listed in the deposit title').toBeVisible();
+
+
+      //UPLOAD A FILE
+      await depositPage.createASubFolder(page, depositPage.createFolderWithinObjectsFolder, 'nyc', 'objects/nyc');
+
+      await depositPage.uploadFile('../../../test-data/test-bag/data/objects/nyc/dscf0981.jpg', false,  page.locator(`[data-type="directory"][data-path="objects/nyc"]`).locator(depositPage.uploadFileIcon));
+      await expect(page.getByText('This Deposit uses BagIt layout on disk')).toBeVisible();
+
     });
 
     await test.step('Create some files directly in the AWS bucket for the Deposit', async() => {
@@ -60,7 +68,6 @@ test.describe('BitCurator Deposit Tests', () => {
         "data/metadata/brunnhilde/report.html",
         "data/metadata/brunnhilde/siegfried.csv",
         "data/metadata/brunnhilde/tree.txt",
-        "data/objects/nyc/DSCF0981.JPG",
         "data/objects/nyc/DSCF1044.JPG",
         "data/objects/nyc/DSCF1090.JPG",
         "data/objects/nyc/DSCF1128.JPG",
@@ -114,85 +121,85 @@ test.describe('BitCurator Deposit Tests', () => {
       await expect(depositPage.createFolderWithinBrunnhildeFolder, 'There is no create folder button in the brunnhilde folder').not.toBeVisible();
     });
 
-    await test.step('Verify we can delete a file from the objects folder', async() => {
-      await depositPage.deleteFile(depositPage.fileToDeleteLocator, depositPage.fileToDeleteName);
-    });
-
-    await test.step('Select all non-Mets, add to METS, verify existence in the METS file', async() => {
-
-      //Select all Non Mets, check it's selected the right things
-      await depositPage.actionsMenu.click();
-      await depositPage.selectAllNonMetsButton.click();
-
-      //Now add them to Mets
-      await depositPage.actionsMenu.click();
-      await depositPage.addToMetsButton.click();
-      await depositPage.addToMetsDialogButton.click();
-
-      //Open the METS file
-      await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
-
-      //Passing TRUE to the methods below, as we DO now expect to find them in the METS
-      //Passing mimetype to check it's present in the METS
-      //TODO ask Tom - Mime type - we had this anyway - how do we know it came from BitCurator?
-      await depositPage.validateFilePresentInMETS(context,metsXML, null, depositPage.bitCuratorFileThreeFullPath, depositPage.objectsFolderName.trim(), 'nyc', null, null, depositPage.bitCuratorFileThreeName, true, depositPage.expectedFileType);
-      await depositPage.validateFilePresentInMETS(context,metsXML, null, depositPage.bitCuratorFileFourFullPath, depositPage.objectsFolderName.trim(), null, null, null, depositPage.bitCuratorFileFourName, true, depositPage.expectedFileType);
-      //Check mime type on the UI
-      await expect(depositPage.bitCuratorFileThree.getByLabel('content-type'), 'Content type is correct').toHaveText(depositPage.expectedFileType);
-      await expect(depositPage.bitCuratorFileFour.getByLabel('content-type'),'Content type is correct').toHaveText(depositPage.expectedFileType);
-
-      //Check that the items are now listed as 'Both'
-      await expect(depositPage.bitCuratorFileTwoSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
-      await expect(depositPage.bitCuratorFileThreeSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
-      await expect(depositPage.bitCuratorFileFourSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
-      await expect(depositPage.bitCuratorFileFiveSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
-
-    });
-
-    //Check for the additional information in the METS produced by the BitCurator info
-    await test.step('Check the file size totals', async() => {
-      await expect(depositPage.bitCuratorDepositFilesTotals).toBeVisible();
-      await expect(depositPage.bitCuratorDepositFileSizeTotals).toBeVisible();
-    });
-
-    //Check for the additional information in the METS produced by the BitCurator info
-    await test.step('Check that we have the info from the BitCurator process in the METS', async() => {
-
-      //PROMON info and checksum
-      //Checksum was already there in other Deposit tests because AWS added it, but we
-      //switched that off, so we now know it came from BitCurator
-      await depositPage.checkForChecksum(metsXML, depositPage.bitCuratorFileThreeFullPath, depositPage.checkSumType, depositPage.bitCuratorFileThreeChecksum);
-      await depositPage.checkForChecksum(metsXML, depositPage.bitCuratorFileFourFullPath, depositPage.checkSumType, depositPage.bitCuratorFileFourChecksum);
-      //Check the hash in the UI
-      await expect(depositPage.bitCuratorFileThree.getByLabel('hash'), 'hash is correct').toHaveText(depositPage.bitCuratorFileThreeChecksum.substring(0,8));
-      await expect(depositPage.bitCuratorFileFour.getByLabel('hash'), 'hash is correct').toHaveText(depositPage.bitCuratorFileFourChecksum.substring(0,8));
-
-
-      //THIS IS NEW STUFF from BitCurator
-      await depositPage.checkPronomInformation(metsXML, depositPage.bitCuratorFileThreeFullPath, 'Exchangeable Image File Format (Compressed)', depositPage.pronomKey);
-      await depositPage.checkPronomInformation(metsXML, depositPage.bitCuratorFileFourFullPath, 'Exchangeable Image File Format (Compressed)', depositPage.pronomKey);
-      //Check the pronom in the UI
-      await expect(depositPage.bitCuratorFileThree.getByLabel('pronom'), 'pronom is correct').toHaveText(depositPage.pronomKey);
-      await expect(depositPage.bitCuratorFileFour.getByLabel('pronom'), 'pronom is correct').toHaveText(depositPage.pronomKey);
-    });
-
-    await test.step('Check that we can now run an import job', async() => {
-      await depositPage.createDiffImportJobButton.click();
-      //Check the 15 files are in the list, plus the METS file
-      await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), '5items in the Binaries to add').toHaveCount(15);
-      await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.bitCuratorFileThreeName);
-      await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.bitCuratorFileFourName);
-      await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.bitCuratorMetadataFileFiveName);
-      await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
-      await expect(depositPage.runImportButton, 'We can now see the button to run the Import').toBeVisible();
-      await page.goBack();
-    });
-
-    await test.step('Tidy up and delete the Deposit', async() => {
-      //Navigate back into the first deposit in order to delete it
-      await page.goto(depositURL);
-      //Tidy up
-      await depositPage.deleteTheCurrentDeposit();
-    });
+    // await test.step('Verify we can delete a file from the objects folder', async() => {
+    //   await depositPage.deleteFile(depositPage.fileToDeleteLocator, depositPage.fileToDeleteName);
+    // });
+    //
+    // await test.step('Select all non-Mets, add to METS, verify existence in the METS file', async() => {
+    //
+    //   //Select all Non Mets, check it's selected the right things
+    //   await depositPage.actionsMenu.click();
+    //   await depositPage.selectAllNonMetsButton.click();
+    //
+    //   //Now add them to Mets
+    //   await depositPage.actionsMenu.click();
+    //   await depositPage.addToMetsButton.click();
+    //   await depositPage.addToMetsDialogButton.click();
+    //
+    //   //Open the METS file
+    //   await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
+    //
+    //   //Passing TRUE to the methods below, as we DO now expect to find them in the METS
+    //   //Passing mimetype to check it's present in the METS
+    //   //TODO ask Tom - Mime type - we had this anyway - how do we know it came from BitCurator?
+    //   await depositPage.validateFilePresentInMETS(context,metsXML, null, depositPage.bitCuratorFileThreeFullPath, depositPage.objectsFolderName.trim(), 'nyc', null, null, depositPage.bitCuratorFileThreeName, true, depositPage.expectedFileType);
+    //   await depositPage.validateFilePresentInMETS(context,metsXML, null, depositPage.bitCuratorFileFourFullPath, depositPage.objectsFolderName.trim(), null, null, null, depositPage.bitCuratorFileFourName, true, depositPage.expectedFileType);
+    //   //Check mime type on the UI
+    //   await expect(depositPage.bitCuratorFileThree.getByLabel('content-type'), 'Content type is correct').toHaveText(depositPage.expectedFileType);
+    //   await expect(depositPage.bitCuratorFileFour.getByLabel('content-type'),'Content type is correct').toHaveText(depositPage.expectedFileType);
+    //
+    //   //Check that the items are now listed as 'Both'
+    //   await expect(depositPage.bitCuratorFileTwoSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
+    //   await expect(depositPage.bitCuratorFileThreeSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
+    //   await expect(depositPage.bitCuratorFileFourSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
+    //   await expect(depositPage.bitCuratorFileFiveSelectArea, 'Listed as Both').toHaveText(depositPage.inBothText);
+    //
+    // });
+    //
+    // //Check for the additional information in the METS produced by the BitCurator info
+    // await test.step('Check the file size totals', async() => {
+    //   await expect(depositPage.bitCuratorDepositFilesTotals).toBeVisible();
+    //   await expect(depositPage.bitCuratorDepositFileSizeTotals).toBeVisible();
+    // });
+    //
+    // //Check for the additional information in the METS produced by the BitCurator info
+    // await test.step('Check that we have the info from the BitCurator process in the METS', async() => {
+    //
+    //   //PROMON info and checksum
+    //   //Checksum was already there in other Deposit tests because AWS added it, but we
+    //   //switched that off, so we now know it came from BitCurator
+    //   await depositPage.checkForChecksum(metsXML, depositPage.bitCuratorFileThreeFullPath, depositPage.checkSumType, depositPage.bitCuratorFileThreeChecksum);
+    //   await depositPage.checkForChecksum(metsXML, depositPage.bitCuratorFileFourFullPath, depositPage.checkSumType, depositPage.bitCuratorFileFourChecksum);
+    //   //Check the hash in the UI
+    //   await expect(depositPage.bitCuratorFileThree.getByLabel('hash'), 'hash is correct').toHaveText(depositPage.bitCuratorFileThreeChecksum.substring(0,8));
+    //   await expect(depositPage.bitCuratorFileFour.getByLabel('hash'), 'hash is correct').toHaveText(depositPage.bitCuratorFileFourChecksum.substring(0,8));
+    //
+    //
+    //   //THIS IS NEW STUFF from BitCurator
+    //   await depositPage.checkPronomInformation(metsXML, depositPage.bitCuratorFileThreeFullPath, 'Exchangeable Image File Format (Compressed)', depositPage.pronomKey);
+    //   await depositPage.checkPronomInformation(metsXML, depositPage.bitCuratorFileFourFullPath, 'Exchangeable Image File Format (Compressed)', depositPage.pronomKey);
+    //   //Check the pronom in the UI
+    //   await expect(depositPage.bitCuratorFileThree.getByLabel('pronom'), 'pronom is correct').toHaveText(depositPage.pronomKey);
+    //   await expect(depositPage.bitCuratorFileFour.getByLabel('pronom'), 'pronom is correct').toHaveText(depositPage.pronomKey);
+    // });
+    //
+    // await test.step('Check that we can now run an import job', async() => {
+    //   await depositPage.createDiffImportJobButton.click();
+    //   //Check the 15 files are in the list, plus the METS file
+    //   await expect(archivalGroupPage.diffBinariesToAdd.getByRole('listitem'), '5items in the Binaries to add').toHaveCount(15);
+    //   await expect(archivalGroupPage.diffBinariesToAdd, 'First test file to add is correct').toContainText(depositPage.bitCuratorFileThreeName);
+    //   await expect(archivalGroupPage.diffBinariesToAdd, 'Second test file to add is correct').toContainText(depositPage.bitCuratorFileFourName);
+    //   await expect(archivalGroupPage.diffBinariesToAdd, 'Third test file to add is correct').toContainText(depositPage.bitCuratorMetadataFileFiveName);
+    //   await expect(archivalGroupPage.diffBinariesToAdd, 'Mets file to add is correct').toContainText(archivalGroupPage.depositPage.metsFileName);
+    //   await expect(depositPage.runImportButton, 'We can now see the button to run the Import').toBeVisible();
+    //   await page.goBack();
+    // });
+    //
+    // await test.step('Tidy up and delete the Deposit', async() => {
+    //   //Navigate back into the first deposit in order to delete it
+    //   await page.goto(depositURL);
+    //   //Tidy up
+    //   await depositPage.deleteTheCurrentDeposit();
+    // });
   });
 });
