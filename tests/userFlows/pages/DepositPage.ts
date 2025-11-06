@@ -37,6 +37,7 @@ export class DepositPage {
   readonly testInvalidArchivalURI : string;
   readonly invalidURIMadeValid: string;
   readonly testFileLocation : string;
+  readonly virusTestFileLocation: string;
   readonly secondTestFileLocation : string;
   readonly testValidArchivalURI : string;
   readonly testArchivalGroupName : string;
@@ -267,7 +268,7 @@ export class DepositPage {
 
   //Pipeline table locators
   readonly pipelineJobTable: Locator;
-  readonly pipelineJobTableFirstRow: Locator;
+  readonly pipelineJobTableLastRow: Locator;
   readonly pipelineJobStatus: Locator;
   readonly testImageChecksum: string;
   readonly testWordDocChecksum: string;
@@ -303,6 +304,7 @@ export class DepositPage {
     this.newTestFolderSlug = this.objectsFolderName + `/new-test-folder-inside-objects`;
     this.newTestFolderSlug2 = this.objectsFolderName + '/second-test-folder-inside-objects';
     this.testFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug}/`;
+    this.virusTestFileLocation = `../../../test-data/virus-file/eicar.txt/`;
     this.secondTestFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug2}/`;
     this.testImageLocationFullPath = this.newTestFolderSlug+'/'+this.testImageLocation;
     this.testWordDocLocationFullPath = this.newTestFolderSlug+'/'+this.testWordDocLocation;
@@ -541,8 +543,8 @@ export class DepositPage {
 
     //Pipeline table locators
     this.pipelineJobTable = page.getByRole('table', {name: 'table-deposit-pipeline-jobs'});
-    this.pipelineJobTableFirstRow = this.pipelineJobTable.getByRole('row').nth(1);
-    this.pipelineJobStatus = this.pipelineJobTableFirstRow.getByLabel('td-status');
+    this.pipelineJobTableLastRow = this.pipelineJobTable.getByRole('row').last();
+    this.pipelineJobStatus = this.pipelineJobTableLastRow.getByLabel('td-status');
     this.testImageChecksum = '62db932f4c8b13da0bb441b21a5b90fa47758a29afa519cb03fcae9606912e82';
     this.testWordDocChecksum = '132d77469b1653818753e0c9c6a7e6387f29042cdffcd4887387a004d9e30dff';
     this.testPdfDocChecksum = 'b07b3df4509ddd400f18b0c078f1a40d2241eb716d0ee3b1ec7a97df18ac5305';

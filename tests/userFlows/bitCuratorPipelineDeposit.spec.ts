@@ -128,7 +128,7 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
           await page.waitForTimeout(1_000);
           await page.goto(page.url());
 
-          await expect(depositPage.pipelineJobStatus, 'The Status of the diff is visible').toBeVisible();
+          await expect(depositPage.pipelineJobStatus, 'The Status of the job is visible').toBeVisible();
           const status = await depositPage.pipelineJobStatus.textContent();
           pipelineCompleted = status == 'completed';
           if (!pipelineCompleted) {
@@ -170,6 +170,41 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
         await expect(depositPage.newTestWordFileInTable.getByLabel('pronom'), 'pronom is correct').toHaveText('fmt/412');
         await expect(depositPage.newTestPdfFileInTable.getByLabel('pronom'), 'pronom is correct').toHaveText('fmt/276');
       });
+
+      await test.step('Add a file with a virus, and re-run the pipleine', async () => {
+
+        //TODO add the virus file
+        await depositPage.uploadFile(depositPage.virusTestFileLocation, false, depositPage.uploadFileToTestFolder);
+
+        //Start the pipeline
+        await depositPage.actionsMenu.click();
+        await depositPage.runPipelineButton.click();
+
+        //Test for 'Deposit locked and pipeline running' alert banner
+        await expect(depositPage.alertMessage, 'We see the Deposit Locked message').toContainText('Deposit locked and pipeline run message sent.');
+
+        //Refresh the page until changes to completed
+        let pipelineCompleted: boolean = false;
+        while (!pipelineCompleted) {
+          //Wait for a few seconds before reloading to give the job time to complete
+          await page.waitForTimeout(1_000);
+          await page.goto(page.url());
+
+          await expect(depositPage.pipelineJobStatus, 'The Status of the job is visible').toBeVisible();
+          const status = await depositPage.pipelineJobStatus.textContent();
+          pipelineCompleted = status == 'completed';
+          if (!pipelineCompleted) {
+            await expect(depositPage.alertMessage, 'We see the Please Refresh message').toContainText('Please refresh for status updates');
+          }
+        }
+
+        //There should be a virus banner now that we are finished
+        await expect(depositPage.alertMessage, 'There is a banner message tellingus about the virus').toContainText('Files with viruses');
+        await expect(depositPage.bitCuratorFileFiveSelectArea, 'Metadata file present and listed as in Both Deposit and mets').toHaveText(depositPage.inBothText);
+
+      });
+
+      //TODO Check the METS for the virus areas
 
       await test.step('Create a diff import job, validate expected fields are present and check values', async () => {
 
@@ -301,7 +336,7 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
       //Now click the stop pipeline button
       await depositPage.actionsMenu.click();
       await depositPage.cancelPipelineButton.click();
-      await expect(depositPage.pipelineJobStatus, 'The Status of the diff is correct').toHaveText('completedWithErrors');
+      await expect(depositPage.pipelineJobStatus, 'The Status of the job is correct').toHaveText('completedWithErrors');
 
       //There should be a banner stating we cancelled the job
       await expect(depositPage.alertMessage, 'We see the Pipeline cancelled banner').toContainText('Force complete of pipeline succeeded and lock released');
