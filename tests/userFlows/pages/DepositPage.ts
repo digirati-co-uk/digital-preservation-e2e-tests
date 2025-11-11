@@ -22,6 +22,7 @@ export class DepositPage {
   readonly testImageLocationFullPath: string;
   readonly testWordDocLocationFullPath: string;
   readonly testPdfDocLocationFullPath: string;
+  readonly virusFileFullPath: string;
   readonly testImageWithInvalidCharsLocation : string;
   readonly testImageWithInvalidCharsLocationTranslated : string;
   readonly newTestFolderTitle : string;
@@ -37,6 +38,7 @@ export class DepositPage {
   readonly testInvalidArchivalURI : string;
   readonly invalidURIMadeValid: string;
   readonly testFileLocation : string;
+  readonly virusFileName: string;
   readonly virusTestFileLocation: string;
   readonly secondTestFileLocation : string;
   readonly testValidArchivalURI : string;
@@ -274,6 +276,10 @@ export class DepositPage {
   readonly testWordDocChecksum: string;
   readonly testPdfDocChecksum: string;
 
+  //Virus specific Locators
+  readonly virusIndicator: Locator;
+  readonly noVirusIndicator: Locator;
+
   constructor(page: Page) {
     this.page = page;
     this.navigationPage = new NavigationPage(page);
@@ -304,11 +310,13 @@ export class DepositPage {
     this.newTestFolderSlug = this.objectsFolderName + `/new-test-folder-inside-objects`;
     this.newTestFolderSlug2 = this.objectsFolderName + '/second-test-folder-inside-objects';
     this.testFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug}/`;
-    this.virusTestFileLocation = `../../../test-data/virus-file/eicar.txt`;
+    this.virusFileName = 'eicar.txt';
+    this.virusTestFileLocation = `../../../test-data/virus-file/${this.virusFileName}`;
     this.secondTestFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug2}/`;
     this.testImageLocationFullPath = this.newTestFolderSlug+'/'+this.testImageLocation;
     this.testWordDocLocationFullPath = this.newTestFolderSlug+'/'+this.testWordDocLocation;
     this.testPdfDocLocationFullPath = this.newTestFolderSlug+'/'+this.testPdfDocLocation;
+    this.virusFileFullPath = this.newTestFolderSlug+'/'+this.virusFileName;
     this.testFolderSlugShouldNotExist = 'new-test-folder-inside-objects';
     this.testDepositNote = 'Playwright test archival group note';
     this.testArchivalGroupName = 'Playwright test archival group name';
@@ -549,6 +557,9 @@ export class DepositPage {
     this.testWordDocChecksum = '132d77469b1653818753e0c9c6a7e6387f29042cdffcd4887387a004d9e30dff';
     this.testPdfDocChecksum = 'b07b3df4509ddd400f18b0c078f1a40d2241eb716d0ee3b1ec7a97df18ac5305';
 
+    //Virus specific locators
+    this.virusIndicator = page.getByRole('cell', {name: 'td-virus'}).filter({hasText: '☣'});
+    this.noVirusIndicator = page.getByRole('cell', {name: 'td-virus'}).getByText('');
   }
 
   async goto() {
@@ -694,6 +705,26 @@ export class DepositPage {
     const formatKeyElement = itemToFindElement[0].getElementsByTagName('premis:formatRegistryKey');
     expect(formatKeyElement, 'There is only 1 formatRegistryKey item').toHaveLength(1);
     expect(formatKeyElement[0].textContent, 'The format key is as expected').toEqual(formatKey);
+  }
+
+  async checkVirusInformation(metsXML: Document, itemToFind: string, pass: boolean, virusName: string){
+    const amdSecValues = metsXML.getElementsByTagName('mets:amdSec');
+    const itemToFindElement = amdSecValues.filter(item => (item.getElementsByTagName('premis:originalName'))[0].textContent.trim() === itemToFind.trim());
+
+    //Find the digiprovMD with eventType 'virus check'
+    const digiProvValues = itemToFindElement[0].getElementsByTagName('mets:digiprovMD');
+    const digiProvToFindElement = digiProvValues.filter(item => (item.getElementsByTagName('premis:eventType'))[0].textContent.trim() === 'virus check');
+
+    //digiProvToFindElement should have length 1
+    //get the eventOutcome - will be pass or fail
+    const virusOutcomeElement = digiProvToFindElement[0].getElementsByTagName('premis:eventOutcome');
+    expect(virusOutcomeElement, 'There is only 1 eventOutcome item').toHaveLength(1);
+    expect(virusOutcomeElement[0].textContent, 'The eventOutcome is as expected').toEqual(pass?'Pass':'Fail');
+
+    //Get the eventOutcomeDetailNote - it will show the virus information
+    const virusOutcomeDetailNote= digiProvToFindElement[0].getElementsByTagName('premis:eventOutcomeDetailNote');
+    expect(virusOutcomeDetailNote, 'There is only 1 eventOutcomeDetailNote item').toHaveLength(1);
+    expect(virusOutcomeDetailNote[0].textContent, 'The eventOutcomeDetailNote is as expected').toContain(pass?'':virusName);
   }
 
   async checkFileSecExists(metsXML: Document, itemToFind: string, admId: string, mimeType: string = null) : Promise<string>{

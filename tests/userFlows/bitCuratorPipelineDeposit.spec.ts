@@ -2,7 +2,7 @@ import {BrowserContext, expect, Locator, Page} from "@playwright/test";
 import {presentationApiContext, test} from '../../fixture';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 import { DOMParser, Document } from '@xmldom/xmldom';
-import {generateUniqueId} from "../helpers/helpers";
+import {createdByUserName, generateUniqueId} from "../helpers/helpers";
 import {DepositPage} from "./pages/DepositPage";
 
 test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
@@ -173,7 +173,7 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
 
       await test.step('Add a file with a virus, and re-run the pipleine', async () => {
 
-        //TODO add the virus file
+        //Add the virus file
         await depositPage.uploadFile(depositPage.virusTestFileLocation, false, depositPage.uploadFileToTestFolder);
 
         //Start the pipeline
@@ -199,12 +199,32 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
         }
 
         //There should be a virus banner now that we are finished
-        await expect(depositPage.alertMessage, 'There is a banner message tellingus about the virus').toContainText('Files with viruses');
+        await expect(depositPage.alertMessage, 'There is a banner message telling us about the virus').toContainText('Files with viruses');
         await expect(depositPage.bitCuratorFileFiveSelectArea, 'Metadata file present and listed as in Both Deposit and mets').toHaveText(depositPage.inBothText);
 
       });
 
-      //TODO Check the METS for the virus areas
+      await test.step('Check the virus is correctly highlighted on the page', async () => {
+        //Check for the virus symbol in the files table agianst one row only, and check the tooltip shows the virus
+        await expect(depositPage.virusIndicator).toHaveCount(1);
+        await expect(depositPage.virusIndicator.getByLabel('virus')).toHaveAttribute('title', ' Win.Test.EICAR_HDB-1 FOUND');
+        await expect(page.getByRole('row').filter({has: depositPage.virusIndicator})).toContainText(depositPage.virusFileName);
+
+      });
+
+      await test.step('Check the METS has the correct virus information', async () => {
+
+        //Open the METS file
+        await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
+
+        //Check the METS for the virus areas, and that we have both PASS and FAIL areas
+        await depositPage.checkVirusInformation(metsXML, depositPage.testImageLocationFullPath, true, '');
+        await depositPage.checkVirusInformation(metsXML, depositPage.testWordDocLocationFullPath, true, '');
+        await depositPage.checkVirusInformation(metsXML, depositPage.testPdfDocLocationFullPath, true, '');
+        await depositPage.checkVirusInformation(metsXML, depositPage.virusFileFullPath, false, ' Win.Test.EICAR_HDB-1 FOUND');
+
+      });
+
 
       await test.step('Create a diff import job, validate expected fields are present and check values', async () => {
 
@@ -252,9 +272,28 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
 
       });
 
+      await test.step('Navigate to the files and check we see the virus information', async () => {
+        await archivalGroupPage.objectsFolderInTable.getByRole('link').click();
+        await archivalGroupPage.subfolderFolderInTable.getByRole('link').click();
+
+        //Validate that the page has changed
+        let expectedURL: string = `${archivalGroupPage.navigationPage.baseBrowsePath}/${archivalGroupString}/${archivalGroupPage.depositPage.newTestFolderSlug}`;
+        await expect(page, 'The URL is correct').toHaveURL(expectedURL);
+
+        //Verify the virus info
+        const virusFileTableRow = archivalGroupPage.resourcesTableRows.filter({has: page.getByRole('cell', {name: 'td-path'}).getByText(archivalGroupPage.depositPage.virusFileName)})
+        await expect(virusFileTableRow.getByRole('cell', {name: 'td-virus'}), 'The virus scan output is displayed for the image file').toHaveText('☣');
+
+        //Check for the virus symbol in the files table agianst one row only, and check the tooltip shows the virus
+        await expect(depositPage.virusIndicator).toHaveCount(1);
+        await expect(depositPage.virusIndicator.getByLabel('virus')).toHaveAttribute('title', ' Win.Test.EICAR_HDB-1 FOUND');
+        await expect(page.getByRole('row').filter({has: depositPage.virusIndicator})).toContainText(depositPage.virusFileName);
+
+      });
+
       await test.step('Check we can access the METS for this archival group via the UI', async () => {
 
-        await page.goto(page.url() + `?view=mets`);
+        await page.goto(archivalGroupURL + `?view=mets`);
 
         //The METS interceptor should have populated metsXML
         //Verify the 2 test files are in the METS i.e. the right METS was returned

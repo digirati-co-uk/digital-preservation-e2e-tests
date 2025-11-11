@@ -306,7 +306,7 @@ test.describe('Archival Group Tests', () => {
         }
         await expect(archivalGroupPage.breadcrumbs.getByText(archivalGroupPage.depositPage.objectsFolderName, {exact: true}), 'Breadcrumb link is displayed as expected').toBeVisible();
 
-        //We can see our 2 images
+        //We can see our 2 files
         await expect(archivalGroupPage.resourcesTableRows, 'We correctly have 2 rows in the Resources table').toHaveCount(2);
         await expect(archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testImageLocation), 'Test file one is correct').toBeVisible();
         await expect(archivalGroupPage.resourcesTableRows.getByLabel('td-path').getByText(archivalGroupPage.depositPage.testWordDocLocation), 'Test file two is correct').toBeVisible();
