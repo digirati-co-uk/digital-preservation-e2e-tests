@@ -304,7 +304,7 @@ export class DepositPage {
     this.newTestFolderSlug = this.objectsFolderName + `/new-test-folder-inside-objects`;
     this.newTestFolderSlug2 = this.objectsFolderName + '/second-test-folder-inside-objects';
     this.testFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug}/`;
-    this.virusTestFileLocation = `../../../test-data/virus-file/eicar.txt/`;
+    this.virusTestFileLocation = `../../../test-data/virus-file/eicar.txt`;
     this.secondTestFileLocation = `../../../test-data/deposit/${this.newTestFolderSlug2}/`;
     this.testImageLocationFullPath = this.newTestFolderSlug+'/'+this.testImageLocation;
     this.testWordDocLocationFullPath = this.newTestFolderSlug+'/'+this.testWordDocLocation;
