@@ -2,7 +2,7 @@ import {BrowserContext, expect, Locator, Page} from "@playwright/test";
 import {presentationApiContext, test} from '../../fixture';
 import {ArchivalGroupPage} from "./pages/ArchivalGroupPage";
 import { DOMParser, Document } from '@xmldom/xmldom';
-import {generateUniqueId} from "../helpers/helpers";
+import {createdByUserName, generateUniqueId} from "../helpers/helpers";
 import {DepositPage} from "./pages/DepositPage";
 
 test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
@@ -128,7 +128,7 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
           await page.waitForTimeout(1_000);
           await page.goto(page.url());
 
-          await expect(depositPage.pipelineJobStatus, 'The Status of the diff is visible').toBeVisible();
+          await expect(depositPage.pipelineJobStatus, 'The Status of the job is visible').toBeVisible();
           const status = await depositPage.pipelineJobStatus.textContent();
           pipelineCompleted = status == 'completed';
           if (!pipelineCompleted) {
@@ -170,6 +170,61 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
         await expect(depositPage.newTestWordFileInTable.getByLabel('pronom'), 'pronom is correct').toHaveText('fmt/412');
         await expect(depositPage.newTestPdfFileInTable.getByLabel('pronom'), 'pronom is correct').toHaveText('fmt/276');
       });
+
+      await test.step('Add a file with a virus, and re-run the pipleine', async () => {
+
+        //Add the virus file
+        await depositPage.uploadFile(depositPage.virusTestFileLocation, false, depositPage.uploadFileToTestFolder);
+
+        //Start the pipeline
+        await depositPage.actionsMenu.click();
+        await depositPage.runPipelineButton.click();
+
+        //Test for 'Deposit locked and pipeline running' alert banner
+        await expect(depositPage.alertMessage, 'We see the Deposit Locked message').toContainText('Deposit locked and pipeline run message sent.');
+
+        //Refresh the page until changes to completed
+        let pipelineCompleted: boolean = false;
+        while (!pipelineCompleted) {
+          //Wait for a few seconds before reloading to give the job time to complete
+          await page.waitForTimeout(1_000);
+          await page.goto(page.url());
+
+          await expect(depositPage.pipelineJobStatus, 'The Status of the job is visible').toBeVisible();
+          const status = await depositPage.pipelineJobStatus.textContent();
+          pipelineCompleted = status == 'completed';
+          if (!pipelineCompleted) {
+            await expect(depositPage.alertMessage, 'We see the Please Refresh message').toContainText('Please refresh for status updates');
+          }
+        }
+
+        //There should be a virus banner now that we are finished
+        await expect(depositPage.alertMessage, 'There is a banner message telling us about the virus').toContainText('Files with viruses');
+        await expect(depositPage.bitCuratorFileFiveSelectArea, 'Metadata file present and listed as in Both Deposit and mets').toHaveText(depositPage.inBothText);
+
+      });
+
+      await test.step('Check the virus is correctly highlighted on the page', async () => {
+        //Check for the virus symbol in the files table agianst one row only, and check the tooltip shows the virus
+        await expect(depositPage.virusIndicator).toHaveCount(1);
+        await expect(depositPage.virusIndicator.getByLabel('virus')).toHaveAttribute('title', ' Win.Test.EICAR_HDB-1 FOUND');
+        await expect(page.getByRole('row').filter({has: depositPage.virusIndicator})).toContainText(depositPage.virusFileName);
+
+      });
+
+      await test.step('Check the METS has the correct virus information', async () => {
+
+        //Open the METS file
+        await depositPage.openMetsFileInTab(context, depositPage.metsFile.getByRole('link'));
+
+        //Check the METS for the virus areas, and that we have both PASS and FAIL areas
+        await depositPage.checkVirusInformation(metsXML, depositPage.testImageLocationFullPath, true, '');
+        await depositPage.checkVirusInformation(metsXML, depositPage.testWordDocLocationFullPath, true, '');
+        await depositPage.checkVirusInformation(metsXML, depositPage.testPdfDocLocationFullPath, true, '');
+        await depositPage.checkVirusInformation(metsXML, depositPage.virusFileFullPath, false, ' Win.Test.EICAR_HDB-1 FOUND');
+
+      });
+
 
       await test.step('Create a diff import job, validate expected fields are present and check values', async () => {
 
@@ -217,9 +272,28 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
 
       });
 
+      await test.step('Navigate to the files and check we see the virus information', async () => {
+        await archivalGroupPage.objectsFolderInTable.getByRole('link').click();
+        await archivalGroupPage.subfolderFolderInTable.getByRole('link').click();
+
+        //Validate that the page has changed
+        let expectedURL: string = `${archivalGroupPage.navigationPage.baseBrowsePath}/${archivalGroupString}/${archivalGroupPage.depositPage.newTestFolderSlug}`;
+        await expect(page, 'The URL is correct').toHaveURL(expectedURL);
+
+        //Verify the virus info
+        const virusFileTableRow = archivalGroupPage.resourcesTableRows.filter({has: page.getByRole('cell', {name: 'td-path'}).getByText(archivalGroupPage.depositPage.virusFileName)})
+        await expect(virusFileTableRow.getByRole('cell', {name: 'td-virus'}), 'The virus scan output is displayed for the image file').toHaveText('☣');
+
+        //Check for the virus symbol in the files table agianst one row only, and check the tooltip shows the virus
+        await expect(depositPage.virusIndicator).toHaveCount(1);
+        await expect(depositPage.virusIndicator.getByLabel('virus')).toHaveAttribute('title', ' Win.Test.EICAR_HDB-1 FOUND');
+        await expect(page.getByRole('row').filter({has: depositPage.virusIndicator})).toContainText(depositPage.virusFileName);
+
+      });
+
       await test.step('Check we can access the METS for this archival group via the UI', async () => {
 
-        await page.goto(page.url() + `?view=mets`);
+        await page.goto(archivalGroupURL + `?view=mets`);
 
         //The METS interceptor should have populated metsXML
         //Verify the 2 test files are in the METS i.e. the right METS was returned
@@ -301,7 +375,7 @@ test.describe('Run the BitCurator Deposit Pipeline Tests', () => {
       //Now click the stop pipeline button
       await depositPage.actionsMenu.click();
       await depositPage.cancelPipelineButton.click();
-      await expect(depositPage.pipelineJobStatus, 'The Status of the diff is correct').toHaveText('completedWithErrors');
+      await expect(depositPage.pipelineJobStatus, 'The Status of the job is correct').toHaveText('completedWithErrors');
 
       //There should be a banner stating we cancelled the job
       await expect(depositPage.alertMessage, 'We see the Pipeline cancelled banner').toContainText('Force complete of pipeline succeeded and lock released');
